@@ -1533,6 +1533,77 @@
         function draw() {
             ctx.imageSmoothingEnabled = false;
             bgCtx.imageSmoothingEnabled = false;
+
+            // タイトル画面
+            if (gameState === 'title') {
+                ctx.fillStyle = '#000011';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // 星を描画
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 80; i++) {
+                    const sx = ((i * 137 + 11) % canvas.width);
+                    const sy = ((i * 97 + 31) % canvas.height);
+                    ctx.fillRect(sx, sy, i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1);
+                }
+                // タイトルロゴ
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 58px monospace';
+                ctx.fillText('Retro Fantasy', canvas.width / 2, 160);
+                ctx.fillStyle = '#D0D0D0';
+                ctx.font = 'bold 20px monospace';
+                ctx.fillText('― An Epic 8-bit Adventure ―', canvas.width / 2, 200);
+
+                // メニュー
+                const opts = ['START', 'CONTINUE'];
+                for (let i = 0; i < opts.length; i++) {
+                    const sel = (titleSelectedOption === i);
+                    ctx.fillStyle = sel ? '#EFD02E' : '#aaaaaa';
+                    ctx.font = sel ? 'bold 34px monospace' : '28px monospace';
+                    ctx.fillText((sel ? '► ' : '  ') + opts[i], canvas.width / 2, 310 + i * 60);
+                }
+                ctx.fillStyle = '#666';
+                ctx.font = '14px monospace';
+                ctx.fillText('Use [↑↓] / [WS] to select, [Enter] / [Space] to confirm', canvas.width / 2, canvas.height - 40);
+                ctx.textAlign = 'left';
+                return;
+            }
+
+            // ステージ選択画面
+            if (gameState === 'stageSelect') {
+                ctx.fillStyle = '#000022';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 38px monospace';
+                ctx.fillText('CONTINUE - Select Stage', canvas.width / 2, 100);
+                ctx.fillStyle = '#D0D0D0';
+                ctx.font = '18px monospace';
+                ctx.fillText(`Available: Stage 1 to Stage ${maxReachedStage + 1}`, canvas.width / 2, 140);
+
+                for (let i = 0; i <= maxReachedStage; i++) {
+                    const cols = 5;
+                    const bw = 120, bh = 50;
+                    const startX = canvas.width / 2 - (Math.min(cols, maxReachedStage + 1) * (bw + 10)) / 2 + bw / 2;
+                    const bx = startX + (i % cols) * (bw + 10) - bw / 2;
+                    const by = 190 + Math.floor(i / cols) * (bh + 15);
+                    const sel = (stageSelectCursor === i);
+                    ctx.fillStyle = sel ? '#EFD02E' : '#334';
+                    ctx.fillRect(bx, by, bw, bh);
+                    ctx.strokeStyle = sel ? '#fff' : '#667';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(bx, by, bw, bh);
+                    ctx.fillStyle = sel ? '#000' : '#ccc';
+                    ctx.font = sel ? 'bold 20px monospace' : '18px monospace';
+                    ctx.fillText(`STAGE ${i + 1}`, bx + bw / 2, by + 31);
+                }
+                ctx.fillStyle = '#888';
+                ctx.font = '14px monospace';
+                ctx.fillText('[←→] / [AD] to move, [Enter] / [Space] to select, [Esc] to go back', canvas.width / 2, canvas.height - 40);
+                ctx.textAlign = 'left';
+                return;
+            }
+
             if (!isBgCached) {
                 // 背景テーマ設定
                 const bgColors = [
@@ -1616,15 +1687,14 @@
 
             // 主人公
             if (player.invincibleTimer === 0 || player.invincibleTimer % 8 < 4) {
-                // pRot で回転させると剣道みたいになるため、左右の場合はフリップさせる
                 let heroFlip = false;
-                let heroRot = 0;
-                if (player.dirX === -1) { heroFlip = true; } // 左向き
-                else if (player.dirX === 1) { heroFlip = false; } // 右向き
-                else if (player.dirY === -1) { heroRot = 0; } // 上向き（後ろ姿がないのでそのまま）
-                else if (player.dirY === 1) { heroRot = 0; } // 下向き
+                let heroSprite = PLAYER_SPRITE;
+                if (player.dirX === -1) { heroSprite = PLAYER_RIGHT_SPRITE; heroFlip = true; }  // 左向き（右を反転）
+                else if (player.dirX === 1) { heroSprite = PLAYER_RIGHT_SPRITE; }               // 右向き（右横顔）
+                else if (player.dirY === -1) { heroSprite = PLAYER_BACK_SPRITE; }               // 上向き（後ろ姿）
+                // dirY === 1: 下向き（正面） → PLAYER_SPRITE そのまま
 
-                drawShape(PLAYER_SPRITE, player.x, player.y, heroRot, PIXEL_SCALE, false, heroFlip);
+                drawShape(heroSprite, player.x, player.y, 0, PIXEL_SCALE, false, heroFlip);
             }
 
             // 盾 (構えている時)
