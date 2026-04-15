@@ -93,6 +93,47 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
+
+        // 後ろ姿スプライト（上へ移動時）
+        const PLAYER_BACK_SPRITE = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 20, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 20, 20, 11, 7, 11, 20, 20, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 20, 11, 11, 11, 11, 11, 20, 0, 0, 0, 0, 0, 0],
+            [0, 7, 0, 0, 20, 19, 19, 19, 19, 20, 0, 0, 0, 0, 0, 0],
+            [0, 7, 0, 0, 19, 4, 4, 4, 4, 19, 0, 0, 0, 0, 0, 0],
+            [0, 7, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 11, 11, 11, 11],
+            [20, 20, 20, 0, 4, 4, 4, 4, 4, 4, 0, 11, 7, 7, 7, 11],
+            [0, 11, 0, 0, 11, 11, 20, 11, 11, 0, 11, 7, 20, 11, 7, 11],
+            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 11, 11, 11, 11],
+            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 11, 7, 20, 11, 7, 11],
+            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 0, 11, 7, 7, 7, 11],
+            [0, 0, 0, 0, 0, 20, 20, 0, 20, 20, 0, 0, 11, 11, 11, 11],
+            [0, 0, 0, 0, 0, 20, 20, 0, 20, 20, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+
+        // 右横顔スプライト（右へ移動時 / 左は反転）
+        const PLAYER_RIGHT_SPRITE = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 20, 11, 7, 20, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 11, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 11, 11, 11, 11, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 11, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 11, 11, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 11, 11, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 11, 11, 11, 20, 11, 11, 4, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 20, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 20, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+
         // 敵の種類
         // 1. スライム（16x16）
         const SLIME_SPRITE = [
@@ -222,6 +263,7 @@
         // ステージデータ（全体が陸続きもしくは橋で確実につながるように修正）
         const STAGES = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 2, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 2, 1, 0, 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
+        const _hadRestart = sessionStorage.getItem('restartStage') !== null;
         let currentStageIndex = parseInt(sessionStorage.getItem('restartStage') || 0);
         sessionStorage.removeItem('restartStage');
         let maxReachedStage = parseInt(sessionStorage.getItem('maxReachedStage') || 0);
@@ -353,21 +395,30 @@
         let audioStarted = false;
         let nextNoteTime = 0;
         let bgmIndex = 0;
-        const noteLength = 0.15;
-        const noteSpeed = 0.15;
+        const noteLength = 0.22;
+        const noteSpeed = 0.26;
         const C4 = 261.63, D4 = 293.66, Eb4 = 311.13, E4 = 329.63, F4 = 349.23, G4 = 392.00, Ab4 = 415.30, A4 = 440.0, Bb4 = 466.16, C5 = 523.25, D5 = 587.33;
 
-        // ステージ1〜3のBGM配列
+        // ステージBGM配列（クラシック調）
         const bgmNotesList = [
-            [261, 261, 392, 392, 440, 440, 392, 0], // Stage1 草原
-            [196, 261, 311, 261, 196, 261, 311, 261], // Stage2 森
-            [329, 392, 440, 523, 440, 392, 329, 0], // Stage3 川
-            [146, 164, 196, 164, 146, 164, 196, 164], // Stage4 山
-            [523, 659, 783, 659, 523, 659, 783, 659], // Stage5 氷原
-            [220, 233, 261, 233, 220, 233, 261, 233], // Stage6 砂漠
-            [130, 130, 196, 196, 130, 130, 196, 196], // Stage7 城
-            [659, 783, 880, 1046, 880, 783, 659, 0], // Stage8 天空
-            [103, 110, 123, 110, 103, 110, 123, 110]  // Stage9 魔界 (Boss)
+            // Stage1 草原 - クラシック風 (喜びの歌風 C-major)
+            [330, 330, 349, 392, 392, 349, 330, 294, 262, 262, 294, 330, 330, 294, 294, 0],
+            // Stage2 森 - バッハ風 (g-minor)
+            [196, 220, 233, 262, 294, 311, 349, 392, 349, 311, 294, 262, 233, 220, 196, 0],
+            // Stage3 川 - ヘンデル風 (a-minor)
+            [220, 247, 262, 294, 330, 294, 262, 247, 220, 247, 262, 294, 330, 294, 262, 0],
+            // Stage4 山 - ベートーヴェン風 (d-minor)
+            [294, 349, 440, 294, 349, 440, 523, 466, 440, 392, 349, 392, 440, 466, 523, 0],
+            // Stage5 氷原 - ヴィヴァルディ風 (e-minor)
+            [330, 370, 392, 440, 494, 440, 392, 370, 330, 370, 392, 440, 494, 440, 392, 0],
+            // Stage6 砂漠 - 半音階的 (d-minor exotic)
+            [294, 330, 349, 392, 415, 392, 349, 330, 294, 330, 349, 392, 415, 392, 349, 0],
+            // Stage7 城 - バッハ・トッカータ風 (c-minor)
+            [262, 294, 311, 349, 392, 415, 392, 349, 311, 294, 262, 311, 349, 392, 415, 0],
+            // Stage8 天空 - ヘンデル・メサイア風 (F-major)
+            [349, 392, 440, 466, 523, 466, 440, 392, 349, 392, 440, 466, 523, 466, 440, 0],
+            // Stage9 魔界 - 減音階 (diminished/boss)
+            [247, 294, 349, 415, 494, 415, 349, 294, 247, 294, 349, 415, 494, 415, 349, 0]
         ];
 
 
@@ -457,20 +508,42 @@
             while (nextNoteTime < audioCtx.currentTime + 0.1) {
                 const freq = currentBgm[bgmIndex % currentBgm.length];
                 if (freq > 0) {
-                    [freq, freq * 1.5].forEach((f, i) => {
-                        const osc = audioCtx.createOscillator();
-                        const gainNode = audioCtx.createGain();
-                        osc.type = i === 0 ? 'square' : 'triangle';
-                        osc.frequency.setValueAtTime(f, nextNoteTime);
-                        osc.connect(gainNode);
-                        gainNode.connect(audioCtx.destination);
+                    // メロディ (triangle - クラシック調で暖かい音色)
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, nextNoteTime);
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    gainNode.gain.setValueAtTime(0.08, nextNoteTime);
+                    gainNode.gain.setValueAtTime(0.06, nextNoteTime + noteLength * 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength);
+                    osc.start(nextNoteTime);
+                    osc.stop(nextNoteTime + noteLength);
 
-                        gainNode.gain.setValueAtTime(0.03, nextNoteTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength);
+                    // ハーモニー (sine - 3度上)
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 1.25, nextNoteTime);
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    gain2.gain.setValueAtTime(0.03, nextNoteTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength);
+                    osc2.start(nextNoteTime);
+                    osc2.stop(nextNoteTime + noteLength);
 
-                        osc.start(nextNoteTime);
-                        osc.stop(nextNoteTime + noteLength);
-                    });
+                    // バス (sine - オクターブ下)
+                    const osc3 = audioCtx.createOscillator();
+                    const gain3 = audioCtx.createGain();
+                    osc3.type = 'sine';
+                    osc3.frequency.setValueAtTime(freq * 0.5, nextNoteTime);
+                    osc3.connect(gain3);
+                    gain3.connect(audioCtx.destination);
+                    gain3.gain.setValueAtTime(0.04, nextNoteTime);
+                    gain3.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength * 0.8);
+                    osc3.start(nextNoteTime);
+                    osc3.stop(nextNoteTime + noteLength);
                 }
                 nextNoteTime += noteSpeed;
                 bgmIndex = (bgmIndex + 1) % currentBgm.length;
@@ -484,6 +557,76 @@
 
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
+
+            // タイトル画面の操作
+            if (gameState === 'title') {
+                initAudio();
+                if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                    titleSelectedOption = 0;
+                } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                    titleSelectedOption = 1;
+                } else if (e.code === 'Enter' || e.code === 'Space') {
+                    if (titleSelectedOption === 0) {
+                        // START: ステージ1から開始
+                        currentStageIndex = 0;
+                        maxReachedStage = 0;
+                        mapData = STAGES[0];
+                        hasStarted = true;
+                        gameState = 'playing';
+                        centerMessage = "STAGE 1";
+                        msgTimer = 120;
+                    } else {
+                        // CONTINUE: ステージ選択画面へ
+                        if (maxReachedStage === 0 && !sessionStorage.getItem('maxReachedStage')) {
+                            // まだ進捗なし→STARTと同様
+                            currentStageIndex = 0;
+                            mapData = STAGES[0];
+                            hasStarted = true;
+                            gameState = 'playing';
+                            centerMessage = "STAGE 1";
+                            msgTimer = 120;
+                        } else {
+                            stageSelectCursor = currentStageIndex;
+                            gameState = 'stageSelect';
+                        }
+                    }
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            // ステージ選択画面の操作
+            if (gameState === 'stageSelect') {
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                    stageSelectCursor = Math.max(0, stageSelectCursor - 1);
+                } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                    stageSelectCursor = Math.min(maxReachedStage, stageSelectCursor + 1);
+                } else if (e.code === 'Enter' || e.code === 'Space') {
+                    isBgCached = false;
+                    currentStageIndex = stageSelectCursor;
+                    mapData = STAGES[currentStageIndex];
+                    enemiesDefeatedInStage = 0;
+                    itemBoxSpawnedThisStage = false;
+                    player.hp = player.maxHp;
+                    enemies = [];
+                    projectiles = [];
+                    items = [];
+                    do {
+                        player.x = 40 + Math.random() * (canvas.width - 80);
+                        player.y = 40 + Math.random() * (canvas.height - 80);
+                    } while (!isWalkable(player.x, player.y));
+                    spawnEnemies();
+                    hasStarted = true;
+                    gameState = 'playing';
+                    centerMessage = `STAGE ${currentStageIndex + 1}`;
+                    msgTimer = 120;
+                    e.preventDefault();
+                } else if (e.code === 'Escape') {
+                    gameState = 'title';
+                }
+                return;
+            }
+
             if (isGameOver && gameOverTimer <= 0) {
                 if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
                     gameOverSelectedStage = Math.max(0, gameOverSelectedStage - 1);
@@ -522,13 +665,16 @@
         });
 
         const player = {
-            x: 400, y: 300, speed: 1.2,
+            x: 400, y: 300, speed: 1.44,
             dirX: 0, dirY: 1,
             isAttacking: false, attackTimer: 0,
             hp: 5, maxHp: 5,
             invincibleTimer: 0
         };
-        let hasStarted = false;
+        let hasStarted = _hadRestart;
+        let gameState = _hadRestart ? 'playing' : 'title'; // 'title', 'stageSelect', 'playing'
+        let titleSelectedOption = 0; // 0=START, 1=CONTINUE
+        let stageSelectCursor = 0;
         let isGameOver = false;
         let gameOverTimer = 0;
         let gameOverSelectedStage = 0;
@@ -941,6 +1087,71 @@
                 }
             }
 
+            updateBgm(); // タイトル/ステージ選択中もBGMを流す
+
+            // ゲームパッド: タイトル画面操作
+            if (gameState === 'title') {
+                if (jpTimer === 0) {
+                    if (padUp || padDown) {
+                        titleSelectedOption = titleSelectedOption === 0 ? 1 : 0;
+                        jpTimer = 15;
+                    }
+                    if (padA || padStart) {
+                        initAudio();
+                        if (titleSelectedOption === 0 || maxReachedStage === 0) {
+                            currentStageIndex = 0;
+                            mapData = STAGES[0];
+                            hasStarted = true;
+                            gameState = 'playing';
+                            centerMessage = "STAGE 1";
+                            msgTimer = 120;
+                        } else {
+                            stageSelectCursor = currentStageIndex;
+                            gameState = 'stageSelect';
+                        }
+                        jpTimer = 30;
+                    }
+                }
+                return;
+            }
+
+            // ゲームパッド: ステージ選択操作
+            if (gameState === 'stageSelect') {
+                if (jpTimer === 0) {
+                    if (padLeft) {
+                        stageSelectCursor = Math.max(0, stageSelectCursor - 1);
+                        jpTimer = 15;
+                    } else if (padRight) {
+                        stageSelectCursor = Math.min(maxReachedStage, stageSelectCursor + 1);
+                        jpTimer = 15;
+                    } else if (padA || padStart) {
+                        isBgCached = false;
+                        currentStageIndex = stageSelectCursor;
+                        mapData = STAGES[currentStageIndex];
+                        enemiesDefeatedInStage = 0;
+                        itemBoxSpawnedThisStage = false;
+                        player.hp = player.maxHp;
+                        enemies = [];
+                        projectiles = [];
+                        items = [];
+                        do {
+                            player.x = 40 + Math.random() * (canvas.width - 80);
+                            player.y = 40 + Math.random() * (canvas.height - 80);
+                        } while (!isWalkable(player.x, player.y));
+                        spawnEnemies();
+                        hasStarted = true;
+                        gameState = 'playing';
+                        centerMessage = `STAGE ${currentStageIndex + 1}`;
+                        msgTimer = 120;
+                        jpTimer = 30;
+                    } else if (padB) {
+                        gameState = 'title';
+                        jpTimer = 15;
+                    }
+                }
+                return;
+            }
+
             if (padA || padStart) {
                 if (!hasStarted) {
                     hasStarted = true;
@@ -1064,7 +1275,7 @@
                                 updateHTMLUI();
                             } else if (!hasBoots) {
                                 hasBoots = true;
-                                player.speed = 2.5;
+                                player.speed = 3.0;
                                 updateHTMLUI();
                             } else {
                                 player.hp = Math.min(player.maxHp, player.hp + 1);
@@ -1355,8 +1566,6 @@
                 player.attackTimer--;
                 if (player.attackTimer <= 0) player.isAttacking = false;
             }
-
-            updateBgm();
         }
 
         function drawShape(sprite, fx, fy, rot, scale, isHitFlash = false, flipX = false, targetCtx = ctx) {
@@ -1388,6 +1597,77 @@
         function draw() {
             ctx.imageSmoothingEnabled = false;
             bgCtx.imageSmoothingEnabled = false;
+
+            // タイトル画面
+            if (gameState === 'title') {
+                ctx.fillStyle = '#000011';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // 星を描画
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 80; i++) {
+                    const sx = ((i * 137 + 11) % canvas.width);
+                    const sy = ((i * 97 + 31) % canvas.height);
+                    ctx.fillRect(sx, sy, i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1);
+                }
+                // タイトルロゴ
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 58px monospace';
+                ctx.fillText('Retro Fantasy', canvas.width / 2, 160);
+                ctx.fillStyle = '#D0D0D0';
+                ctx.font = 'bold 20px monospace';
+                ctx.fillText('― An Epic 8-bit Adventure ―', canvas.width / 2, 200);
+
+                // メニュー
+                const opts = ['START', 'CONTINUE'];
+                for (let i = 0; i < opts.length; i++) {
+                    const sel = (titleSelectedOption === i);
+                    ctx.fillStyle = sel ? '#EFD02E' : '#aaaaaa';
+                    ctx.font = sel ? 'bold 34px monospace' : '28px monospace';
+                    ctx.fillText((sel ? '► ' : '  ') + opts[i], canvas.width / 2, 310 + i * 60);
+                }
+                ctx.fillStyle = '#666';
+                ctx.font = '14px monospace';
+                ctx.fillText('Use [↑↓] / [WS] to select, [Enter] / [Space] to confirm', canvas.width / 2, canvas.height - 40);
+                ctx.textAlign = 'left';
+                return;
+            }
+
+            // ステージ選択画面
+            if (gameState === 'stageSelect') {
+                ctx.fillStyle = '#000022';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 38px monospace';
+                ctx.fillText('CONTINUE - Select Stage', canvas.width / 2, 100);
+                ctx.fillStyle = '#D0D0D0';
+                ctx.font = '18px monospace';
+                ctx.fillText(`Available: Stage 1 to Stage ${maxReachedStage + 1}`, canvas.width / 2, 140);
+
+                for (let i = 0; i <= maxReachedStage; i++) {
+                    const cols = 5;
+                    const bw = 120, bh = 50;
+                    const startX = canvas.width / 2 - (Math.min(cols, maxReachedStage + 1) * (bw + 10)) / 2 + bw / 2;
+                    const bx = startX + (i % cols) * (bw + 10) - bw / 2;
+                    const by = 190 + Math.floor(i / cols) * (bh + 15);
+                    const sel = (stageSelectCursor === i);
+                    ctx.fillStyle = sel ? '#EFD02E' : '#334';
+                    ctx.fillRect(bx, by, bw, bh);
+                    ctx.strokeStyle = sel ? '#fff' : '#667';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(bx, by, bw, bh);
+                    ctx.fillStyle = sel ? '#000' : '#ccc';
+                    ctx.font = sel ? 'bold 20px monospace' : '18px monospace';
+                    ctx.fillText(`STAGE ${i + 1}`, bx + bw / 2, by + 31);
+                }
+                ctx.fillStyle = '#888';
+                ctx.font = '14px monospace';
+                ctx.fillText('[←→] / [AD] to move, [Enter] / [Space] to select, [Esc] to go back', canvas.width / 2, canvas.height - 40);
+                ctx.textAlign = 'left';
+                return;
+            }
+
             if (!isBgCached) {
                 // 背景テーマ設定
                 const bgColors = [
@@ -1471,15 +1751,14 @@
 
             // 主人公
             if (player.invincibleTimer === 0 || player.invincibleTimer % 8 < 4) {
-                // pRot で回転させると剣道みたいになるため、左右の場合はフリップさせる
                 let heroFlip = false;
-                let heroRot = 0;
-                if (player.dirX === -1) { heroFlip = true; } // 左向き
-                else if (player.dirX === 1) { heroFlip = false; } // 右向き
-                else if (player.dirY === -1) { heroRot = 0; } // 上向き（後ろ姿がないのでそのまま）
-                else if (player.dirY === 1) { heroRot = 0; } // 下向き
+                let heroSprite = PLAYER_SPRITE;
+                if (player.dirX === -1) { heroSprite = PLAYER_RIGHT_SPRITE; heroFlip = true; }  // 左向き（右を反転）
+                else if (player.dirX === 1) { heroSprite = PLAYER_RIGHT_SPRITE; }               // 右向き（右横顔）
+                else if (player.dirY === -1) { heroSprite = PLAYER_BACK_SPRITE; }               // 上向き（後ろ姿）
+                // dirY === 1: 下向き（正面） → PLAYER_SPRITE そのまま
 
-                drawShape(PLAYER_SPRITE, player.x, player.y, heroRot, PIXEL_SCALE, false, heroFlip);
+                drawShape(heroSprite, player.x, player.y, 0, PIXEL_SCALE, false, heroFlip);
             }
 
             // 盾 (構えている時)
