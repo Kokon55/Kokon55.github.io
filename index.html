@@ -395,30 +395,37 @@
         let audioStarted = false;
         let nextNoteTime = 0;
         let bgmIndex = 0;
-        const noteLength = 0.22;
-        const noteSpeed = 0.26;
-        const C4 = 261.63, D4 = 293.66, Eb4 = 311.13, E4 = 329.63, F4 = 349.23, G4 = 392.00, Ab4 = 415.30, A4 = 440.0, Bb4 = 466.16, C5 = 523.25, D5 = 587.33;
+        let bgmCurrentStage = -1; // ステージ変化検出用
 
-        // ステージBGM配列（クラシック調）
-        const bgmNotesList = [
-            // Stage1 草原 - クラシック風 (喜びの歌風 C-major)
-            [330, 330, 349, 392, 392, 349, 330, 294, 262, 262, 294, 330, 330, 294, 294, 0],
-            // Stage2 森 - バッハ風 (g-minor)
-            [196, 220, 233, 262, 294, 311, 349, 392, 349, 311, 294, 262, 233, 220, 196, 0],
-            // Stage3 川 - ヘンデル風 (a-minor)
-            [220, 247, 262, 294, 330, 294, 262, 247, 220, 247, 262, 294, 330, 294, 262, 0],
-            // Stage4 山 - ベートーヴェン風 (d-minor)
-            [294, 349, 440, 294, 349, 440, 523, 466, 440, 392, 349, 392, 440, 466, 523, 0],
-            // Stage5 氷原 - ヴィヴァルディ風 (e-minor)
-            [330, 370, 392, 440, 494, 440, 392, 370, 330, 370, 392, 440, 494, 440, 392, 0],
-            // Stage6 砂漠 - 半音階的 (d-minor exotic)
-            [294, 330, 349, 392, 415, 392, 349, 330, 294, 330, 349, 392, 415, 392, 349, 0],
-            // Stage7 城 - バッハ・トッカータ風 (c-minor)
-            [262, 294, 311, 349, 392, 415, 392, 349, 311, 294, 262, 311, 349, 392, 415, 0],
-            // Stage8 天空 - ヘンデル・メサイア風 (F-major)
-            [349, 392, 440, 466, 523, 466, 440, 392, 349, 392, 440, 466, 523, 466, 440, 0],
-            // Stage9 魔界 - 減音階 (diminished/boss)
-            [247, 294, 349, 415, 494, 415, 349, 294, 247, 294, 349, 415, 494, 415, 349, 0]
+        // ステージ別BGM設定（雰囲気に合わせたテンポ・波形・音量）
+        const bgmStages = [
+            // Stage1 草原 - 穏やか・牧歌的 (C major, slow, sine)
+            { notes: [262, 294, 330, 349, 392, 349, 330, 294, 262, 0, 330, 294, 262, 0, 0, 0],
+              speed: 0.42, type: 'sine', gain: 0.07 },
+            // Stage2 森 - 神秘的・静か (A minor, medium, triangle)
+            { notes: [220, 196, 220, 247, 262, 220, 196, 175, 196, 220, 247, 220, 196, 0, 0, 0],
+              speed: 0.30, type: 'triangle', gain: 0.07 },
+            // Stage3 川 - 流れるよう・軽やか (F major, medium-fast, sine)
+            { notes: [349, 392, 440, 392, 349, 330, 349, 392, 440, 494, 440, 392, 349, 330, 0, 0],
+              speed: 0.22, type: 'sine', gain: 0.06 },
+            // Stage4 山 - 雄大・力強い (D minor, medium, triangle)
+            { notes: [294, 330, 294, 247, 262, 294, 330, 349, 294, 0, 349, 392, 349, 330, 294, 0],
+              speed: 0.25, type: 'triangle', gain: 0.08 },
+            // Stage5 氷原 - 寒く緊迫・不安 (E minor, fast, square low gain)
+            { notes: [330, 311, 294, 311, 330, 311, 294, 277, 294, 311, 330, 370, 349, 330, 311, 0],
+              speed: 0.17, type: 'square', gain: 0.035 },
+            // Stage6 砂漠 - 異国風・危険な緊張 (Harmonic minor, medium-fast, triangle)
+            { notes: [220, 247, 293, 311, 370, 311, 293, 247, 220, 247, 311, 370, 415, 370, 311, 0],
+              speed: 0.18, type: 'triangle', gain: 0.07 },
+            // Stage7 城 - 暗く劇的・重厚 (C minor, medium-fast, square)
+            { notes: [262, 247, 233, 220, 233, 247, 262, 311, 294, 262, 0, 349, 311, 294, 262, 0],
+              speed: 0.16, type: 'square', gain: 0.045 },
+            // Stage8 天空 - 壮大・激しい (G major, fast, triangle)
+            { notes: [392, 440, 494, 523, 587, 523, 494, 440, 392, 440, 494, 587, 523, 494, 440, 0],
+              speed: 0.13, type: 'triangle', gain: 0.06 },
+            // Stage9 魔界ボス - 超激しい・緊迫 (Diminished, very fast, square)
+            { notes: [220, 262, 311, 370, 440, 370, 311, 262, 220, 262, 311, 370, 311, 262, 220, 0],
+              speed: 0.10, type: 'square', gain: 0.055 },
         ];
 
 
@@ -503,23 +510,29 @@
 
         function updateBgm() {
             if (!audioStarted || !audioCtx) return;
-            const currentBgm = bgmNotesList[currentStageIndex % bgmNotesList.length];
+            const stageConfig = bgmStages[currentStageIndex % bgmStages.length];
+            if (bgmCurrentStage !== currentStageIndex) {
+                bgmCurrentStage = currentStageIndex;
+                bgmIndex = 0;
+                nextNoteTime = audioCtx.currentTime + 0.05;
+            }
+            const noteLen = stageConfig.speed * 0.85;
 
-            while (nextNoteTime < audioCtx.currentTime + 0.1) {
-                const freq = currentBgm[bgmIndex % currentBgm.length];
+            while (nextNoteTime < audioCtx.currentTime + 0.2) {
+                const freq = stageConfig.notes[bgmIndex % stageConfig.notes.length];
                 if (freq > 0) {
-                    // メロディ (triangle - クラシック調で暖かい音色)
+                    // メロディ (ステージ設定の音色)
                     const osc = audioCtx.createOscillator();
                     const gainNode = audioCtx.createGain();
-                    osc.type = 'triangle';
+                    osc.type = stageConfig.type;
                     osc.frequency.setValueAtTime(freq, nextNoteTime);
                     osc.connect(gainNode);
                     gainNode.connect(audioCtx.destination);
-                    gainNode.gain.setValueAtTime(0.08, nextNoteTime);
-                    gainNode.gain.setValueAtTime(0.06, nextNoteTime + noteLength * 0.5);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength);
+                    gainNode.gain.setValueAtTime(stageConfig.gain, nextNoteTime);
+                    gainNode.gain.setValueAtTime(stageConfig.gain * 0.7, nextNoteTime + noteLen * 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc.start(nextNoteTime);
-                    osc.stop(nextNoteTime + noteLength);
+                    osc.stop(nextNoteTime + noteLen);
 
                     // ハーモニー (sine - 3度上)
                     const osc2 = audioCtx.createOscillator();
@@ -528,10 +541,10 @@
                     osc2.frequency.setValueAtTime(freq * 1.25, nextNoteTime);
                     osc2.connect(gain2);
                     gain2.connect(audioCtx.destination);
-                    gain2.gain.setValueAtTime(0.03, nextNoteTime);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength);
+                    gain2.gain.setValueAtTime(stageConfig.gain * 0.35, nextNoteTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc2.start(nextNoteTime);
-                    osc2.stop(nextNoteTime + noteLength);
+                    osc2.stop(nextNoteTime + noteLen);
 
                     // バス (sine - オクターブ下)
                     const osc3 = audioCtx.createOscillator();
@@ -540,13 +553,13 @@
                     osc3.frequency.setValueAtTime(freq * 0.5, nextNoteTime);
                     osc3.connect(gain3);
                     gain3.connect(audioCtx.destination);
-                    gain3.gain.setValueAtTime(0.04, nextNoteTime);
-                    gain3.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLength * 0.8);
+                    gain3.gain.setValueAtTime(stageConfig.gain * 0.5, nextNoteTime);
+                    gain3.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen * 0.8);
                     osc3.start(nextNoteTime);
-                    osc3.stop(nextNoteTime + noteLength);
+                    osc3.stop(nextNoteTime + noteLen);
                 }
-                nextNoteTime += noteSpeed;
-                bgmIndex = (bgmIndex + 1) % currentBgm.length;
+                nextNoteTime += stageConfig.speed;
+                bgmIndex = (bgmIndex + 1) % stageConfig.notes.length;
             }
         }
 
@@ -570,6 +583,8 @@
                         // START: ステージ1から開始
                         currentStageIndex = 0;
                         maxReachedStage = 0;
+                        savedItemsForContinue = null;
+                        hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
                         mapData = STAGES[0];
                         hasStarted = true;
                         gameState = 'playing';
@@ -597,9 +612,9 @@
 
             // ステージ選択画面の操作
             if (gameState === 'stageSelect') {
-                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                if (e.code === 'ArrowUp' || e.code === 'KeyW') {
                     stageSelectCursor = Math.max(0, stageSelectCursor - 1);
-                } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
                     stageSelectCursor = Math.min(maxReachedStage, stageSelectCursor + 1);
                 } else if (e.code === 'Enter' || e.code === 'Space') {
                     isBgCached = false;
@@ -611,6 +626,12 @@
                     enemies = [];
                     projectiles = [];
                     items = [];
+                    if (savedItemsForContinue) {
+                        hasLongSword = savedItemsForContinue.hasLongSword;
+                        hasBow = savedItemsForContinue.hasBow;
+                        hasShield = savedItemsForContinue.hasShield;
+                        hasBoots = savedItemsForContinue.hasBoots;
+                    }
                     do {
                         player.x = 40 + Math.random() * (canvas.width - 80);
                         player.y = 40 + Math.random() * (canvas.height - 80);
@@ -627,13 +648,6 @@
                 return;
             }
 
-            if (isGameOver && gameOverTimer <= 0) {
-                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                    gameOverSelectedStage = Math.max(0, gameOverSelectedStage - 1);
-                } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                    gameOverSelectedStage = Math.min(maxReachedStage, gameOverSelectedStage + 1);
-                }
-            }
             if (e.code === 'KeyP') {
                 isPaused = !isPaused;
                 if (!isPaused) popupMessage = "";
@@ -642,13 +656,6 @@
                 currentWeapon = currentWeapon === 'sword' ? 'bow' : 'sword';
             }
             if (e.code === 'Space') {
-                if (isGameOver) {
-                    if (gameOverTimer <= 0) {
-                        sessionStorage.setItem('restartStage', gameOverSelectedStage);
-                        location.reload();
-                    }
-                    return;
-                }
                 playerAttack();
                 e.preventDefault();
             }
@@ -677,7 +684,7 @@
         let stageSelectCursor = 0;
         let isGameOver = false;
         let gameOverTimer = 0;
-        let gameOverSelectedStage = 0;
+        let savedItemsForContinue = null; // ゲームオーバー時のアイテム保存
         let hasLongSword = false;
         let hasBow = false;
         let hasShield = false;
@@ -1118,10 +1125,10 @@
             // ゲームパッド: ステージ選択操作
             if (gameState === 'stageSelect') {
                 if (jpTimer === 0) {
-                    if (padLeft) {
+                    if (padUp) {
                         stageSelectCursor = Math.max(0, stageSelectCursor - 1);
                         jpTimer = 15;
-                    } else if (padRight) {
+                    } else if (padDown) {
                         stageSelectCursor = Math.min(maxReachedStage, stageSelectCursor + 1);
                         jpTimer = 15;
                     } else if (padA || padStart) {
@@ -1134,6 +1141,12 @@
                         enemies = [];
                         projectiles = [];
                         items = [];
+                        if (savedItemsForContinue) {
+                            hasLongSword = savedItemsForContinue.hasLongSword;
+                            hasBow = savedItemsForContinue.hasBow;
+                            hasShield = savedItemsForContinue.hasShield;
+                            hasBoots = savedItemsForContinue.hasBoots;
+                        }
                         do {
                             player.x = 40 + Math.random() * (canvas.width - 80);
                             player.y = 40 + Math.random() * (canvas.height - 80);
@@ -1157,28 +1170,11 @@
                     hasStarted = true;
                     initAudio();
                 }
-                if (isGameOver) {
-                    if (gameOverTimer <= 0) {
-                        sessionStorage.setItem('restartStage', gameOverSelectedStage);
-                        location.reload();
-                    }
-                    return;
-                }
             }
 
             if (padA) {
                 playerAttack();
                 initAudio();
-            }
-
-            if (isGameOver && gameOverTimer <= 0 && jpTimer === 0) {
-                if (padLeft) {
-                    gameOverSelectedStage = Math.max(0, gameOverSelectedStage - 1);
-                    jpTimer = 15;
-                } else if (padRight) {
-                    gameOverSelectedStage = Math.min(maxReachedStage, gameOverSelectedStage + 1);
-                    jpTimer = 15;
-                }
             }
 
             if (padStart && jpTimer === 0) { // Start button
@@ -1199,8 +1195,14 @@
             if (!hasStarted) return;
             if (isPaused) return; // ポーズ中は処理を止める
             if (isGameOver) {
-                if (gameOverTimer > 0) gameOverTimer--;
-                return; // ゲームオーバーになったら完全に動きを止める（即死させる）
+                if (gameOverTimer > 0) {
+                    gameOverTimer--;
+                } else {
+                    // タイトル画面へ自動遷移
+                    isGameOver = false;
+                    gameState = 'title';
+                }
+                return;
             }
             // 進行中ならスキップ
             if (msgTimer > 0 && currentStageIndex === 8 && enemiesDefeatedInStage >= 1) {
@@ -1381,7 +1383,8 @@
                         projectiles.splice(i, 1);
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
-                            gameOverTimer = 120; // 1秒間操作を受け付けない
+                            gameOverTimer = 180; // 3秒間はゲームオーバー画面
+                            savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
                             playSoundEffect('gameover');
                         }
                         continue; // 弾消滅
@@ -1549,7 +1552,8 @@
 
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
-                            gameOverTimer = 120;
+                            gameOverTimer = 180; // 3秒間はゲームオーバー画面
+                            savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
                             playSoundEffect('gameover');
                         }
                     }
@@ -1640,30 +1644,41 @@
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#EFD02E';
                 ctx.font = 'bold 38px monospace';
-                ctx.fillText('CONTINUE - Select Stage', canvas.width / 2, 100);
+                ctx.fillText('CONTINUE - Select Stage', canvas.width / 2, 80);
                 ctx.fillStyle = '#D0D0D0';
                 ctx.font = '18px monospace';
-                ctx.fillText(`Available: Stage 1 to Stage ${maxReachedStage + 1}`, canvas.width / 2, 140);
+                ctx.fillText(`Available: Stage 1 to Stage ${maxReachedStage + 1}`, canvas.width / 2, 118);
 
-                for (let i = 0; i <= maxReachedStage; i++) {
-                    const cols = 5;
-                    const bw = 120, bh = 50;
-                    const startX = canvas.width / 2 - (Math.min(cols, maxReachedStage + 1) * (bw + 10)) / 2 + bw / 2;
-                    const bx = startX + (i % cols) * (bw + 10) - bw / 2;
-                    const by = 190 + Math.floor(i / cols) * (bh + 15);
+                const bw = 260, bh = 44;
+                const bx = canvas.width / 2 - bw / 2;
+                const listStartY = 148;
+                const listSpacing = 52;
+                const visibleCount = Math.min(maxReachedStage + 1, 7);
+                const scrollOffset = Math.max(0, Math.min(stageSelectCursor - 3, maxReachedStage + 1 - visibleCount));
+
+                for (let vi = 0; vi < visibleCount; vi++) {
+                    const i = scrollOffset + vi;
+                    if (i > maxReachedStage) break;
+                    const by = listStartY + vi * listSpacing;
                     const sel = (stageSelectCursor === i);
-                    ctx.fillStyle = sel ? '#EFD02E' : '#334';
+                    ctx.fillStyle = sel ? '#EFD02E' : '#223355';
                     ctx.fillRect(bx, by, bw, bh);
-                    ctx.strokeStyle = sel ? '#fff' : '#667';
+                    ctx.strokeStyle = sel ? '#fff' : '#445577';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(bx, by, bw, bh);
                     ctx.fillStyle = sel ? '#000' : '#ccc';
-                    ctx.font = sel ? 'bold 20px monospace' : '18px monospace';
-                    ctx.fillText(`STAGE ${i + 1}`, bx + bw / 2, by + 31);
+                    ctx.font = sel ? 'bold 22px monospace' : '20px monospace';
+                    ctx.fillText(`STAGE ${i + 1}`, canvas.width / 2, by + 29);
+                }
+                if (maxReachedStage + 1 > visibleCount) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '13px monospace';
+                    if (scrollOffset > 0) ctx.fillText('▲', canvas.width / 2, listStartY - 8);
+                    if (scrollOffset + visibleCount <= maxReachedStage) ctx.fillText('▼', canvas.width / 2, listStartY + visibleCount * listSpacing + 12);
                 }
                 ctx.fillStyle = '#888';
                 ctx.font = '14px monospace';
-                ctx.fillText('[←→] / [AD] to move, [Enter] / [Space] to select, [Esc] to go back', canvas.width / 2, canvas.height - 40);
+                ctx.fillText('[↑↓] / [WS] to move, [Enter] / [Space] to select, [Esc] to go back', canvas.width / 2, canvas.height - 40);
                 ctx.textAlign = 'left';
                 return;
             }
@@ -1804,23 +1819,16 @@
                 ctx.fillStyle = '#e02020';
                 ctx.font = 'bold 50px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+                ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
 
                 ctx.fillStyle = '#fff';
                 ctx.font = '20px monospace';
-                ctx.fillText(`Final Score: ${pScore}`, canvas.width / 2, canvas.height / 2 + 40);
+                ctx.fillText(`Final Score: ${pScore}`, canvas.width / 2, canvas.height / 2 + 30);
 
                 if (Math.floor(Date.now() / 500) % 2 === 0) {
-                    ctx.fillStyle = '#ccc';
+                    ctx.fillStyle = '#aaaaaa';
                     ctx.font = '16px monospace';
-                    ctx.fillText("Select Stage with [Left/Right] Keys:", canvas.width / 2, canvas.height / 2 + 90);
-                    ctx.fillStyle = '#EFD02E';
-                    ctx.font = 'bold 24px monospace';
-                    ctx.fillText(`< STAGE ${gameOverSelectedStage + 1} >`, canvas.width / 2, canvas.height / 2 + 120);
-
-                    ctx.fillStyle = '#ccc';
-                    ctx.font = '16px monospace';
-                    ctx.fillText(gameOverTimer <= 0 ? "Press [SPACE] to Restart there!" : "", canvas.width / 2, canvas.height / 2 + 160);
+                    ctx.fillText("Returning to title...", canvas.width / 2, canvas.height / 2 + 80);
                 }
                 ctx.textAlign = 'left';
             } else if (msgTimer > 0 && currentStageIndex !== 7) {
