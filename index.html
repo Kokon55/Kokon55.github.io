@@ -614,6 +614,8 @@
             enemies = [];
             projectiles = [];
             items = [];
+            ambientParticles = [];
+            lightningFlash = 0;
 
             // プレイヤーを安全な位置に配置
             do {
@@ -1987,6 +1989,16 @@
             } else {
                 player.walkFrame = 0;
                 player.walkTimer = 0;
+                // 風の効果（立ち止まっている時も適用）
+                const _scWind = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+                if (_scWind.windX !== 0) {
+                    const wx = player.x + _scWind.windX;
+                    if (isWalkable(wx, player.y)) player.x = wx;
+                }
+                if (_scWind.windY !== 0) {
+                    const wy = player.y + _scWind.windY;
+                    if (isWalkable(player.x, wy)) player.y = wy;
+                }
             }
 
             // 境界チェック（ワールド座標でクランプ）
@@ -2345,6 +2357,12 @@
                 if (player.attackTimer <= 0) player.isAttacking = false;
             }
 
+            spawnAmbient();
+            updateAmbient();
+            // 火山ステージの地震
+            if ((STAGE_CONFIG[currentStageIndex] || {}).ambient === 'embers' && Math.random() < 0.004) {
+                screenShake = Math.max(screenShake, 5 + Math.random() * 8);
+            }
             updateParticles();
         }
 
@@ -2738,6 +2756,15 @@
             ctx.translate(shakeX, shakeY);
             ctx.drawImage(bgCanvas, camX, camY, VIEW_W, VIEW_H, 0, 0, VIEW_W, VIEW_H);
 
+            // ステージ大気オーバーレイ
+            const _sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            if (_sc.tint) {
+                ctx.save();
+                ctx.fillStyle = _sc.tint;
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.restore();
+            }
+
             let pRot = 0;
             if (player.dirX === 1) pRot = Math.PI / 2;
             else if (player.dirX === -1) pRot = -Math.PI / 2;
@@ -2844,8 +2871,14 @@
                 ctx.restore();
             }
 
+            // アンビエントパーティクル描画
+            drawAmbient();
+
             // パーティクル描画
             drawParticles(camX, camY);
+
+            // 暗闇オーバーレイ
+            drawDarknessOverlay(camX, camY);
 
             // UI (ゲームエリア 0-800)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
