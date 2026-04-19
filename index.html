@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>8-bit Top Down Action</title>
+    <title>Retro Fantasy &#8212; A Philosophical Journey</title>
     <style>
         body {
             margin: 0;
@@ -20,8 +20,7 @@
         }
 
         canvas {
-            background-color: #4b8b4b;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 20px rgba(0,200,255,0.2);
             image-rendering: pixelated;
         }
 
@@ -41,12 +40,16 @@
 </head>
 
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas" width="1000" height="600"></canvas>
     <div id="ui" style="margin-top: 10px; font-size: 16px; min-height: 40px; text-align: center;"></div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+        // ==== レイアウト定数 ====
+        const VIEW_W = 800, VIEW_H = 600, STATS_W = 200;
+        const WORLD_W = 1600, WORLD_H = 1200;
 
         // ==== グラフィック・ドット絵 ====
         const PIXEL_SCALE = 3; // 16x16ドット * 3 = 48x48px に表示
@@ -255,13 +258,45 @@
             [18, 18, 18, 18, 1, 1, 18, 18, 18, 18]
         ];
 
-        // 20x15 タイルマップ (800x600)
-        const MAP_COLS = 20;
-        const MAP_ROWS = 15;
+        // 40x30 タイルマップ (1600x1200) カメラで800x600を表示
+        const MAP_COLS = 40;
+        const MAP_ROWS = 30;
         const TILE_SIZE = 40;
 
-        // ステージデータ（全体が陸続きもしくは橋で確実につながるように修正）
-        const STAGES = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 2, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 2, 1, 0, 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+        // ==== マップ生成（シード乱数 40x30） ====
+        function xorRng(seed) {
+            let s = (seed | 0) || 1;
+            return function() { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 0x100000000; };
+        }
+        const STAGE_MAP_CONFIGS = [
+            { wallRate:0.05, waterRate:0.02 }, // 1 草原
+            { wallRate:0.15, waterRate:0.03 }, // 2 森
+            { wallRate:0.05, waterRate:0.20 }, // 3 川
+            { wallRate:0.20, waterRate:0.02 }, // 4 岩山
+            { wallRate:0.08, waterRate:0.12 }, // 5 氷原
+            { wallRate:0.03, waterRate:0.01 }, // 6 砂漠
+            { wallRate:0.18, waterRate:0.02 }, // 7 城
+            { wallRate:0.05, waterRate:0.05 }, // 8 天空
+            { wallRate:0.10, waterRate:0.05 }, // 9 魔界
+        ];
+        function generateMap(stageIdx, cfg) {
+            const rng = xorRng(stageIdx * 7919 + 1337);
+            const map = new Array(MAP_ROWS * MAP_COLS).fill(0);
+            for (let r = 1; r < MAP_ROWS - 1; r++) {
+                for (let c = 1; c < MAP_COLS - 1; c++) {
+                    const v = rng();
+                    if (v < cfg.wallRate) map[r * MAP_COLS + c] = 1;
+                    else if (v < cfg.wallRate + cfg.waterRate) map[r * MAP_COLS + c] = 2;
+                }
+            }
+            // 中央エリアをクリア（プレイヤー初期位置）
+            const midR = Math.floor(MAP_ROWS / 2), midC = Math.floor(MAP_COLS / 2);
+            for (let r = midR - 3; r <= midR + 3; r++)
+                for (let c = midC - 3; c <= midC + 3; c++)
+                    if (r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS) map[r * MAP_COLS + c] = 0;
+            return map;
+        }
+        const STAGES = STAGE_MAP_CONFIGS.map((cfg, i) => generateMap(i, cfg)); [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 2, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 2, 1, 0, 1, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 1, 2, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 2, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
 
         const _hadRestart = sessionStorage.getItem('restartStage') !== null;
         let currentStageIndex = parseInt(sessionStorage.getItem('restartStage') || 0);
@@ -270,10 +305,11 @@
         let mapData = STAGES[currentStageIndex];
 
         const bgCanvas = document.createElement('canvas');
-        bgCanvas.width = 800;
-        bgCanvas.height = 600;
+        bgCanvas.width = WORLD_W;
+        bgCanvas.height = WORLD_H;
         const bgCtx = bgCanvas.getContext('2d');
         let isBgCached = false;
+        let camX = 0, camY = 0;
 
         let enemiesDefeatedInStage = 0;
         let itemBoxSpawnedThisStage = false;
@@ -376,10 +412,10 @@
             projectiles = [];
             items = [];
 
-            // プレイヤーを初期位置に戻すか、安全な位置に置く
+            // プレイヤーを安全な位置に配置
             do {
-                player.x = Math.random() * (canvas.width - SPRITE_SIZE);
-                player.y = Math.random() * (canvas.height - SPRITE_SIZE);
+                player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
+                player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
             } while (!isWalkable(player.x, player.y));
 
             spawnEnemies(); // spawnEnemyからspawnEnemiesへ修正
@@ -633,8 +669,8 @@
                         hasBoots = savedItemsForContinue.hasBoots;
                     }
                     do {
-                        player.x = 40 + Math.random() * (canvas.width - 80);
-                        player.y = 40 + Math.random() * (canvas.height - 80);
+                        player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
+                        player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
                     } while (!isWalkable(player.x, player.y));
                     spawnEnemies();
                     hasStarted = true;
@@ -949,30 +985,13 @@
         const STAGE_CLEAR_COUNTS = [20, 20, 20, 20, 20, 20, 20, 20, 20];
         const MAX_ENEMIES_PER_STAGE = [2, 3, 3, 4, 4, 5, 5, 1]; // 画面上の最大数
 
-        // 8ステージ分のデータを構築
-        // STAGESを複製して8個にする（実際はバリエーションを）
-        const STAGE4 = STAGES[0];
-        const STAGE5 = STAGES[1];
-        const STAGE6 = STAGES[2];
-        const STAGE7 = STAGES[0];
-        // Final Boss Arena (Stage 8) - All plain green except edges
-        const STAGE8 = new Array(300).fill(0);
-        for (let r = 0; r < MAP_ROWS; r++) {
-            for (let c = 0; c < MAP_COLS; c++) {
-                if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) {
-                    STAGE8[r * MAP_COLS + c] = 1; // 周りは山
-                }
-            }
-        }
-
-        STAGES.push(STAGE4, STAGE5, STAGE6, STAGE7, STAGE8);
 
         function spawnEnemies() {
             if (currentStageIndex === 8) {
                 // ラスボス
                 if (enemies.length === 0 && enemiesDefeatedInStage === 0) {
                     enemies.push({
-                        x: 400, y: 150,
+                        x: WORLD_W / 2, y: WORLD_H / 4,
                         hp: ENEMY_TYPES[6].hp, maxHp: ENEMY_TYPES[6].hp,
                         speed: ENEMY_TYPES[6].speed,
                         sprite: ENEMY_TYPES[6].sprite,
@@ -994,9 +1013,8 @@
                 let ex, ey, dist, reachable;
                 let attempts = 0;
                 do {
-                    ex = Math.random() * (canvas.width - SPRITE_SIZE);
-                    ey = Math.random() * (canvas.height - SPRITE_SIZE);
-                    if (ex < 0) ex = 0; if (ey < 0) ey = 0;
+                    ex = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
+                    ey = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
                     const dx = ex - player.x;
                     const dy = ey - player.y;
                     dist = Math.sqrt(dx * dx + dy * dy);
@@ -1032,11 +1050,11 @@
             }
         }
 
-        // 初期ロード時のプレイヤーも安全な位置に配置する
+        // 初期ロード時のプレイヤーを安全な位置に配置
         do {
-            player.x = 40 + Math.random() * (canvas.width - 80);
-            player.y = 40 + Math.random() * (canvas.height - 80);
-        } while (!isWalkable(player.x, player.y) || !isWalkable(player.x + Math.sign(player.dirX) * 5, player.y));
+            player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
+            player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
+        } while (!isWalkable(player.x, player.y));
 
         spawnEnemies();
 
@@ -1148,8 +1166,8 @@
                             hasBoots = savedItemsForContinue.hasBoots;
                         }
                         do {
-                            player.x = 40 + Math.random() * (canvas.width - 80);
-                            player.y = 40 + Math.random() * (canvas.height - 80);
+                            player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
+                            player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
                         } while (!isWalkable(player.x, player.y));
                         spawnEnemies();
                         hasStarted = true;
@@ -1247,12 +1265,16 @@
                 }
             }
 
-            // 境界チェック（ループ廃止、クランプ処理）
+            // 境界チェック（ワールド座標でクランプ）
             if (player.x < 0) player.x = 0;
-            else if (player.x > canvas.width - SPRITE_SIZE) player.x = canvas.width - SPRITE_SIZE;
+            else if (player.x > WORLD_W - SPRITE_SIZE) player.x = WORLD_W - SPRITE_SIZE;
 
             if (player.y < 0) player.y = 0;
-            else if (player.y > canvas.height - SPRITE_SIZE) player.y = canvas.height - SPRITE_SIZE;
+            else if (player.y > WORLD_H - SPRITE_SIZE) player.y = WORLD_H - SPRITE_SIZE;
+
+            // カメラ更新
+            camX = Math.max(0, Math.min(player.x + SPRITE_SIZE / 2 - VIEW_W / 2, WORLD_W - VIEW_W));
+            camY = Math.max(0, Math.min(player.y + SPRITE_SIZE / 2 - VIEW_H / 2, WORLD_H - VIEW_H));
 
             // アイテムの拾得チェック
             for (let i = items.length - 1; i >= 0; i--) {
@@ -1329,7 +1351,7 @@
                                     items.push({ x: enemy.x, y: enemy.y, sprite: HEART_SPRITE });
                                 }
                                 if (enemiesDefeatedInStage === 10 && !itemBoxSpawnedThisStage) {
-                                    items.push({ x: canvas.width / 2, y: canvas.height / 2, sprite: ITEM_BOX_SPRITE, isBox: true });
+                                    items.push({ x: WORLD_W / 2, y: WORLD_H / 2, sprite: ITEM_BOX_SPRITE, isBox: true });
                                     itemBoxSpawnedThisStage = true;
                                 }
 
@@ -1496,7 +1518,7 @@
 
                             // 10体倒したら確定でアイテムボックス出現
                             if (enemiesDefeatedInStage === 10 && !itemBoxSpawnedThisStage) {
-                                items.push({ x: canvas.width / 2, y: canvas.height / 2, sprite: ITEM_BOX_SPRITE, isBox: true });
+                                items.push({ x: WORLD_W / 2, y: WORLD_H / 2, sprite: ITEM_BOX_SPRITE, isBox: true });
                                 itemBoxSpawnedThisStage = true;
                             }
 
@@ -1544,11 +1566,10 @@
 
                         if (isWalkable(player.x, knockBackY)) player.y = knockBackY;
 
-                        if (player.x < -SPRITE_SIZE / 2) player.x = canvas.width - SPRITE_SIZE / 2;
-                        else if (player.x > canvas.width - SPRITE_SIZE / 2) player.x = -SPRITE_SIZE / 2;
-
-                        if (player.y < -SPRITE_SIZE / 2) player.y = canvas.height - SPRITE_SIZE / 2;
-                        else if (player.y > canvas.height - SPRITE_SIZE / 2) player.y = -SPRITE_SIZE / 2;
+                        if (player.x < 0) player.x = 0;
+                        else if (player.x > WORLD_W - SPRITE_SIZE) player.x = WORLD_W - SPRITE_SIZE;
+                        if (player.y < 0) player.y = 0;
+                        else if (player.y > WORLD_H - SPRITE_SIZE) player.y = WORLD_H - SPRITE_SIZE;
 
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
@@ -1598,6 +1619,62 @@
             targetCtx.restore();
         }
 
+        // ==== 右側ステータスパネル ====
+        function drawStatsPanel() {
+            const px = VIEW_W;
+            ctx.fillStyle = '#111122';
+            ctx.fillRect(px, 0, STATS_W, VIEW_H);
+            ctx.strokeStyle = '#334466';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px, 0, STATS_W, VIEW_H);
+            ctx.textAlign = 'center';
+
+            // ステージ名
+            ctx.fillStyle = '#EFD02E';
+            ctx.font = 'bold 15px monospace';
+            ctx.fillText('STAGE ' + (currentStageIndex + 1), px + STATS_W / 2, 28);
+
+            // HP
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 13px monospace';
+            ctx.fillText('HP', px + STATS_W / 2, 58);
+            ctx.fillStyle = '#330000';
+            ctx.fillRect(px + 10, 64, STATS_W - 20, 16);
+            ctx.fillStyle = '#ee2222';
+            ctx.fillRect(px + 10, 64, (STATS_W - 20) * Math.max(0, player.hp / player.maxHp), 16);
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 10, 64, STATS_W - 20, 16);
+            ctx.fillStyle = '#fff';
+            ctx.font = '11px monospace';
+            ctx.fillText(player.hp + ' / ' + player.maxHp, px + STATS_W / 2, 76);
+
+            // スコア
+            ctx.fillStyle = '#aaddff';
+            ctx.font = '13px monospace';
+            ctx.fillText('SCORE: ' + pScore, px + STATS_W / 2, 104);
+
+            // アイテム
+            ctx.fillStyle = '#EFD02E';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText('ITEMS', px + STATS_W / 2, 130);
+            ctx.fillStyle = '#aaaaaa';
+            ctx.font = '12px monospace';
+            let iy = 148;
+            if (hasLongSword) { ctx.fillText('[Long Sword]', px + STATS_W / 2, iy); iy += 18; }
+            if (hasBow)       { ctx.fillText('[Bow]',       px + STATS_W / 2, iy); iy += 18; }
+            if (hasShield)    { ctx.fillText('[Shield]',    px + STATS_W / 2, iy); iy += 18; }
+            if (hasBoots)     { ctx.fillText('[Boots]',     px + STATS_W / 2, iy); iy += 18; }
+
+            // 操作説明
+            ctx.fillStyle = '#445566';
+            ctx.font = '11px monospace';
+            const hints = ['WASD/Arrow:Move', 'Space:Attack', 'Shift:Shield', 'Q/E:Weapon', 'P:Pause'];
+            hints.forEach((h, i) => ctx.fillText(h, px + STATS_W / 2, VIEW_H - 90 + i * 18));
+
+            ctx.textAlign = 'left';
+        }
+
         function draw() {
             ctx.imageSmoothingEnabled = false;
             bgCtx.imageSmoothingEnabled = false;
@@ -1605,22 +1682,32 @@
             // タイトル画面
             if (gameState === 'title') {
                 ctx.fillStyle = '#000011';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                // 右パネル背景
+                ctx.fillStyle = '#080818';
+                ctx.fillRect(VIEW_W, 0, STATS_W, VIEW_H);
                 // 星を描画
                 ctx.fillStyle = '#fff';
                 for (let i = 0; i < 80; i++) {
-                    const sx = ((i * 137 + 11) % canvas.width);
-                    const sy = ((i * 97 + 31) % canvas.height);
+                    const sx = ((i * 137 + 11) % VIEW_W);
+                    const sy = ((i * 97 + 31) % VIEW_H);
                     ctx.fillRect(sx, sy, i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1);
                 }
                 // タイトルロゴ
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#EFD02E';
-                ctx.font = 'bold 58px monospace';
-                ctx.fillText('Retro Fantasy', canvas.width / 2, 160);
+                ctx.font = 'bold 52px monospace';
+                ctx.fillText('Retro Fantasy', VIEW_W / 2, 140);
                 ctx.fillStyle = '#D0D0D0';
                 ctx.font = 'bold 20px monospace';
-                ctx.fillText('― An Epic 8-bit Adventure ―', canvas.width / 2, 200);
+                ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 185);
+
+                // 操作説明（タイトル画面）
+                ctx.fillStyle = '#88aacc';
+                ctx.font = '14px monospace';
+                ctx.fillText('Move: WASD / Arrow Keys', VIEW_W / 2, 230);
+                ctx.fillText('Attack: Space  |  Shield: Shift', VIEW_W / 2, 250);
+                ctx.fillText('Switch Weapon: Q/E  |  Pause: P', VIEW_W / 2, 270);
 
                 // メニュー
                 const opts = ['START', 'CONTINUE'];
@@ -1628,11 +1715,11 @@
                     const sel = (titleSelectedOption === i);
                     ctx.fillStyle = sel ? '#EFD02E' : '#aaaaaa';
                     ctx.font = sel ? 'bold 34px monospace' : '28px monospace';
-                    ctx.fillText((sel ? '► ' : '  ') + opts[i], canvas.width / 2, 310 + i * 60);
+                    ctx.fillText((sel ? '► ' : '  ') + opts[i], VIEW_W / 2, 330 + i * 60);
                 }
                 ctx.fillStyle = '#666';
-                ctx.font = '14px monospace';
-                ctx.fillText('Use [↑↓] / [WS] to select, [Enter] / [Space] to confirm', canvas.width / 2, canvas.height - 40);
+                ctx.font = '13px monospace';
+                ctx.fillText('[↑↓]/[WS]: select  [Enter]/[Space]: confirm', VIEW_W / 2, VIEW_H - 40);
                 ctx.textAlign = 'left';
                 return;
             }
@@ -1640,17 +1727,19 @@
             // ステージ選択画面
             if (gameState === 'stageSelect') {
                 ctx.fillStyle = '#000022';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.fillStyle = '#080818';
+                ctx.fillRect(VIEW_W, 0, STATS_W, VIEW_H);
                 ctx.textAlign = 'center';
                 ctx.fillStyle = '#EFD02E';
-                ctx.font = 'bold 38px monospace';
-                ctx.fillText('CONTINUE - Select Stage', canvas.width / 2, 80);
+                ctx.font = 'bold 36px monospace';
+                ctx.fillText('CONTINUE - Select Stage', VIEW_W / 2, 80);
                 ctx.fillStyle = '#D0D0D0';
                 ctx.font = '18px monospace';
-                ctx.fillText(`Available: Stage 1 to Stage ${maxReachedStage + 1}`, canvas.width / 2, 118);
+                ctx.fillText(`Available: Stage 1 to Stage ${maxReachedStage + 1}`, VIEW_W / 2, 118);
 
                 const bw = 260, bh = 44;
-                const bx = canvas.width / 2 - bw / 2;
+                const bx = VIEW_W / 2 - bw / 2;
                 const listStartY = 148;
                 const listSpacing = 52;
                 const visibleCount = Math.min(maxReachedStage + 1, 7);
@@ -1668,17 +1757,17 @@
                     ctx.strokeRect(bx, by, bw, bh);
                     ctx.fillStyle = sel ? '#000' : '#ccc';
                     ctx.font = sel ? 'bold 22px monospace' : '20px monospace';
-                    ctx.fillText(`STAGE ${i + 1}`, canvas.width / 2, by + 29);
+                    ctx.fillText(`STAGE ${i + 1}`, VIEW_W / 2, by + 29);
                 }
                 if (maxReachedStage + 1 > visibleCount) {
                     ctx.fillStyle = '#666';
                     ctx.font = '13px monospace';
-                    if (scrollOffset > 0) ctx.fillText('▲', canvas.width / 2, listStartY - 8);
-                    if (scrollOffset + visibleCount <= maxReachedStage) ctx.fillText('▼', canvas.width / 2, listStartY + visibleCount * listSpacing + 12);
+                    if (scrollOffset > 0) ctx.fillText('▲', VIEW_W / 2, listStartY - 8);
+                    if (scrollOffset + visibleCount <= maxReachedStage) ctx.fillText('▼', VIEW_W / 2, listStartY + visibleCount * listSpacing + 12);
                 }
                 ctx.fillStyle = '#888';
                 ctx.font = '14px monospace';
-                ctx.fillText('[↑↓] / [WS] to move, [Enter] / [Space] to select, [Esc] to go back', canvas.width / 2, canvas.height - 40);
+                ctx.fillText('[↑↓] / [WS] to move, [Enter] / [Space] to select, [Esc] to go back', VIEW_W / 2, VIEW_H - 40);
                 ctx.textAlign = 'left';
                 return;
             }
@@ -1725,7 +1814,8 @@
                 isBgCached = true;
             }
 
-            ctx.drawImage(bgCanvas, 0, 0);
+            // カメラ適用: ワールドの見える範囲だけbgCanvasから切り出して描画
+            ctx.drawImage(bgCanvas, camX, camY, VIEW_W, VIEW_H, 0, 0, VIEW_W, VIEW_H);
 
             let pRot = 0;
             if (player.dirX === 1) pRot = Math.PI / 2;
@@ -1733,35 +1823,33 @@
             else if (player.dirY === -1) pRot = 0;
             else if (player.dirY === 1) pRot = Math.PI;
 
-            // アイテム描画
+            // アイテム描画（カメラオフセット適用）
             for (let item of items) {
-                const wobble = Math.sin(Date.now() / 200) * 0.15; // ふわふわ
-                drawShape(item.sprite, item.x, item.y, wobble, PIXEL_SCALE);
+                const wobble = Math.sin(Date.now() / 200) * 0.15;
+                drawShape(item.sprite, item.x - camX, item.y - camY, wobble, PIXEL_SCALE);
             }
 
-            // 弾
+            // 弾（カメラオフセット適用）
             for (let p of projectiles) {
                 let rot = Math.atan2(p.dy, p.dx) + Math.PI / 2;
-                drawShape(p.sprite, p.x, p.y, rot, PIXEL_SCALE);
+                drawShape(p.sprite, p.x - camX, p.y - camY, rot, PIXEL_SCALE);
             }
 
-            // 敵 (敵もプレイヤーを向いている方向に反転させる簡易実装)
+            // 敵（カメラオフセット適用）
             for (let enemy of enemies) {
                 const wobble = Math.sin(Date.now() / 150) * 0.1;
                 let scale = PIXEL_SCALE;
                 if (enemy.type === 'boss') scale *= 1.5;
-                const eFlipX = (player.x < enemy.x); // プレイヤーが左にいたら左を向く
-
-                // ボス以外は回転せず、画像反転などで表現。スライムやコウモリはそのまま。 
-                // Orc等人間型はプレイヤーの方向を向く
-                drawShape(enemy.sprite, enemy.x, enemy.y, wobble, scale, enemy.hitTimer % 4 > 1, eFlipX);
-
+                const eFlipX = (player.x < enemy.x);
+                const esx = enemy.x - camX, esy = enemy.y - camY;
+                if (esx < -SPRITE_SIZE * 2 || esx > VIEW_W + SPRITE_SIZE || esy < -SPRITE_SIZE * 2 || esy > VIEW_H + SPRITE_SIZE) continue;
+                drawShape(enemy.sprite, esx, esy, wobble, scale, enemy.hitTimer % 4 > 1, eFlipX);
                 // HPバー
                 ctx.fillStyle = '#f00';
                 const hpRatio = enemy.hp / enemy.maxHp;
-                ctx.fillRect(enemy.x, enemy.y - 10, (16 * scale) * hpRatio, 4);
+                ctx.fillRect(esx, esy - 10, (16 * scale) * hpRatio, 4);
                 ctx.strokeStyle = '#000';
-                ctx.strokeRect(enemy.x, enemy.y - 10, 16 * scale, 4);
+                ctx.strokeRect(esx, esy - 10, 16 * scale, 4);
             }
 
             // 主人公
@@ -1773,28 +1861,28 @@
                 else if (player.dirY === -1) { heroSprite = PLAYER_BACK_SPRITE; }               // 上向き（後ろ姿）
                 // dirY === 1: 下向き（正面） → PLAYER_SPRITE そのまま
 
-                drawShape(heroSprite, player.x, player.y, 0, PIXEL_SCALE, false, heroFlip);
+                drawShape(heroSprite, player.x - camX, player.y - camY, 0, PIXEL_SCALE, false, heroFlip);
             }
 
             // 盾 (構えている時)
             if (isShielding && player.invincibleTimer % 8 < 4) {
-                const sx = player.x + player.dirX * 25;
-                const sy = player.y + player.dirY * 25;
+                const sx = player.x - camX + player.dirX * 25;
+                const sy = player.y - camY + player.dirY * 25;
                 drawShape(SHIELD_SPRITE, sx, sy, pRot, PIXEL_SCALE);
             }
 
             // 剣
             if (player.isAttacking && currentWeapon === 'sword') {
                 const offset = (15 - player.attackTimer) * 0.5;
-                let sx = player.x + player.dirX * (SPRITE_SIZE * 0.9 + offset);
-                let sy = player.y + player.dirY * (SPRITE_SIZE * 0.9 + offset);
+                let sx = player.x - camX + player.dirX * (SPRITE_SIZE * 0.9 + offset);
+                let sy = player.y - camY + player.dirY * (SPRITE_SIZE * 0.9 + offset);
                 let wpnSprite = hasLongSword ? SWORD_LARGE_SPRITE : SWORD_SPRITE;
                 drawShape(wpnSprite, sx, sy, pRot, PIXEL_SCALE);
             }
 
-            // UI
+            // UI (ゲームエリア 0-800)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, canvas.width, 40);
+            ctx.fillRect(0, 0, VIEW_W, 40);
 
             ctx.fillStyle = '#fff';
             ctx.font = '20px monospace';
@@ -1804,7 +1892,7 @@
             ctx.font = '16px monospace';
             let remain = STAGE_CLEAR_COUNTS[currentStageIndex] - enemiesDefeatedInStage;
             if (currentStageIndex === 8) remain = "BOSS";
-            ctx.fillText(`NEXT: ${remain}`, canvas.width - 120, 26);
+            ctx.fillText(`NEXT: ${remain}`, VIEW_W - 120, 26);
 
             ctx.fillStyle = '#fff';
             ctx.fillText(`HP: `, 160, 26);
@@ -1813,57 +1901,58 @@
                 ctx.fillRect(200 + i * 20, 10, 14, 20);
             }
 
+            // 右側ステータスパネル
+            drawStatsPanel();
+
             if (isGameOver) {
                 ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
                 ctx.fillStyle = '#e02020';
                 ctx.font = 'bold 50px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+                ctx.fillText("GAME OVER", VIEW_W / 2, VIEW_H / 2 - 20);
 
                 ctx.fillStyle = '#fff';
                 ctx.font = '20px monospace';
-                ctx.fillText(`Final Score: ${pScore}`, canvas.width / 2, canvas.height / 2 + 30);
+                ctx.fillText(`Final Score: ${pScore}`, VIEW_W / 2, VIEW_H / 2 + 30);
 
                 if (Math.floor(Date.now() / 500) % 2 === 0) {
                     ctx.fillStyle = '#aaaaaa';
                     ctx.font = '16px monospace';
-                    ctx.fillText("Returning to title...", canvas.width / 2, canvas.height / 2 + 80);
+                    ctx.fillText("Returning to title...", VIEW_W / 2, VIEW_H / 2 + 80);
                 }
                 ctx.textAlign = 'left';
             } else if (msgTimer > 0 && currentStageIndex !== 7) {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(0, canvas.height / 2 - 40, canvas.width, 80);
+                ctx.fillRect(0, VIEW_H / 2 - 40, VIEW_W, 80);
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 40px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText(centerMessage, canvas.width / 2, canvas.height / 2 + 15);
+                ctx.fillText(centerMessage, VIEW_W / 2, VIEW_H / 2 + 15);
                 ctx.textAlign = 'left';
                 msgTimer--;
             } else if (msgTimer > 0 && currentStageIndex === 8 && enemiesDefeatedInStage >= 1) {
-                // Game clear message
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(0, canvas.height / 2 - 40, canvas.width, 80);
+                ctx.fillRect(0, VIEW_H / 2 - 40, VIEW_W, 80);
                 ctx.fillStyle = '#EFD02E';
                 ctx.font = 'bold 40px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText(centerMessage, canvas.width / 2, canvas.height / 2 + 15);
+                ctx.fillText(centerMessage, VIEW_W / 2, VIEW_H / 2 + 15);
                 ctx.textAlign = 'left';
                 msgTimer--;
             }
 
             if (isPaused && !isGameOver) {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
                 if (popupMessage !== "") {
-                    // アイテム説明ポップアップ
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
                     const pw = 500, ph = 260;
-                    ctx.fillRect(canvas.width / 2 - pw / 2, canvas.height / 2 - ph / 2, pw, ph);
+                    ctx.fillRect(VIEW_W / 2 - pw / 2, VIEW_H / 2 - ph / 2, pw, ph);
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 4;
-                    ctx.strokeRect(canvas.width / 2 - pw / 2, canvas.height / 2 - ph / 2, pw, ph);
+                    ctx.strokeRect(VIEW_W / 2 - pw / 2, VIEW_H / 2 - ph / 2, pw, ph);
 
                     ctx.fillStyle = '#fff';
                     ctx.textAlign = 'center';
@@ -1872,20 +1961,20 @@
                     for (let i = 0; i < lines.length; i++) {
                         ctx.font = i === 0 ? 'bold 30px monospace' : '20px monospace';
                         ctx.fillStyle = i === 0 ? '#EFD02E' : '#fff';
-                        ctx.fillText(lines[i], canvas.width / 2, canvas.height / 2 - ph / 2 + 50 + i * 35);
+                        ctx.fillText(lines[i], VIEW_W / 2, VIEW_H / 2 - ph / 2 + 50 + i * 35);
                     }
 
                     if (Math.floor(Date.now() / 500) % 2 === 0) {
                         ctx.fillStyle = '#ccc';
                         ctx.font = '16px monospace';
-                        ctx.fillText("Press [P] or [Start] to Continue", canvas.width / 2, canvas.height / 2 + ph / 2 - 20);
+                        ctx.fillText("Press [P] or [Start] to Continue", VIEW_W / 2, VIEW_H / 2 + ph / 2 - 20);
                     }
                 } else {
                     // 通常のポーズ
                     ctx.fillStyle = '#fff';
                     ctx.font = 'bold 50px monospace';
                     ctx.textAlign = 'center';
-                    ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+                    ctx.fillText("PAUSED", VIEW_W / 2, VIEW_H / 2);
                 }
                 ctx.textAlign = 'left';
             }
