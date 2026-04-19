@@ -521,6 +521,8 @@
         let centerMessage = "STAGE 1";
         let narrativeTimer = 0;   // >0 の間はナラティブオーバーレイを表示
         let narrativeStage = -1;  // 表示中のステージ番号
+        let tutorialStep = 1; // 0=off, 1=move, 2=attack, 3=shield, 4=keyitem, 5=done
+        let tutorialMoveShown = false;
 
         // 障害物の判定
         function isWalkable(x, y) {
@@ -614,6 +616,7 @@
             enemies = [];
             projectiles = [];
             items = [];
+            graveMarkers = graveMarkers.filter(g => g.stage !== currentStageIndex);
             ambientParticles = [];
             lightningFlash = 0;
 
@@ -630,6 +633,7 @@
             msgTimer = 120;
             narrativeTimer = 180; // 3秒間表示
             narrativeStage = currentStageIndex;
+            if (currentStageIndex === 0) tutorialStep = 1;
             playSoundEffect('stageclear');
         }
 
@@ -902,6 +906,11 @@
 
             if (narrativeTimer > 30) { narrativeTimer = 30; return; }
 
+            if (gameState === 'credits') {
+                gameState = 'title';
+                return;
+            }
+
             // タイトル画面の操作
             if (gameState === 'title') {
                 initAudio();
@@ -930,6 +939,7 @@
                         msgTimer = 120;
                         narrativeTimer = 180;
                         narrativeStage = 0;
+                        tutorialStep = 1;
                     } else {
                         // CONTINUE: セーブデータを読み込んでステージ選択画面へ
                         const loaded = loadGame();
@@ -948,6 +958,9 @@
                             gameState = 'stageSelect';
                         }
                     }
+                    e.preventDefault();
+                } else if (e.code === 'KeyC') {
+                    gameState = 'credits';
                     e.preventDefault();
                 }
                 return;
@@ -996,9 +1009,43 @@
                 return;
             }
 
-            if (e.code === 'KeyP') {
-                isPaused = !isPaused;
-                if (!isPaused) popupMessage = "";
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (isPaused && pauseInSettings) {
+                    pauseInSettings = false;
+                } else {
+                    isPaused = !isPaused;
+                    pauseMenuCursor = 0;
+                    pauseInSettings = false;
+                    if (!isPaused) popupMessage = "";
+                }
+                return;
+            }
+            if (isPaused && !isGameOver && popupMessage === '') {
+                if (!pauseInSettings) {
+                    if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                        pauseMenuCursor = Math.max(0, pauseMenuCursor - 1);
+                    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                        pauseMenuCursor = Math.min(2, pauseMenuCursor + 1);
+                    } else if (e.code === 'Enter' || e.code === 'Space') {
+                        if (pauseMenuCursor === 0) { isPaused = false; }
+                        else if (pauseMenuCursor === 1) { pauseInSettings = true; }
+                        else if (pauseMenuCursor === 2) { isPaused = false; gameState = 'title'; }
+                    }
+                } else {
+                    // 設定画面
+                    if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                        if (pauseMenuCursor === 0) bgmVolume = Math.max(0, bgmVolume - 0.1);
+                        if (pauseMenuCursor === 1) seVolume = Math.max(0, seVolume - 0.1);
+                    } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                        if (pauseMenuCursor === 0) bgmVolume = Math.min(1, bgmVolume + 0.1);
+                        if (pauseMenuCursor === 1) seVolume = Math.min(1, seVolume + 0.1);
+                    } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                        pauseMenuCursor = Math.max(0, pauseMenuCursor - 1);
+                    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                        pauseMenuCursor = Math.min(2, pauseMenuCursor + 1);
+                    } else if (e.code === 'Escape') { pauseInSettings = false; }
+                }
+                return;
             }
             if (hasBow && (e.code === 'KeyQ' || e.code === 'KeyE' || e.code === 'Digit1' || e.code === 'Digit2')) {
                 currentWeapon = currentWeapon === 'sword' ? 'bow' : 'sword';
@@ -1122,6 +1169,10 @@
         const DIFF_XP_MULT   = [1.3, 1.0, 0.8];  // 獲得XP倍率
         let stageSelectCursor = 0;
         let isGameOver = false;
+        let deathScenePhase = 0; // 0=normal, 1=slowmo+mono, 2=memento mori text
+        let deathSceneTimer = 0;
+        let deathX = 0, deathY = 0; // 死亡した場所
+        let graveMarkers = []; // ステージ内の墓石位置
         let gameOverTimer = 0;
         let savedItemsForContinue = null; // ゲームオーバー時のアイテム保存
         let hasLongSword = false;
@@ -1666,6 +1717,9 @@
             uiDiv.innerHTML = htmlText;
         }
         let isPaused = false;
+        let pauseMenuCursor = 0; // 0=再開, 1=設定, 2=タイトルへ
+        let pauseInSettings = false;
+        let bgmVolume = 0.7, seVolume = 0.7;
         let popupMessage = "";
         let isStageAdvancing = false;
         let keyItemPos = null;
@@ -1737,6 +1791,7 @@
             if (!player.isAttacking && !isGameOver) {
                 player.isAttacking = true;
                 player.attackTimer = 15;
+                if (currentStageIndex === 0 && tutorialStep === 2) tutorialStep = 3;
                 if (currentWeapon === 'sword') {
                     playSoundEffect('attack');
                 } else if (currentWeapon === 'bow') {
@@ -1915,6 +1970,7 @@
 
             if (hasShield) {
                 isShielding = (keys['ShiftLeft'] || keys['ShiftRight'] || padShield || touch.shield) && !player.isAttacking;
+                if (isShielding && currentStageIndex === 0 && tutorialStep === 3) tutorialStep = 4;
             }
 
             if (!hasStarted) return;
@@ -1923,9 +1979,12 @@
             if (isGameOver) {
                 if (gameOverTimer > 0) {
                     gameOverTimer--;
+                    if (deathSceneTimer > 0) deathSceneTimer--;
                 } else {
                     // タイトル画面へ自動遷移
                     isGameOver = false;
+                    deathScenePhase = 0;
+                    deathSceneTimer = 0;
                     gameState = 'title';
                 }
                 return;
@@ -1986,6 +2045,7 @@
                 // 歩行アニメ
                 player.walkTimer++;
                 if (player.walkTimer >= 10) { player.walkTimer = 0; player.walkFrame ^= 1; }
+                if (currentStageIndex === 0 && tutorialStep === 1) tutorialStep = 2;
             } else {
                 player.walkFrame = 0;
                 player.walkTimer = 0;
@@ -2016,6 +2076,7 @@
             if (keyItemPos && !keyItemCollected && !bossActive) {
                 if (Math.hypot(player.x + SPRITE_SIZE/2 - keyItemPos.x, player.y + SPRITE_SIZE/2 - keyItemPos.y) < SPRITE_SIZE * 1.2) {
                     keyItemCollected = true;
+                    if (currentStageIndex === 0) tutorialStep = 5;
                     bossActive = true;
                     keyItemPos = null;
                     const boss = getStageBoss(currentStageIndex);
@@ -2165,7 +2226,12 @@
                         projectiles.splice(i, 1);
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
-                            gameOverTimer = 180; // 3秒間はゲームオーバー画面
+                            gameOverTimer = 300; // 5秒間の演出
+                            deathScenePhase = 1;
+                            deathSceneTimer = 300;
+                            deathX = player.x;
+                            deathY = player.y;
+                            graveMarkers.push({ x: player.x, y: player.y, stage: currentStageIndex });
                             savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
                             saveGame();
                             playSoundEffect('gameover');
@@ -2338,7 +2404,12 @@
 
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
-                            gameOverTimer = 180; // 3秒間はゲームオーバー画面
+                            gameOverTimer = 300; // 5秒間の演出
+                            deathScenePhase = 1;
+                            deathSceneTimer = 300;
+                            deathX = player.x;
+                            deathY = player.y;
+                            graveMarkers.push({ x: player.x, y: player.y, stage: currentStageIndex });
                             savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
                             saveGame();
                             playSoundEffect('gameover');
@@ -2506,6 +2577,38 @@
             ctx.restore();
         }
 
+        function drawTutorial() {
+            if (currentStageIndex !== 0 || tutorialStep === 0 || tutorialStep >= 5 || narrativeTimer > 0 || isGameOver || isPaused) return;
+
+            const hints = [
+                null,
+                { text: '移動: WASD / 矢印キー', sub: 'まず歩いてみよう', color: '#88FFAA' },
+                { text: '攻撃: Space / Z', sub: '敵に近づいて攻撃！', color: '#FFAA44' },
+                { text: '盾: F キー長押し', sub: '盾で身を守ろう', color: '#44AAFF' },
+                { text: '光るアイテムを探せ！', sub: '哲学の鍵を見つけてボスを呼ぶ', color: '#EFD02E' },
+            ];
+            const hint = hints[tutorialStep];
+            if (!hint) return;
+
+            const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 400);
+            ctx.save();
+            ctx.globalAlpha = pulse;
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(VIEW_W / 2 - 210, VIEW_H - 85, 420, 60);
+            ctx.strokeStyle = hint.color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(VIEW_W / 2 - 210, VIEW_H - 85, 420, 60);
+            ctx.fillStyle = hint.color;
+            ctx.font = 'bold 17px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(hint.text, VIEW_W / 2, VIEW_H - 58);
+            ctx.fillStyle = '#CCCCCC';
+            ctx.font = '13px monospace';
+            ctx.fillText(hint.sub, VIEW_W / 2, VIEW_H - 38);
+            ctx.textAlign = 'left';
+            ctx.restore();
+        }
+
         // ==== 右側ステータスパネル ====
         function drawStatsPanel() {
             const px = VIEW_W;
@@ -2661,9 +2764,76 @@
                 ctx.font = '12px monospace';
                 ctx.fillText('← → to change', VIEW_W / 2, 480);
 
+                ctx.fillStyle = '#555555';
+                ctx.font = '14px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('[ C ] CREDITS', VIEW_W / 2, 395);
+
                 ctx.fillStyle = '#666';
                 ctx.font = '13px monospace';
                 ctx.fillText('[↑↓]/[WS]: select  [Enter]/[Space]: confirm', VIEW_W / 2, VIEW_H - 40);
+                ctx.textAlign = 'left';
+                return;
+            }
+
+            if (gameState === 'credits') {
+                ctx.fillStyle = '#0a0a0a';
+                ctx.fillRect(0, 0, VIEW_W + STATS_W, VIEW_H);
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 32px monospace';
+                ctx.fillText('— CREDITS —', (VIEW_W + STATS_W) / 2, 60);
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 18px monospace';
+                ctx.fillText('Retro Fantasy — A Philosophical Journey', (VIEW_W + STATS_W) / 2, 110);
+
+                const credits = [
+                    ['', ''],
+                    ['■ 哲学的引用・参考思想家', ''],
+                    ['Socrates', 'ソクラテス（問いかけの父）'],
+                    ['Plato', 'プラトン（イデア論）'],
+                    ['Aristotle', 'アリストテレス（存在の哲学）'],
+                    ['René Descartes', 'デカルト（Cogito ergo sum）'],
+                    ['Friedrich Nietzsche', 'ニーチェ（力への意志）'],
+                    ['Jean-Paul Sartre', 'サルトル（実存主義）'],
+                    ['', ''],
+                    ['■ 技術', ''],
+                    ['HTML5 Canvas API', 'レンダリングエンジン'],
+                    ['Web Audio API', 'サウンドシステム'],
+                    ['', ''],
+                    ['■ Special Thanks', ''],
+                    ['', 'このゲームをプレイしてくれた あなた へ'],
+                    ['', 'あなたの存在が、この哲学の旅を意味あるものにする'],
+                ];
+
+                let y = 145;
+                credits.forEach(([left, right]) => {
+                    if (left.startsWith('■')) {
+                        ctx.fillStyle = '#EFD02E';
+                        ctx.font = 'bold 15px monospace';
+                        ctx.fillText(left, (VIEW_W + STATS_W) / 2, y);
+                    } else if (left === '' && right === '') {
+                        // spacing
+                    } else {
+                        ctx.fillStyle = '#AAAAAA';
+                        ctx.font = '14px monospace';
+                        ctx.textAlign = 'right';
+                        ctx.fillText(left, (VIEW_W + STATS_W) / 2 - 10, y);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(right, (VIEW_W + STATS_W) / 2 + 10, y);
+                    }
+                    y += 22;
+                });
+
+                ctx.textAlign = 'center';
+                if (Math.floor(Date.now() / 600) % 2 === 0) {
+                    ctx.fillStyle = '#888';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('— 何かキーを押してタイトルへ —', (VIEW_W + STATS_W) / 2, VIEW_H - 30);
+                }
                 ctx.textAlign = 'left';
                 return;
             }
@@ -2908,25 +3078,88 @@
             // ナラティブオーバーレイ
             drawNarrativeOverlay();
 
+            // チュートリアル
+            drawTutorial();
+
             // バーチャルパッド（タッチデバイス）
             drawVirtualPad();
 
+            // 墓石を描画（プレイ中）
+            if (!isGameOver) {
+                for (const g of graveMarkers) {
+                    if (g.stage === currentStageIndex) {
+                        const gx = g.x - camX, gy = g.y - camY;
+                        if (gx > -20 && gx < VIEW_W && gy > -20 && gy < VIEW_H) {
+                            ctx.save();
+                            ctx.globalAlpha = 0.55;
+                            ctx.fillStyle = '#888888';
+                            ctx.fillRect(gx + 16, gy + 8, 16, 24);
+                            ctx.fillRect(gx + 10, gy + 8, 28, 10);
+                            ctx.fillStyle = '#aaaaaa';
+                            ctx.font = '9px monospace';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('RIP', gx + 24, gy + 25);
+                            ctx.textAlign = 'left';
+                            ctx.restore();
+                        }
+                    }
+                }
+            }
+
             if (isGameOver) {
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                const phase2Start = 220;
+                const phase3Start = 150;
+                // モノクロフィルター
+                ctx.save();
+                const monoAlpha = Math.min(1, (deathSceneTimer - phase2Start) / 80);
+                if (deathSceneTimer < phase2Start) {
+                    ctx.fillStyle = `rgba(0,0,0,${Math.max(0, 0.7 - deathSceneTimer / 300 * 0.3)})`;
+                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                    // グレースケールオーバーレイ
+                    ctx.fillStyle = `rgba(180,180,180,${Math.min(0.65, (phase2Start - deathSceneTimer) / 150)})`;
+                    ctx.globalCompositeOperation = 'color';
+                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+                ctx.restore();
+
+                ctx.fillStyle = 'rgba(0,0,0,0.72)';
                 ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-                ctx.fillStyle = '#e02020';
-                ctx.font = 'bold 50px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText("GAME OVER", VIEW_W / 2, VIEW_H / 2 - 20);
 
-                ctx.fillStyle = '#fff';
-                ctx.font = '20px monospace';
-                ctx.fillText(`Final Score: ${pScore}`, VIEW_W / 2, VIEW_H / 2 + 30);
-
-                if (Math.floor(Date.now() / 500) % 2 === 0) {
+                // memento mori テキスト
+                if (deathSceneTimer < phase2Start) {
+                    const fadeIn = Math.min(1, (phase2Start - deathSceneTimer) / 60);
+                    ctx.globalAlpha = fadeIn;
+                    ctx.fillStyle = '#888888';
+                    ctx.font = 'italic 20px serif';
+                    ctx.fillText('memento mori', VIEW_W / 2, VIEW_H / 2 - 80);
+                    ctx.fillStyle = '#e02020';
+                    ctx.font = 'bold 52px monospace';
+                    ctx.fillText('GAME OVER', VIEW_W / 2, VIEW_H / 2 - 20);
                     ctx.fillStyle = '#aaaaaa';
-                    ctx.font = '16px monospace';
-                    ctx.fillText("Returning to title...", VIEW_W / 2, VIEW_H / 2 + 80);
+                    ctx.font = '18px monospace';
+                    ctx.fillText(`— Stage ${currentStageIndex + 1}  Score: ${pScore} —`, VIEW_W / 2, VIEW_H / 2 + 30);
+
+                    if (deathSceneTimer < 80) {
+                        ctx.fillStyle = '#888888';
+                        ctx.font = 'italic 16px serif';
+                        ctx.globalAlpha = (80 - deathSceneTimer) / 80;
+                        const lastWords = [
+                            'Cogito ergo sum...',
+                            '我思う、ゆえに我あり...',
+                            '存在は消えても、問いは残る...',
+                            'The unexamined life is not worth living...',
+                        ];
+                        ctx.fillText(lastWords[currentStageIndex % lastWords.length], VIEW_W / 2, VIEW_H / 2 + 75);
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                if (Math.floor(Date.now() / 500) % 2 === 0 && deathSceneTimer < 60) {
+                    ctx.fillStyle = '#555555';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('Returning to title...', VIEW_W / 2, VIEW_H / 2 + 120);
                 }
                 ctx.textAlign = 'left';
             } else if (msgTimer > 0 && currentStageIndex !== 7) {
@@ -2949,39 +3182,89 @@
                 msgTimer--;
             }
 
-            if (isPaused && !isGameOver) {
+            if (isPaused && !isGameOver && popupMessage === '') {
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.textAlign = 'center';
+
+                if (!pauseInSettings) {
+                    ctx.fillStyle = '#EFD02E';
+                    ctx.font = 'bold 38px monospace';
+                    ctx.fillText('— PAUSE —', VIEW_W / 2, VIEW_H / 2 - 90);
+
+                    const pItems = ['▶  再開', '⚙  設定', '⏹  タイトルへ'];
+                    pItems.forEach((label, i) => {
+                        const sel = pauseMenuCursor === i;
+                        ctx.fillStyle = sel ? '#ffffff' : '#888888';
+                        ctx.font = sel ? 'bold 28px monospace' : '24px monospace';
+                        if (sel) {
+                            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                            ctx.fillRect(VIEW_W/2 - 160, VIEW_H/2 - 30 + i*60, 320, 44);
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(label, VIEW_W / 2, VIEW_H / 2 - 10 + i * 60);
+                    });
+
+                    ctx.fillStyle = '#555';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('↑↓ 選択   Enter 決定   P/Esc 閉じる', VIEW_W / 2, VIEW_H / 2 + 185);
+                } else {
+                    ctx.fillStyle = '#EFD02E';
+                    ctx.font = 'bold 30px monospace';
+                    ctx.fillText('⚙ 設定', VIEW_W / 2, VIEW_H / 2 - 100);
+
+                    const settings = [
+                        { label: 'BGM音量', val: bgmVolume },
+                        { label: 'SE音量', val: seVolume },
+                        { label: '← 戻る', val: null },
+                    ];
+                    settings.forEach((s, i) => {
+                        const sel = pauseMenuCursor === i;
+                        ctx.fillStyle = sel ? '#fff' : '#888';
+                        ctx.font = sel ? 'bold 22px monospace' : '20px monospace';
+                        if (s.val !== null) {
+                            const barW = 180;
+                            const bx = VIEW_W / 2 - barW / 2;
+                            const by = VIEW_H / 2 - 40 + i * 65;
+                            ctx.fillText(s.label, VIEW_W / 2, by);
+                            ctx.fillStyle = '#333';
+                            ctx.fillRect(bx, by + 8, barW, 16);
+                            ctx.fillStyle = sel ? '#EFD02E' : '#888';
+                            ctx.fillRect(bx, by + 8, barW * s.val, 16);
+                            ctx.strokeStyle = '#666';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(bx, by + 8, barW, 16);
+                        } else {
+                            ctx.fillText(s.label, VIEW_W / 2, VIEW_H / 2 - 40 + i * 65);
+                        }
+                    });
+                    ctx.fillStyle = '#555';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('↑↓ 選択   ←→ 調整   Esc 戻る', VIEW_W / 2, VIEW_H / 2 + 185);
+                }
+                ctx.textAlign = 'left';
+            } else if (isPaused && !isGameOver) {
+                // popupMessage表示時の既存処理
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-
-                if (popupMessage !== "") {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                    const pw = 500, ph = 260;
-                    ctx.fillRect(VIEW_W / 2 - pw / 2, VIEW_H / 2 - ph / 2, pw, ph);
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 4;
-                    ctx.strokeRect(VIEW_W / 2 - pw / 2, VIEW_H / 2 - ph / 2, pw, ph);
-
-                    ctx.fillStyle = '#fff';
-                    ctx.textAlign = 'center';
-
-                    const lines = popupMessage.split('\n');
-                    for (let i = 0; i < lines.length; i++) {
-                        ctx.font = i === 0 ? 'bold 30px monospace' : '20px monospace';
-                        ctx.fillStyle = i === 0 ? '#EFD02E' : '#fff';
-                        ctx.fillText(lines[i], VIEW_W / 2, VIEW_H / 2 - ph / 2 + 50 + i * 35);
-                    }
-
-                    if (Math.floor(Date.now() / 500) % 2 === 0) {
-                        ctx.fillStyle = '#ccc';
-                        ctx.font = '16px monospace';
-                        ctx.fillText("Press [P] or [Start] to Continue", VIEW_W / 2, VIEW_H / 2 + ph / 2 - 20);
-                    }
-                } else {
-                    // 通常のポーズ
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 50px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.fillText("PAUSED", VIEW_W / 2, VIEW_H / 2);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                const pw = 500, ph = 260;
+                ctx.fillRect(VIEW_W / 2 - pw / 2, VIEW_H / 2 - ph / 2, pw, ph);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(VIEW_W / 2 - pw / 2, VIEW_H / 2 - ph / 2, pw, ph);
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                const lines = popupMessage.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.font = i === 0 ? 'bold 30px monospace' : '20px monospace';
+                    ctx.fillStyle = i === 0 ? '#EFD02E' : '#fff';
+                    ctx.fillText(lines[i], VIEW_W / 2, VIEW_H / 2 - ph / 2 + 50 + i * 35);
+                }
+                if (Math.floor(Date.now() / 500) % 2 === 0) {
+                    ctx.fillStyle = '#ccc';
+                    ctx.font = '16px monospace';
+                    ctx.fillText("Press [P] or [Start] to Continue", VIEW_W / 2, VIEW_H / 2 + ph / 2 - 20);
                 }
                 ctx.textAlign = 'left';
             }
