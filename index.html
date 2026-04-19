@@ -41,6 +41,7 @@
 
 <body>
     <canvas id="gameCanvas" width="1000" height="600"></canvas>
+    <audio id="bgm" loop preload="none"></audio>
     <div id="ui" style="margin-top: 10px; font-size: 16px; min-height: 40px; text-align: center;"></div>
 
     <script>
@@ -550,6 +551,7 @@
 
             keyItemPos = findKeyItemPos();
             spawnEnemies();
+            saveGame();
             centerMessage = `STAGE ${currentStageIndex + 1}`;
             msgTimer = 120;
             playSoundEffect('stageclear');
@@ -593,6 +595,39 @@
             // Stage9 魔界ボス - 超激しい・緊迫 (Diminished, very fast, square)
             { notes: [220, 262, 311, 370, 440, 370, 311, 262, 220, 262, 311, 370, 311, 262, 220, 0],
               speed: 0.10, type: 'square', gain: 0.055 },
+            // Stage10 洞窟 - 重く暗い (B minor, slow, sawtooth)
+            { notes: [247, 220, 196, 175, 196, 220, 247, 294, 247, 220, 175, 196, 220, 247, 0, 0],
+              speed: 0.28, type: 'sawtooth', gain: 0.045 },
+            // Stage11 城 - 荘厳・暗黒 (D minor, medium, square)
+            { notes: [294, 311, 330, 311, 294, 262, 247, 262, 294, 330, 349, 330, 311, 294, 0, 0],
+              speed: 0.20, type: 'square', gain: 0.05 },
+            // Stage12 夕焼け - 哀愁・郷愁 (C major, medium-slow, sine)
+            { notes: [523, 494, 440, 392, 440, 494, 523, 587, 523, 494, 440, 392, 330, 349, 392, 0],
+              speed: 0.26, type: 'sine', gain: 0.065 },
+            // Stage13 天空 - 浮遊・幻想 (F major, medium-fast, triangle)
+            { notes: [349, 392, 440, 523, 494, 440, 392, 349, 392, 440, 494, 523, 587, 523, 494, 0],
+              speed: 0.15, type: 'triangle', gain: 0.06 },
+            // Stage14 海底 - 深遠・神秘 (A minor, slow, sine)
+            { notes: [220, 196, 175, 165, 175, 196, 220, 247, 220, 196, 165, 175, 196, 175, 165, 0],
+              speed: 0.32, type: 'sine', gain: 0.055 },
+            // Stage15 火山 - 激しい・燃える (E minor, fast, sawtooth)
+            { notes: [330, 311, 294, 330, 370, 330, 294, 277, 294, 330, 370, 415, 440, 370, 330, 0],
+              speed: 0.12, type: 'sawtooth', gain: 0.05 },
+            // Stage16 ドラゴン巣 - 緊迫・戦闘 (B dim, very fast, square)
+            { notes: [247, 277, 311, 370, 440, 494, 440, 370, 311, 277, 247, 294, 330, 370, 311, 0],
+              speed: 0.09, type: 'square', gain: 0.05 },
+            // Stage17 魔界 - 邪悪・混沌 (Chromatic, very fast, sawtooth)
+            { notes: [220, 233, 247, 262, 247, 233, 220, 208, 220, 247, 277, 311, 294, 262, 233, 0],
+              speed: 0.09, type: 'sawtooth', gain: 0.045 },
+            // Stage18 塔 - 緊張・登攀 (C minor, fast, square)
+            { notes: [262, 294, 311, 349, 370, 349, 311, 294, 262, 311, 370, 415, 440, 415, 370, 0],
+              speed: 0.11, type: 'square', gain: 0.05 },
+            // Stage19 神殿 - 荘厳・神性 (G major, medium, triangle)
+            { notes: [392, 440, 494, 523, 494, 440, 392, 349, 392, 494, 587, 523, 494, 440, 392, 0],
+              speed: 0.18, type: 'triangle', gain: 0.065 },
+            // Stage20 終焉 - 壮大・最終決戦 (D minor diminished, very fast, square)
+            { notes: [294, 311, 370, 440, 523, 587, 523, 440, 370, 311, 294, 330, 392, 440, 392, 0],
+              speed: 0.08, type: 'square', gain: 0.055 },
         ];
 
 
@@ -677,6 +712,9 @@
 
         function updateBgm() {
             if (!audioStarted || !audioCtx) return;
+            // 外部BGMが再生中ならWeb Audio合成をスキップ
+            const bgmAudio = document.getElementById('bgm');
+            if (bgmAudio && bgmAudio.src && !bgmAudio.paused) return;
             const stageConfig = bgmStages[currentStageIndex % bgmStages.length];
             if (bgmCurrentStage !== currentStageIndex) {
                 bgmCurrentStage = currentStageIndex;
@@ -747,20 +785,24 @@
                     titleSelectedOption = 1;
                 } else if (e.code === 'Enter' || e.code === 'Space') {
                     if (titleSelectedOption === 0) {
-                        // START: ステージ1から開始
+                        // START: ステージ1から開始 (新規)
                         currentStageIndex = 0;
                         maxReachedStage = 0;
                         savedItemsForContinue = null;
                         hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                        playerLevel = 1; playerXP = 0; playerATK = 1.0;
+                        player.maxHp = 5; player.hp = 5;
+                        try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
                         mapData = STAGES[0];
                         hasStarted = true;
                         gameState = 'playing';
                         centerMessage = "STAGE 1";
                         msgTimer = 120;
                     } else {
-                        // CONTINUE: ステージ選択画面へ
-                        if (maxReachedStage === 0 && !sessionStorage.getItem('maxReachedStage')) {
-                            // まだ進捗なし→STARTと同様
+                        // CONTINUE: セーブデータを読み込んでステージ選択画面へ
+                        const loaded = loadGame();
+                        if (!loaded) {
+                            // セーブなし→新規開始
                             currentStageIndex = 0;
                             mapData = STAGES[0];
                             hasStarted = true;
@@ -861,6 +903,59 @@
         let hasShield = false;
         let hasBoots = false;
         let pScore = 0;
+        let playerLevel = 1, playerXP = 0, playerATK = 1.0;
+
+        const XP_TABLE = [0, 30, 80, 160, 280, 440, 650, 920, 1260, 1680,
+                           2200, 2820, 3560, 4440, 5480, 6700, 8120, 9760, 11650, 13800];
+
+        function gainXP(amt) {
+            if (playerLevel >= 20) return;
+            playerXP += amt;
+            while (playerLevel < 20 && playerXP >= XP_TABLE[playerLevel]) {
+                playerLevel++;
+                player.maxHp = 5 + Math.floor((playerLevel - 1) * 0.5);
+                player.hp = Math.min(player.hp + 2, player.maxHp);
+                playerATK = 1.0 + (playerLevel - 1) * 0.12;
+                centerMessage = `Lv.${playerLevel} UP!`;
+                msgTimer = 90;
+                playSoundEffect('stageclear');
+            }
+        }
+
+        const SAVE_KEY = 'retro_fantasy_v3';
+
+        function saveGame() {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify({
+                    stage: currentStageIndex, maxStage: maxReachedStage,
+                    level: playerLevel, xp: playerXP, atk: playerATK,
+                    score: pScore, maxHp: player.maxHp,
+                    sword: hasLongSword, bow: hasBow, shield: hasShield, boots: hasBoots
+                }));
+            } catch(e) {}
+        }
+
+        function loadGame() {
+            try {
+                const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+                if (!d) return false;
+                currentStageIndex = d.stage || 0;
+                maxReachedStage = d.maxStage || 0;
+                playerLevel = d.level || 1;
+                playerXP = d.xp || 0;
+                playerATK = d.atk || 1.0;
+                pScore = d.score || 0;
+                player.maxHp = d.maxHp || 5;
+                player.hp = player.maxHp;
+                hasLongSword = !!d.sword;
+                hasBow = !!d.bow;
+                hasShield = !!d.shield;
+                hasBoots = !!d.boots;
+                mapData = STAGES[Math.min(currentStageIndex, STAGES.length - 1)];
+                return true;
+            } catch(e) { return false; }
+        }
+
         let enemies = [];
         let projectiles = [];
         let items = [];
@@ -1275,16 +1370,32 @@
                     }
                     if (padA || padStart) {
                         initAudio();
-                        if (titleSelectedOption === 0 || maxReachedStage === 0) {
+                        if (titleSelectedOption === 0) {
                             currentStageIndex = 0;
+                            maxReachedStage = 0;
+                            savedItemsForContinue = null;
+                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            playerLevel = 1; playerXP = 0; playerATK = 1.0;
+                            player.maxHp = 5; player.hp = 5;
+                            try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
                             mapData = STAGES[0];
                             hasStarted = true;
                             gameState = 'playing';
                             centerMessage = "STAGE 1";
                             msgTimer = 120;
                         } else {
-                            stageSelectCursor = currentStageIndex;
-                            gameState = 'stageSelect';
+                            const loaded = loadGame();
+                            if (!loaded) {
+                                currentStageIndex = 0;
+                                mapData = STAGES[0];
+                                hasStarted = true;
+                                gameState = 'playing';
+                                centerMessage = "STAGE 1";
+                                msgTimer = 120;
+                            } else {
+                                stageSelectCursor = currentStageIndex;
+                                gameState = 'stageSelect';
+                            }
                         }
                         jpTimer = 30;
                     }
@@ -1514,7 +1625,7 @@
                         const er = SPRITE_SIZE * 0.4;
                         if (Math.hypot(ecx - (p.x + 12), ecy - (p.y + 12)) < er + 10) {
                             // Hit enemy!
-                            enemy.hp -= 0.66; // 攻撃力2/3 (Sword is 1, LongSword is 1.5)
+                            enemy.hp -= playerATK * 0.66;
                             enemy.hitTimer = 10;
                             enemy.x += p.dx * 15; // Knockback
                             enemy.y += p.dy * 15;
@@ -1522,6 +1633,7 @@
                             if (enemy.hp <= 0) {
                                 playSoundEffect('kill');
                                 pScore += enemy.maxHp * (enemy.isBoss ? 5 : 1);
+                                gainXP(enemy.maxHp * (enemy.isBoss ? 8 : 4));
                                 enemiesDefeatedInStage++;
                                 if (Math.random() < 0.18) {
                                     items.push({ x: enemy.x, y: enemy.y, sprite: HEART_SPRITE });
@@ -1585,6 +1697,7 @@
                             isGameOver = true;
                             gameOverTimer = 180; // 3秒間はゲームオーバー画面
                             savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
+                            saveGame();
                             playSoundEffect('gameover');
                         }
                         continue; // 弾消滅
@@ -1677,7 +1790,7 @@
                     const isAttackBlocked = (tileType === 1 || tileType === 2);
 
                     if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er)) { // bossは当たり判定を大きくすべきだが簡略化
-                        enemy.hp -= (hasLongSword ? 1.5 : 1.0); // 大剣は1.5、通常は1.0
+                        enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0);
                         enemy.hitTimer = 10;
 
                         // ノックバック
@@ -1687,6 +1800,7 @@
                         if (enemy.hp <= 0) {
                             playSoundEffect('kill');
                             pScore += enemy.maxHp * (enemy.isBoss ? 5 : 1);
+                            gainXP(enemy.maxHp * (enemy.isBoss ? 8 : 4));
                             enemiesDefeatedInStage++;
 
                             if (Math.random() < 0.18) {
@@ -1752,6 +1866,7 @@
                             isGameOver = true;
                             gameOverTimer = 180; // 3秒間はゲームオーバー画面
                             savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
+                            saveGame();
                             playSoundEffect('gameover');
                         }
                     }
@@ -1830,18 +1945,38 @@
             ctx.font = '11px monospace';
             ctx.fillText(player.hp + ' / ' + player.maxHp, px + STATS_W / 2, 76);
 
+            // レベル / ATK
+            ctx.fillStyle = '#88ffaa';
+            ctx.font = 'bold 13px monospace';
+            ctx.fillText(`Lv.${playerLevel}  ATK:${playerATK.toFixed(1)}`, px + STATS_W / 2, 102);
+
+            // XPバー
+            ctx.fillStyle = '#223300';
+            ctx.fillRect(px + 10, 108, STATS_W - 20, 10);
+            const xpMax = XP_TABLE[Math.min(playerLevel, 19)] || XP_TABLE[19];
+            const xpPrev = XP_TABLE[playerLevel - 1] || 0;
+            const xpRatio = playerLevel >= 20 ? 1 : Math.max(0, (playerXP - xpPrev) / (xpMax - xpPrev));
+            ctx.fillStyle = '#44ee66';
+            ctx.fillRect(px + 10, 108, (STATS_W - 20) * xpRatio, 10);
+            ctx.strokeStyle = '#446644';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 10, 108, STATS_W - 20, 10);
+            ctx.fillStyle = '#aaaaaa';
+            ctx.font = '10px monospace';
+            ctx.fillText(playerLevel >= 20 ? 'MAX' : `XP ${playerXP}/${xpMax}`, px + STATS_W / 2, 117);
+
             // スコア
             ctx.fillStyle = '#aaddff';
-            ctx.font = '13px monospace';
-            ctx.fillText('SCORE: ' + pScore, px + STATS_W / 2, 104);
+            ctx.font = '12px monospace';
+            ctx.fillText('SCORE: ' + pScore, px + STATS_W / 2, 132);
 
             // アイテム
             ctx.fillStyle = '#EFD02E';
             ctx.font = 'bold 12px monospace';
-            ctx.fillText('ITEMS', px + STATS_W / 2, 130);
+            ctx.fillText('ITEMS', px + STATS_W / 2, 152);
             ctx.fillStyle = '#aaaaaa';
             ctx.font = '12px monospace';
-            let iy = 148;
+            let iy = 168;
             if (hasLongSword) { ctx.fillText('[Long Sword]', px + STATS_W / 2, iy); iy += 18; }
             if (hasBow)       { ctx.fillText('[Bow]',       px + STATS_W / 2, iy); iy += 18; }
             if (hasShield)    { ctx.fillText('[Shield]',    px + STATS_W / 2, iy); iy += 18; }
