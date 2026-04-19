@@ -57,65 +57,71 @@
         const SPRITE_SIZE = 16 * PIXEL_SCALE; // 48
         const PALETTE = {
             0: null,
-            1: '#000000', // 黒の縁取り・影
-            2: '#EFD02E', // 黄金・黄色
-            3: '#D0D0D0', // 銀・グレー（剣や鎧）
-            4: '#FFC8B4', // 肌色
-            5: '#3CD070', // スライム緑
-            6: '#109040', // 濃い緑
-            7: '#FFFFFF', // 白
-            8: '#E02020', // 赤（ダメージ・目）
-            9: '#DDDDDD', // 剣の刃
-            10: '#444444', // 暗いグレー
-            11: '#2040C0', // 青（盾・服など勇者要素）
-            12: '#804020', // 茶色（オーク・革鎧）
-            13: '#A020F0', // 紫（コウモリ等のモンスター）
-            14: '#1848B8', // 川の水色
-            15: '#3878F8', // 川の明るい水色
-            16: '#808080', // 山の岩肌
-            17: '#A0A0A0', // 山の明るい部分
-            18: '#986830', // 橋の板
-            19: '#502010', // 濃い茶色（靴など髪）
-            20: '#F08080'  // ピンク・薄い赤
+            1: '#000000',   // 黒の縁取り・影
+            2: '#EFD02E',   // 黄金・黄色
+            3: '#D0D0D0',   // 銀・グレー
+            4: '#FFC8B4',   // 肌色
+            5: '#3CD070',   // スライム緑
+            6: '#109040',   // 濃い緑
+            7: '#FFFFFF',   // 白
+            8: '#E02020',   // 赤
+            9: '#DDDDDD',   // 剣の刃
+            10: '#444444',  // 暗いグレー
+            11: '#2040C0',  // 青
+            12: '#804020',  // 茶色
+            13: '#A020F0',  // 紫
+            14: '#1848B8',  // 川の水色
+            15: '#3878F8',  // 川の明るい水色
+            16: '#808080',  // 山の岩肌
+            17: '#A0A0A0',  // 山の明るい部分
+            18: '#986830',  // 橋の板
+            19: '#502010',  // 濃い茶色
+            20: '#F08080',  // ピンク・薄い赤
+            21: '#C09030',  // 金の影
+            22: '#FFF0A0',  // 金のハイライト
+            23: '#E8906C',  // 肌の影
+            24: '#6080F0',  // 青のハイライト
+            25: '#102080',  // 青の深い影
+            26: '#60C860',  // 緑のハイライト
         };
 
         const PLAYER_SPRITE = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 20, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0, 0], // 白角と青兜、白ライン
-            [0, 0, 0, 20, 20, 11, 7, 11, 20, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 11, 11, 11, 11, 11, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 20, 4, 4, 4, 4, 20, 0, 0, 0, 0, 0, 0], // オレンジの髪と肌
-            [0, 7, 0, 0, 4, 11, 4, 4, 11, 4, 0, 0, 0, 0, 0, 0], // 青い目（11）と剣の先
-            [0, 7, 0, 0, 4, 11, 4, 4, 11, 4, 0, 0, 11, 11, 11, 11], // 盾の上部
-            [20, 20, 20, 0, 4, 4, 4, 4, 4, 4, 0, 11, 7, 7, 7, 11], // つばと手
-            [0, 11, 0, 0, 11, 11, 20, 11, 11, 0, 11, 7, 20, 11, 7, 11], // 青い服、オレンジの服ライン。丸盾の十字
-            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 11, 11, 11, 11], // 盾の右下
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 11, 7, 20, 11, 7, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 0, 11, 7, 7, 7, 11],
-            [0, 0, 0, 0, 0, 20, 20, 0, 20, 20, 0, 0, 11, 11, 11, 11], // オレンジの脚
-            [0, 0, 0, 0, 0, 20, 20, 0, 20, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 25, 11, 24, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 24, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 25, 11, 11, 24, 11, 11, 25,  0,  0,  0,  0,  0,  0],
+            [0,  7,  0,  0, 23,  4,  4,  4, 23,  0,  0,  0,  0,  0,  0,  0],
+            [0,  7,  0,  0,  4, 11,  4,  4, 11,  4,  0,  0,  0,  0,  0,  0],
+            [0,  7,  0,  0,  4, 11,  4,  4, 11,  4,  0,  0, 11, 24, 11,  0],
+            [ 9,  9,  9,  0,  4,  4,  4,  4,  4,  4,  0, 11, 24,  7, 24, 11],
+            [0, 25,  0,  0, 25, 11, 20, 11, 25,  0, 11, 24, 20, 11, 20, 11],
+            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 24, 11, 24, 11],
+            [0,  0,  0,  0, 11, 11, 11, 11, 11, 11, 11, 24, 20, 11, 20, 11],
+            [0,  0,  0,  0, 25, 11, 11, 11, 11, 25,  0, 11, 24,  7, 24, 11],
+            [0,  0,  0,  0,  0, 19, 20,  0, 19, 20,  0,  0, 11, 24, 11,  0],
+            [0,  0,  0,  0,  0, 19, 12,  0, 19, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 後ろ姿スプライト（上へ移動時）
         const PLAYER_BACK_SPRITE = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 20, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 20, 11, 7, 11, 20, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 11, 11, 11, 11, 11, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 20, 19, 19, 19, 19, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 19, 4, 4, 4, 4, 19, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 11, 11, 11, 11],
-            [20, 20, 20, 0, 4, 4, 4, 4, 4, 4, 0, 11, 7, 7, 7, 11],
-            [0, 11, 0, 0, 11, 11, 20, 11, 11, 0, 11, 7, 20, 11, 7, 11],
-            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 11, 11, 11, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 11, 7, 20, 11, 7, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 0, 11, 7, 7, 7, 11],
-            [0, 0, 0, 0, 0, 20, 20, 0, 20, 20, 0, 0, 11, 11, 11, 11],
-            [0, 0, 0, 0, 0, 20, 20, 0, 20, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 25, 11, 24, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 24, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 25, 11, 11, 24, 11, 11, 25,  0,  0,  0,  0,  0,  0],
+            [0,  7,  0,  0, 19, 19, 19, 19, 19,  0,  0,  0,  0,  0,  0,  0],
+            [0,  7,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  7,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0, 11, 24, 11,  0],
+            [ 9,  9,  9,  0,  4, 23, 23, 23,  4,  0, 11, 24,  7, 24, 11,  0],
+            [0, 25,  0,  0, 25, 11, 11, 11, 25,  0, 11, 24,  7, 11,  7, 11],
+            [0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 24, 11, 24, 11, 11],
+            [0,  0,  0,  0, 25, 11, 11, 11, 11, 25, 11, 24, 11, 24, 11, 11],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0, 11, 24,  7, 24, 11,  0],
+            [0,  0,  0,  0,  0, 19, 20,  0, 19, 20,  0,  0, 11, 24, 11,  0],
+            [0,  0,  0,  0,  0, 19, 12,  0, 19, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 右横顔スプライト（右へ移動時 / 左は反転）
@@ -199,20 +205,20 @@
         const SLIME_SPRITE = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 5, 5, 5, 5, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 5, 5, 5, 5, 5, 5, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 5, 1, 7, 5, 5, 7, 1, 5, 1, 0, 0, 0],
-            [0, 0, 1, 5, 5, 7, 8, 5, 5, 8, 7, 5, 5, 1, 0, 0], // 赤い目
-            [0, 0, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 0, 0],
-            [0, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 0],
-            [0, 1, 5, 5, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 1, 0], // 口
-            [1, 5, 5, 1, 8, 8, 8, 8, 8, 8, 1, 5, 5, 5, 5, 1], // 赤い口内
-            [1, 5, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 5, 5, 1],
-            [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
-            [1, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 1], // 底の影
-            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 6, 5, 5,26, 5, 6, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 6, 5, 5,26,26, 5, 5, 6, 0, 0, 0, 0, 0],
+            [0, 0, 0, 6, 5, 1, 5, 5, 1, 5, 6, 0, 0, 0, 0, 0],
+            [0, 0, 0, 6, 5, 7, 5, 5, 7, 5, 6, 0, 0, 0, 0, 0],
+            [0, 0, 0, 6, 5, 5, 5, 5, 5, 5, 6, 0, 0, 0, 0, 0],
+            [0, 0, 6, 5, 5, 5, 5, 5, 5, 5, 5, 6, 0, 0, 0, 0],
+            [0, 0, 6, 5, 5, 5, 5, 5, 5, 5, 5, 6, 0, 0, 0, 0],
+            [0, 0, 6, 6, 5, 5, 5, 5, 5, 5, 6, 6, 0, 0, 0, 0],
+            [0, 0, 0, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ];
 
         // 2. オーク・ゴブリン風（16x16 武器持ちの凶悪な姿）
@@ -565,6 +571,7 @@
         let nextNoteTime = 0;
         let bgmIndex = 0;
         let bgmCurrentStage = -1; // ステージ変化検出用
+        let reverbDelay = null, reverbGain = null;
 
         // ステージ別BGM設定（雰囲気に合わせたテンポ・波形・音量）
         const bgmStages = [
@@ -638,6 +645,14 @@
             audioCtx = new AudioContext();
             audioStarted = true;
             nextNoteTime = audioCtx.currentTime + 0.1;
+            // リバーブ (フィードバックディレイ)
+            reverbDelay = audioCtx.createDelay(0.5);
+            reverbDelay.delayTime.value = 0.22;
+            reverbGain = audioCtx.createGain();
+            reverbGain.gain.value = 0.18;
+            reverbDelay.connect(reverbGain);
+            reverbGain.connect(reverbDelay);
+            reverbGain.connect(audioCtx.destination);
         }
 
         function playSoundEffect(type) {
@@ -712,59 +727,85 @@
 
         function updateBgm() {
             if (!audioStarted || !audioCtx) return;
-            // 外部BGMが再生中ならWeb Audio合成をスキップ
             const bgmAudio = document.getElementById('bgm');
             if (bgmAudio && bgmAudio.src && !bgmAudio.paused) return;
-            const stageConfig = bgmStages[currentStageIndex % bgmStages.length];
+            const cfg = bgmStages[currentStageIndex % bgmStages.length];
             if (bgmCurrentStage !== currentStageIndex) {
                 bgmCurrentStage = currentStageIndex;
                 bgmIndex = 0;
                 nextNoteTime = audioCtx.currentTime + 0.05;
             }
-            const noteLen = stageConfig.speed * 0.85;
+            const noteLen = cfg.speed * 0.9;
 
-            while (nextNoteTime < audioCtx.currentTime + 0.2) {
-                const freq = stageConfig.notes[bgmIndex % stageConfig.notes.length];
+            while (nextNoteTime < audioCtx.currentTime + 0.25) {
+                const freq = cfg.notes[bgmIndex % cfg.notes.length];
+
                 if (freq > 0) {
-                    // メロディ (ステージ設定の音色)
+                    // --- メロディ ---
                     const osc = audioCtx.createOscillator();
-                    const gainNode = audioCtx.createGain();
-                    osc.type = stageConfig.type;
+                    const gn = audioCtx.createGain();
+                    osc.type = cfg.type;
                     osc.frequency.setValueAtTime(freq, nextNoteTime);
-                    osc.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    gainNode.gain.setValueAtTime(stageConfig.gain, nextNoteTime);
-                    gainNode.gain.setValueAtTime(stageConfig.gain * 0.7, nextNoteTime + noteLen * 0.5);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
+                    osc.connect(gn);
+                    gn.connect(audioCtx.destination);
+                    if (reverbDelay) gn.connect(reverbDelay);
+                    gn.gain.setValueAtTime(0.001, nextNoteTime);
+                    gn.gain.linearRampToValueAtTime(cfg.gain, nextNoteTime + cfg.speed * 0.08);
+                    gn.gain.setValueAtTime(cfg.gain, nextNoteTime + noteLen * 0.45);
+                    gn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc.start(nextNoteTime);
-                    osc.stop(nextNoteTime + noteLen);
+                    osc.stop(nextNoteTime + noteLen + 0.05);
 
-                    // ハーモニー (sine - 3度上)
+                    // --- ハーモニー (5度上、低音量) ---
                     const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
+                    const gn2 = audioCtx.createGain();
                     osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(freq * 1.25, nextNoteTime);
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    gain2.gain.setValueAtTime(stageConfig.gain * 0.35, nextNoteTime);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
+                    osc2.frequency.setValueAtTime(freq * 1.5, nextNoteTime);
+                    osc2.connect(gn2);
+                    gn2.connect(audioCtx.destination);
+                    gn2.gain.setValueAtTime(cfg.gain * 0.18, nextNoteTime);
+                    gn2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc2.start(nextNoteTime);
                     osc2.stop(nextNoteTime + noteLen);
-
-                    // バス (sine - オクターブ下)
-                    const osc3 = audioCtx.createOscillator();
-                    const gain3 = audioCtx.createGain();
-                    osc3.type = 'sine';
-                    osc3.frequency.setValueAtTime(freq * 0.5, nextNoteTime);
-                    osc3.connect(gain3);
-                    gain3.connect(audioCtx.destination);
-                    gain3.gain.setValueAtTime(stageConfig.gain * 0.5, nextNoteTime);
-                    gain3.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen * 0.8);
-                    osc3.start(nextNoteTime);
-                    osc3.stop(nextNoteTime + noteLen);
                 }
-                nextNoteTime += stageConfig.speed;
-                bgmIndex = (bgmIndex + 1) % stageConfig.notes.length;
+
+                // --- ベースライン (4拍ごと) ---
+                if (bgmIndex % 4 === 0) {
+                    const bassFreq = cfg.notes.find(n => n > 0) * 0.25;
+                    if (bassFreq > 0) {
+                        const bOsc = audioCtx.createOscillator();
+                        const bGn = audioCtx.createGain();
+                        bOsc.type = 'sine';
+                        bOsc.frequency.setValueAtTime(bassFreq, nextNoteTime);
+                        bOsc.connect(bGn);
+                        bGn.connect(audioCtx.destination);
+                        bGn.gain.setValueAtTime(cfg.gain * 1.2, nextNoteTime);
+                        bGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + cfg.speed * 3.8);
+                        bOsc.start(nextNoteTime);
+                        bOsc.stop(nextNoteTime + cfg.speed * 4);
+                    }
+                }
+
+                // --- コードパッド (8拍ごと、ゆったりした和音) ---
+                if (bgmIndex % 8 === 0 && freq > 0) {
+                    [1.0, 1.26, 1.5].forEach(ratio => {
+                        const cOsc = audioCtx.createOscillator();
+                        const cGn = audioCtx.createGain();
+                        cOsc.type = 'sine';
+                        cOsc.frequency.setValueAtTime(freq * ratio * 0.5, nextNoteTime);
+                        cOsc.connect(cGn);
+                        cGn.connect(audioCtx.destination);
+                        if (reverbDelay) cGn.connect(reverbDelay);
+                        cGn.gain.setValueAtTime(0.001, nextNoteTime);
+                        cGn.gain.linearRampToValueAtTime(cfg.gain * 0.22, nextNoteTime + cfg.speed * 0.5);
+                        cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + cfg.speed * 7.5);
+                        cOsc.start(nextNoteTime);
+                        cOsc.stop(nextNoteTime + cfg.speed * 8);
+                    });
+                }
+
+                nextNoteTime += cfg.speed;
+                bgmIndex = (bgmIndex + 1) % cfg.notes.length;
             }
         }
 
