@@ -254,6 +254,45 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
 
+        // ==== 色変換で派生スプライトを生成 ====
+        function recolorSprite(base, map) {
+            return base.map(row => row.map(c => map[c] !== undefined ? map[c] : c));
+        }
+        // 骸骨 — スライムをグレー化
+        const SKELETON_SPRITE = recolorSprite(SLIME_SPRITE, {5:9, 6:16, 7:7, 8:7});
+        // 幽霊 — コウモリを白/青化
+        const GHOST_SPRITE    = recolorSprite(BAT_SPRITE,  {13:7, 1:11, 8:11});
+        // 暗黒騎士 — オークをダーク鎧化
+        const DARK_KNIGHT_SPRITE = recolorSprite(ORC_SPRITE, {12:10, 8:3, 10:1});
+        // 炎の精霊 — スライムを赤/黄化
+        const FIRE_ELEM_SPRITE = recolorSprite(SLIME_SPRITE, {5:8, 6:2, 7:2, 8:2});
+        // 氷の精霊 — スライムを青化
+        const ICE_ELEM_SPRITE  = recolorSprite(SLIME_SPRITE, {5:15, 6:14, 8:7});
+        // トロル — オークを緑化
+        const TROLL_SPRITE     = recolorSprite(ORC_SPRITE,  {12:6, 8:20, 10:19});
+        // ドラゴンの幼体 — コウモリを赤/金化
+        const DRAGON_WHELP_SPRITE = recolorSprite(BAT_SPRITE, {13:8, 8:2, 1:10});
+
+        // 哲学の鍵アイテム（黄金の宝珠）
+        const KEY_ITEM_SPRITE = [
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0],
+            [0,0,0,0,0,2,2,7,2,2,0,0,0,0,0,0],
+            [0,0,0,0,2,2,7,7,2,2,2,0,0,0,0,0],
+            [0,0,0,2,2,7,2,2,2,2,2,2,0,0,0,0],
+            [0,0,2,2,2,2,2,2,2,2,2,2,2,0,0,0],
+            [0,0,2,2,2,2,2,2,2,2,2,2,2,0,0,0],
+            [0,0,2,2,2,2,2,2,2,2,2,2,2,0,0,0],
+            [0,0,2,2,2,2,2,2,2,2,2,2,2,0,0,0],
+            [0,0,0,2,2,2,2,2,2,2,2,2,0,0,0,0],
+            [0,0,0,0,2,2,2,2,2,2,2,0,0,0,0,0],
+            [0,0,0,0,0,2,2,2,2,2,0,0,0,0,0,0],
+            [0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        ];
+
         const SWORD_SPRITE = [
             [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0, 0],
@@ -496,8 +535,10 @@
             mapData = STAGES[currentStageIndex];
             enemiesDefeatedInStage = 0;
             itemBoxSpawnedThisStage = false;
-            player.hp = player.maxHp; // ステージクリアでHP全回復
-            enemies = []; // これがないと前のステージの敵が残る
+            keyItemCollected = false;
+            bossActive = false;
+            player.hp = player.maxHp;
+            enemies = [];
             projectiles = [];
             items = [];
 
@@ -507,7 +548,8 @@
                 player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
             } while (!isWalkable(player.x, player.y));
 
-            spawnEnemies(); // spawnEnemyからspawnEnemiesへ修正
+            keyItemPos = findKeyItemPos();
+            spawnEnemies();
             centerMessage = `STAGE ${currentStageIndex + 1}`;
             msgTimer = 120;
             playSoundEffect('stageclear');
@@ -747,6 +789,8 @@
                     mapData = STAGES[currentStageIndex];
                     enemiesDefeatedInStage = 0;
                     itemBoxSpawnedThisStage = false;
+                    keyItemCollected = false;
+                    bossActive = false;
                     player.hp = player.maxHp;
                     enemies = [];
                     projectiles = [];
@@ -761,6 +805,7 @@
                         player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
                         player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
                     } while (!isWalkable(player.x, player.y));
+                    keyItemPos = findKeyItemPos();
                     spawnEnemies();
                     hasStarted = true;
                     gameState = 'playing';
@@ -1034,14 +1079,45 @@
         ];
 
         const ENEMY_TYPES = [
-            { sprite: SLIME_SPRITE, hp: 3, speed: 1.2, name: 'Slime', type: 'melee' },
-            { sprite: ORC_SPRITE, hp: 6, speed: 0.8, name: 'Orc', type: 'melee' },
-            { sprite: BAT_SPRITE, hp: 1, speed: 2.2, name: 'Bat', type: 'melee' },
-            { sprite: MAGE_SPRITE, hp: 4, speed: 0.6, name: 'Mage', type: 'mage', fireInterval: 90 },
-            { sprite: ARCHER_SPRITE, hp: 4, speed: 0.7, name: 'Archer', type: 'archer', fireInterval: 60 },
-            { sprite: SWORDFIGHTER_SPRITE, hp: 8, speed: 1.1, name: 'SwordFighter', type: 'melee' },
-            { sprite: BOSS_SPRITE, hp: 30, speed: 1.5, name: 'Boss Dragon', type: 'boss', fireInterval: 45 }
+            { sprite: SLIME_SPRITE,       hp: 3,  speed: 1.2, name: 'Slime',       type: 'melee' },            // 0
+            { sprite: ORC_SPRITE,         hp: 6,  speed: 0.8, name: 'Orc',         type: 'melee' },            // 1
+            { sprite: BAT_SPRITE,         hp: 1,  speed: 2.2, name: 'Bat',         type: 'melee' },            // 2
+            { sprite: MAGE_SPRITE,        hp: 4,  speed: 0.6, name: 'Mage',        type: 'mage',   fireInterval: 90 }, // 3
+            { sprite: ARCHER_SPRITE,      hp: 4,  speed: 0.7, name: 'Archer',      type: 'archer', fireInterval: 60 }, // 4
+            { sprite: SWORDFIGHTER_SPRITE,hp: 8,  speed: 1.1, name: 'SwordFighter',type: 'melee' },            // 5
+            { sprite: BOSS_SPRITE,        hp: 30, speed: 1.5, name: 'Boss Dragon', type: 'boss',   fireInterval: 45 }, // 6
+            { sprite: SKELETON_SPRITE,    hp: 5,  speed: 0.9, name: 'Skeleton',    type: 'melee' },            // 7
+            { sprite: GHOST_SPRITE,       hp: 2,  speed: 2.8, name: 'Ghost',       type: 'melee' },            // 8
+            { sprite: DARK_KNIGHT_SPRITE, hp: 10, speed: 1.0, name: 'DarkKnight',  type: 'melee' },            // 9
+            { sprite: FIRE_ELEM_SPRITE,   hp: 4,  speed: 1.3, name: 'FireElem',    type: 'mage',   fireInterval: 70 }, // 10
+            { sprite: ICE_ELEM_SPRITE,    hp: 4,  speed: 0.9, name: 'IceElem',     type: 'mage',   fireInterval: 80 }, // 11
+            { sprite: TROLL_SPRITE,       hp: 12, speed: 0.7, name: 'Troll',       type: 'melee' },            // 12
+            { sprite: DRAGON_WHELP_SPRITE,hp: 6,  speed: 1.8, name: 'DragonWhelp',type: 'archer', fireInterval: 50 }, // 13
         ];
+
+        function getStageBoss(stageIdx) {
+            const tier = Math.floor(stageIdx / 5);
+            const hpTable    = [35, 55, 80, 110, 150];
+            const speedTable = [1.2, 1.4, 1.6, 1.8, 2.0];
+            const spriteTable = [BOSS_SPRITE, DRAGON_WHELP_SPRITE, TROLL_SPRITE, BOSS_SPRITE, BOSS_SPRITE];
+            const hp = hpTable[Math.min(tier, 4)];
+            return {
+                x: WORLD_W * 0.75, y: WORLD_H * 0.25,
+                hp, maxHp: hp,
+                speed: speedTable[Math.min(tier, 4)],
+                sprite: spriteTable[Math.min(tier, 4)],
+                type: 'boss', fireInterval: 45, fireTimer: 0, hitTimer: 0, isBoss: true
+            };
+        }
+
+        function findKeyItemPos() {
+            for (let attempt = 0; attempt < 800; attempt++) {
+                const x = WORLD_W * 0.4 + Math.random() * WORLD_W * 0.5;
+                const y = WORLD_H * 0.4 + Math.random() * WORLD_H * 0.5;
+                if (isWalkable(x, y)) return { x, y };
+            }
+            return { x: WORLD_W * 0.75, y: WORLD_H * 0.75 };
+        }
 
         // updateHTMLUI関数へ
 
@@ -1071,33 +1147,28 @@
         let isPaused = false;
         let popupMessage = "";
         let isStageAdvancing = false;
+        let keyItemPos = null;
+        let keyItemCollected = false;
+        let bossActive = false;
 
-        const STAGE_CLEAR_COUNTS = [20,22,22,25,25,25,28,28,30,30,30,30,32,32,35,35,35,38,40,0];
         const MAX_ENEMIES_PER_STAGE = [2,3,3,4,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,1];
 
+        function stageEnemyPool(si) {
+            // ステージ番号に応じて出現する敵の種類プールを返す
+            if (si <= 2)  return [0,1,2];
+            if (si <= 4)  return [0,1,2,3,4,7];
+            if (si <= 6)  return [1,2,3,4,5,7,8];
+            if (si <= 9)  return [1,3,4,5,7,8,9];
+            if (si <= 12) return [1,4,5,7,9,10,11];
+            if (si <= 15) return [4,5,7,9,10,11,12];
+            return             [5,7,9,10,11,12,13];
+        }
 
         function spawnEnemies() {
-            if (currentStageIndex === 19) {
-                // ラスボス
-                if (enemies.length === 0 && enemiesDefeatedInStage === 0) {
-                    enemies.push({
-                        x: WORLD_W / 2, y: WORLD_H / 4,
-                        hp: ENEMY_TYPES[6].hp, maxHp: ENEMY_TYPES[6].hp,
-                        speed: ENEMY_TYPES[6].speed,
-                        sprite: ENEMY_TYPES[6].sprite,
-                        type: ENEMY_TYPES[6].type,
-                        fireInterval: ENEMY_TYPES[6].fireInterval,
-                        fireTimer: 0,
-                        hitTimer: 0
-                    });
-                }
-                return;
-            }
+            if (bossActive) return; // ボス戦中は通常敵スポーン停止
 
-            const maxOnScreen = MAX_ENEMIES_PER_STAGE[currentStageIndex];
-            // 倒すべき残りの数と現在の画面上の数を考慮
-            const remainingToClear = STAGE_CLEAR_COUNTS[currentStageIndex] - enemiesDefeatedInStage;
-            const toSpawn = Math.min(maxOnScreen - enemies.length, remainingToClear - enemies.length);
+            const maxOnScreen = MAX_ENEMIES_PER_STAGE[currentStageIndex] || 4;
+            const toSpawn = maxOnScreen - enemies.filter(e => !e.isBoss).length;
 
             for (let i = 0; i < toSpawn; i++) {
                 let ex, ey, dist, reachable;
@@ -1110,22 +1181,12 @@
                     dist = Math.sqrt(dx * dx + dy * dy);
                     reachable = isWalkable(ex, ey) && isReachable(player.x, player.y, ex, ey);
                     attempts++;
-                    // 100回超えたら距離制限を無視してでも「到達可能な場所」を優先させる
                 } while ((!reachable || dist < 120) && attempts < 1000);
 
-                if (!reachable) {
-                    // 1000回やってもダメならプレイヤーと同じ位置の少し横に出す（フェールセーフ）
-                    ex = player.x;
-                    ey = player.y;
-                }
+                if (!reachable) { ex = player.x + 120; ey = player.y; }
 
-                // 出現する敵の種類をステージごとに調整
-                let avail = [0, 1, 2]; // 最初はスライム、オーク、コウモリ
-                if (currentStageIndex >= 2) avail.push(3); // Stage 3+ Mage (盾が出る面から)
-                if (currentStageIndex >= 2) avail.push(4); // Stage 3+ Archer (盾が出る面から)
-                if (currentStageIndex >= 3) avail.push(5); // Stage 4+ SwordFighter
-
-                const typeIdx = avail[Math.floor(Math.random() * avail.length)];
+                const pool = stageEnemyPool(currentStageIndex);
+                const typeIdx = pool[Math.floor(Math.random() * pool.length)];
                 const typeDef = ENEMY_TYPES[typeIdx];
                 enemies.push({
                     x: ex, y: ey,
@@ -1145,6 +1206,7 @@
             player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
             player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
         } while (!isWalkable(player.x, player.y));
+        keyItemPos = findKeyItemPos();
 
         spawnEnemies();
 
@@ -1245,6 +1307,8 @@
                         mapData = STAGES[currentStageIndex];
                         enemiesDefeatedInStage = 0;
                         itemBoxSpawnedThisStage = false;
+                        keyItemCollected = false;
+                        bossActive = false;
                         player.hp = player.maxHp;
                         enemies = [];
                         projectiles = [];
@@ -1259,6 +1323,7 @@
                             player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
                             player.y = 40 + Math.random() * (WORLD_H - SPRITE_SIZE - 80);
                         } while (!isWalkable(player.x, player.y));
+                        keyItemPos = findKeyItemPos();
                         spawnEnemies();
                         hasStarted = true;
                         gameState = 'playing';
@@ -1373,6 +1438,20 @@
             camX = Math.max(0, Math.min(player.x + SPRITE_SIZE / 2 - VIEW_W / 2, WORLD_W - VIEW_W));
             camY = Math.max(0, Math.min(player.y + SPRITE_SIZE / 2 - VIEW_H / 2, WORLD_H - VIEW_H));
 
+            // 哲学の鍵アイテム取得チェック
+            if (keyItemPos && !keyItemCollected && !bossActive) {
+                if (Math.hypot(player.x + SPRITE_SIZE/2 - keyItemPos.x, player.y + SPRITE_SIZE/2 - keyItemPos.y) < SPRITE_SIZE * 1.2) {
+                    keyItemCollected = true;
+                    bossActive = true;
+                    keyItemPos = null;
+                    const boss = getStageBoss(currentStageIndex);
+                    enemies.push(boss);
+                    centerMessage = "ボス出現！";
+                    msgTimer = 90;
+                    playSoundEffect('stageclear');
+                }
+            }
+
             // アイテムの拾得チェック
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
@@ -1442,29 +1521,31 @@
                             playSoundEffect('hit');
                             if (enemy.hp <= 0) {
                                 playSoundEffect('kill');
-                                pScore += enemy.maxHp;
+                                pScore += enemy.maxHp * (enemy.isBoss ? 5 : 1);
                                 enemiesDefeatedInStage++;
-                                if (Math.random() < 0.15) {
+                                if (Math.random() < 0.18) {
                                     items.push({ x: enemy.x, y: enemy.y, sprite: HEART_SPRITE });
                                 }
-                                if (enemiesDefeatedInStage === 10 && !itemBoxSpawnedThisStage) {
+                                if (enemiesDefeatedInStage === 8 && !itemBoxSpawnedThisStage) {
                                     items.push({ x: WORLD_W / 2, y: WORLD_H / 2, sprite: ITEM_BOX_SPRITE, isBox: true });
                                     itemBoxSpawnedThisStage = true;
                                 }
 
+                                const wasBoss = enemy.isBoss;
                                 enemies.splice(j, 1);
 
-                                if (enemiesDefeatedInStage >= STAGE_CLEAR_COUNTS[currentStageIndex] && !isStageAdvancing) {
+                                if (wasBoss && !isStageAdvancing) {
                                     isStageAdvancing = true;
-                                    if (currentStageIndex === 8) {
-                                        centerMessage = "GAME CLEAR! YOU RESTORED PEACE!";
+                                    bossActive = false;
+                                    if (currentStageIndex >= 19) {
+                                        centerMessage = "GAME CLEAR! — 哲学の旅が終わる";
                                         msgTimer = 999;
                                     } else {
-                                        setTimeout(advanceStage, 1000);
+                                        setTimeout(advanceStage, 1500);
                                         centerMessage = "STAGE CLEAR!";
                                         msgTimer = 120;
                                     }
-                                } else if (!isStageAdvancing && enemiesDefeatedInStage < STAGE_CLEAR_COUNTS[currentStageIndex]) {
+                                } else if (!wasBoss && !isStageAdvancing) {
                                     spawnEnemies();
                                 }
                             }
@@ -1605,33 +1686,32 @@
 
                         if (enemy.hp <= 0) {
                             playSoundEffect('kill');
-                            pScore += enemy.maxHp;
+                            pScore += enemy.maxHp * (enemy.isBoss ? 5 : 1);
                             enemiesDefeatedInStage++;
 
-                            // 15%の確率でハートを落とす
-                            if (Math.random() < 0.15) {
+                            if (Math.random() < 0.18) {
                                 items.push({ x: enemy.x, y: enemy.y, sprite: HEART_SPRITE });
                             }
-
-                            // 10体倒したら確定でアイテムボックス出現
-                            if (enemiesDefeatedInStage === 10 && !itemBoxSpawnedThisStage) {
+                            if (enemiesDefeatedInStage === 8 && !itemBoxSpawnedThisStage) {
                                 items.push({ x: WORLD_W / 2, y: WORLD_H / 2, sprite: ITEM_BOX_SPRITE, isBox: true });
                                 itemBoxSpawnedThisStage = true;
                             }
 
+                            const wasBoss2 = enemy.isBoss;
                             enemies.splice(i, 1);
 
-                            if (enemiesDefeatedInStage >= STAGE_CLEAR_COUNTS[currentStageIndex] && !isStageAdvancing) {
+                            if (wasBoss2 && !isStageAdvancing) {
                                 isStageAdvancing = true;
-                                if (currentStageIndex === 8) {
-                                    centerMessage = "GAME CLEAR! YOU RESTORED PEACE!";
+                                bossActive = false;
+                                if (currentStageIndex >= 19) {
+                                    centerMessage = "GAME CLEAR! — 哲学の旅が終わる";
                                     msgTimer = 999;
                                 } else {
-                                    setTimeout(advanceStage, 1000);
+                                    setTimeout(advanceStage, 1500);
                                     centerMessage = "STAGE CLEAR!";
                                     msgTimer = 120;
                                 }
-                            } else if (!isStageAdvancing) {
+                            } else if (!wasBoss2 && !isStageAdvancing) {
                                 spawnEnemies();
                             }
                             continue;
@@ -1678,9 +1758,8 @@
                 }
             }
 
-            // --- 敵補充 ---
-            // 何らかの理由で敵が減少しすぎていて、かつステージクリアでなければ補充
-            if (!isGameOver && enemiesDefeatedInStage < STAGE_CLEAR_COUNTS[currentStageIndex]) {
+            // --- 敵補充 (継続スポーン) ---
+            if (!isGameOver && !bossActive && !isStageAdvancing) {
                 spawnEnemies();
             }
 
@@ -1768,11 +1847,26 @@
             if (hasShield)    { ctx.fillText('[Shield]',    px + STATS_W / 2, iy); iy += 18; }
             if (hasBoots)     { ctx.fillText('[Boots]',     px + STATS_W / 2, iy); iy += 18; }
 
+            // ボス状態表示
+            if (bossActive) {
+                ctx.fillStyle = '#ff4444';
+                ctx.font = 'bold 13px monospace';
+                ctx.fillText('⚔ BOSS BATTLE', px + STATS_W / 2, VIEW_H - 115);
+            } else if (keyItemPos) {
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = '11px monospace';
+                ctx.fillText('黄金の宝珠を探せ', px + STATS_W / 2, VIEW_H - 115);
+            } else {
+                ctx.fillStyle = '#88ff88';
+                ctx.font = '11px monospace';
+                ctx.fillText('鍵を手に入れた!', px + STATS_W / 2, VIEW_H - 115);
+            }
+
             // 操作説明
             ctx.fillStyle = '#445566';
             ctx.font = '11px monospace';
             const hints = ['WASD/Arrow:Move', 'Space:Attack', 'Shift:Shield', 'Q/E:Weapon', 'P:Pause'];
-            hints.forEach((h, i) => ctx.fillText(h, px + STATS_W / 2, VIEW_H - 90 + i * 18));
+            hints.forEach((h, i) => ctx.fillText(h, px + STATS_W / 2, VIEW_H - 95 + i * 18));
 
             ctx.textAlign = 'left';
         }
@@ -1925,6 +2019,28 @@
             else if (player.dirY === -1) pRot = 0;
             else if (player.dirY === 1) pRot = Math.PI;
 
+            // 哲学の鍵アイテム描画
+            if (keyItemPos && !keyItemCollected) {
+                const kx = keyItemPos.x - camX;
+                const ky = keyItemPos.y - camY;
+                const pulse = Math.sin(Date.now() / 300) * 0.25;
+                drawShape(KEY_ITEM_SPRITE, kx, ky, pulse, PIXEL_SCALE);
+                // 画面外なら矢印インジケーター
+                if (kx < 0 || kx > VIEW_W || ky < 0 || ky > VIEW_H) {
+                    const ax = Math.max(20, Math.min(VIEW_W - 20, kx));
+                    const ay = Math.max(20, Math.min(VIEW_H - 20, ky));
+                    const ang = Math.atan2(keyItemPos.y - (player.y + SPRITE_SIZE/2), keyItemPos.x - (player.x + SPRITE_SIZE/2));
+                    ctx.save();
+                    ctx.translate(ax, ay);
+                    ctx.rotate(ang);
+                    ctx.fillStyle = '#EFD02E';
+                    ctx.font = 'bold 16px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('▶', 0, 6);
+                    ctx.restore();
+                }
+            }
+
             // アイテム描画（カメラオフセット適用）
             for (let item of items) {
                 const wobble = Math.sin(Date.now() / 200) * 0.15;
@@ -2011,11 +2127,10 @@
             ctx.font = '20px monospace';
             ctx.fillText(`STAGE: ${currentStageIndex + 1} | SCORE: ${pScore}`, 10, 26);
 
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = bossActive ? '#ff4444' : '#fff';
             ctx.font = '16px monospace';
-            let remain = STAGE_CLEAR_COUNTS[currentStageIndex] - enemiesDefeatedInStage;
-            if (currentStageIndex === 19) remain = "BOSS";
-            ctx.fillText(`NEXT: ${remain}`, VIEW_W - 120, 26);
+            const hudMsg = bossActive ? '⚔ BOSS ⚔' : (keyItemPos ? `倒せ: ${enemiesDefeatedInStage}` : '鍵を取れ!');
+            ctx.fillText(hudMsg, VIEW_W - 120, 26);
 
             ctx.fillStyle = '#fff';
             ctx.fillText(`HP: `, 160, 26);
