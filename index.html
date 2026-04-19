@@ -223,22 +223,22 @@
 
         // 2. オーク・ゴブリン風（16x16 武器持ちの凶悪な姿）
         const ORC_SPRITE = [
-            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 12, 12, 12, 12, 12, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 12, 12, 12, 12, 12, 12, 12, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 12, 12, 12, 12, 12, 1, 1, 0, 0, 0, 0], // ゴブリン顔
-            [0, 0, 1, 12, 1, 7, 1, 1, 7, 1, 12, 1, 0, 0, 0, 0], // 凶悪な目
-            [0, 0, 1, 12, 1, 8, 1, 1, 8, 1, 12, 1, 0, 0, 0, 0], // 赤い瞳
-            [0, 1, 12, 12, 12, 12, 1, 1, 12, 12, 12, 12, 1, 0, 0, 0],
-            [0, 1, 12, 12, 12, 1, 1, 1, 1, 12, 12, 12, 1, 0, 0, 0], // 牙
-            [1, 10, 1, 1, 1, 8, 8, 8, 8, 1, 1, 1, 1, 10, 1], // 赤い服と武器を持つ手
-            [1, 10, 10, 1, 12, 8, 8, 8, 8, 12, 1, 10, 10, 1],
-            [1, 10, 10, 1, 12, 8, 8, 8, 8, 12, 1, 10, 10, 1],
-            [0, 1, 1, 1, 1, 1, 8, 8, 1, 1, 1, 1, 1, 0, 0],
-            [0, 0, 0, 1, 12, 12, 1, 1, 12, 12, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 12, 12, 1, 1, 12, 12, 1, 0, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 12, 19,  0, 19, 12,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12,  5,  5, 26,  5,  5, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12,  5,  8, 26,  8,  5, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12,  5,  5,  5,  5,  5, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 12, 12,  5, 12, 12,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0, 12, 12, 12, 12, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12,  8, 10, 12, 10,  8, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12, 12, 10, 12, 10, 12, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12, 12, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0, 12, 12,  0, 12, 12, 12,  0, 12, 12,  0,  0,  0,  0,  0],
+            [0,  0, 12,  0,  0, 12, 12, 12,  0,  0, 12,  0,  0,  0,  0,  0],
+            [0,  0, 19, 19,  0, 19, 19, 19,  0, 19, 19,  0,  0,  0,  0,  0],
+            [0,  0,  1,  1,  0,  1,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 3. コウモリ（16x16 大きな翼）
@@ -814,6 +814,19 @@
         const keys = {};
         let jpTimer = 0;
 
+        // タッチ操作
+        const touch = { up: false, down: false, left: false, right: false, attack: false, shield: false, weapon: false };
+        let isTouchDevice = false;
+
+        const VPAD = {
+            // Dパッド中心座標
+            cx: 80, cy: 510, radius: 60,
+            // アクションボタン
+            atkX: 680, atkY: 530, atkR: 32,
+            shieldX: 620, shieldY: 490, shieldR: 24,
+            weaponX: 680, weaponY: 470, weaponR: 18,
+        };
+
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
 
@@ -918,6 +931,91 @@
         window.addEventListener('keyup', e => {
             keys[e.code] = false;
         });
+
+        // タッチ操作
+        canvas.addEventListener('touchstart', handleTouch, { passive: false });
+        canvas.addEventListener('touchmove', handleTouch, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+        canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+        function getTouchPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return Array.from(e.touches).map(t => ({
+                x: (t.clientX - rect.left) * scaleX,
+                y: (t.clientY - rect.top) * scaleY,
+            }));
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            isTouchDevice = true;
+            const positions = getTouchPos(e);
+            touch.up = false; touch.down = false; touch.left = false; touch.right = false;
+            touch.attack = false; touch.shield = false; touch.weapon = false;
+
+            // タイトル/ステージ選択: タップで決定
+            if (gameState === 'title' || gameState === 'stageSelect') {
+                if (e.type === 'touchstart') {
+                    initAudio();
+                    if (gameState === 'title') {
+                        const tp = positions[0];
+                        if (tp.y < canvas.height / 2) titleSelectedOption = 0;
+                        else titleSelectedOption = 1;
+                        // Enterイベントをシミュレート
+                        const fakeEvent = { code: 'Enter', preventDefault: () => {} };
+                        // handle inline
+                        if (titleSelectedOption === 0) {
+                            currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
+                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            playerLevel = 1; playerXP = 0; playerATK = 1.0;
+                            player.maxHp = 5; player.hp = 5;
+                            try { localStorage.removeItem(SAVE_KEY); } catch(err) {}
+                            mapData = STAGES[0]; hasStarted = true; gameState = 'playing';
+                            centerMessage = "STAGE 1"; msgTimer = 120;
+                        } else {
+                            const loaded = loadGame();
+                            if (!loaded) {
+                                currentStageIndex = 0; mapData = STAGES[0]; hasStarted = true;
+                                gameState = 'playing'; centerMessage = "STAGE 1"; msgTimer = 120;
+                            } else { stageSelectCursor = currentStageIndex; gameState = 'stageSelect'; }
+                        }
+                    }
+                }
+                return;
+            }
+
+            for (const pos of positions) {
+                const { x, y } = pos;
+                // Dパッド判定
+                const dx = x - VPAD.cx, dy = y - VPAD.cy;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < VPAD.radius && dist > 8) {
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        if (dx > 0) touch.right = true; else touch.left = true;
+                    } else {
+                        if (dy > 0) touch.down = true; else touch.up = true;
+                    }
+                }
+                // 攻撃ボタン
+                if (Math.hypot(x - VPAD.atkX, y - VPAD.atkY) < VPAD.atkR) touch.attack = true;
+                // 盾ボタン
+                if (Math.hypot(x - VPAD.shieldX, y - VPAD.shieldY) < VPAD.shieldR) touch.shield = true;
+                // 武器切り替え
+                if (Math.hypot(x - VPAD.weaponX, y - VPAD.weaponY) < VPAD.weaponR) touch.weapon = true;
+            }
+
+            // 攻撃タップ
+            if (touch.attack) playerAttack();
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            touch.up = false; touch.down = false; touch.left = false; touch.right = false;
+            touch.attack = false; touch.shield = false; touch.weapon = false;
+            if (e.touches.length > 0) handleTouch(e);
+        }
 
         window.addEventListener('mousedown', () => {
             if (!hasStarted) { hasStarted = true; initAudio(); }
@@ -1514,7 +1612,7 @@
             }
 
             if (hasShield) {
-                isShielding = (keys['ShiftLeft'] || keys['ShiftRight'] || padShield) && !player.isAttacking;
+                isShielding = (keys['ShiftLeft'] || keys['ShiftRight'] || padShield || touch.shield) && !player.isAttacking;
             }
 
             if (!hasStarted) return;
@@ -1543,10 +1641,10 @@
 
             let dx = 0;
             let dy = 0;
-            if (keys['ArrowUp'] || keys['KeyW'] || padUp) dy -= 1;
-            if (keys['ArrowDown'] || keys['KeyS'] || padDown) dy += 1;
-            if (keys['ArrowLeft'] || keys['KeyA'] || padLeft) dx -= 1;
-            if (keys['ArrowRight'] || keys['KeyD'] || padRight) dx += 1;
+            if (keys['ArrowUp'] || keys['KeyW'] || padUp || touch.up) dy -= 1;
+            if (keys['ArrowDown'] || keys['KeyS'] || padDown || touch.down) dy += 1;
+            if (keys['ArrowLeft'] || keys['KeyA'] || padLeft || touch.left) dx -= 1;
+            if (keys['ArrowRight'] || keys['KeyD'] || padRight || touch.right) dx += 1;
 
             if (dx !== 0 || dy !== 0) {
                 const len = Math.sqrt(dx * dx + dy * dy);
@@ -1951,6 +2049,81 @@
             targetCtx.restore();
         }
 
+        function drawVirtualPad() {
+            if (!isTouchDevice) return;
+            ctx.save();
+            ctx.globalAlpha = 0.45;
+
+            // Dパッド外円
+            ctx.beginPath();
+            ctx.arc(VPAD.cx, VPAD.cy, VPAD.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#223344';
+            ctx.fill();
+            ctx.strokeStyle = '#4488aa';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Dパッド十字
+            const arms = [
+                [0, -1, '▲'], [0, 1, '▼'], [-1, 0, '◀'], [1, 0, '▶']
+            ];
+            arms.forEach(([ax, ay, label]) => {
+                const bx = VPAD.cx + ax * VPAD.radius * 0.6;
+                const by = VPAD.cy + ay * VPAD.radius * 0.6;
+                const active = (ax === -1 && touch.left) || (ax === 1 && touch.right) ||
+                               (ay === -1 && touch.up)   || (ay === 1  && touch.down);
+                ctx.fillStyle = active ? '#88ddff' : '#4488aa';
+                ctx.font = 'bold 18px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, bx, by);
+            });
+
+            // 攻撃ボタン
+            ctx.beginPath();
+            ctx.arc(VPAD.atkX, VPAD.atkY, VPAD.atkR, 0, Math.PI * 2);
+            ctx.fillStyle = touch.attack ? '#ff6644' : '#882200';
+            ctx.fill();
+            ctx.strokeStyle = '#ffaa88';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('ATK', VPAD.atkX, VPAD.atkY);
+
+            // 盾ボタン
+            ctx.beginPath();
+            ctx.arc(VPAD.shieldX, VPAD.shieldY, VPAD.shieldR, 0, Math.PI * 2);
+            ctx.fillStyle = touch.shield ? '#4488ff' : '#112266';
+            ctx.fill();
+            ctx.strokeStyle = '#6699ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('DEF', VPAD.shieldX, VPAD.shieldY);
+
+            // 武器切替ボタン
+            ctx.beginPath();
+            ctx.arc(VPAD.weaponX, VPAD.weaponY, VPAD.weaponR, 0, Math.PI * 2);
+            ctx.fillStyle = '#224422';
+            ctx.fill();
+            ctx.strokeStyle = '#44aa44';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#aaffaa';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('WPN', VPAD.weaponX, VPAD.weaponY);
+
+            ctx.restore();
+        }
+
         // ==== 右側ステータスパネル ====
         function drawStatsPanel() {
             const px = VIEW_W;
@@ -2317,6 +2490,9 @@
 
             // 右側ステータスパネル
             drawStatsPanel();
+
+            // バーチャルパッド（タッチデバイス）
+            drawVirtualPad();
 
             if (isGameOver) {
                 ctx.fillStyle = 'rgba(0,0,0,0.7)';
