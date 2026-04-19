@@ -392,6 +392,48 @@
             '神殿 — 神性と問い',        // 19
             '終焉の地 — 死と再生',      // 20
         ];
+        const STAGE_CONFIG = [
+    // 1: 草原 — 明るい緑、Normal
+    { bg:'#5A8030', tint:null,                 speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'breeze'    },
+    // 2: 森 — 暗い緑、移動やや遅い
+    { bg:'#1A3A10', tint:'rgba(0,30,0,0.35)',   speedMult:0.85, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'leaves'    },
+    // 3: 川の沿岸 — 青緑、移動遅い
+    { bg:'#1A4A50', tint:'rgba(0,60,100,0.25)', speedMult:0.80, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'bubbles'   },
+    // 4: 岩山 — 茶灰、土埃
+    { bg:'#706040', tint:'rgba(80,60,20,0.22)', speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'dust'      },
+    // 5: 氷原 — 氷青、超高速でつるつる、吹雪
+    { bg:'#A0C8E8', tint:'rgba(200,230,255,0.3)',speedMult:1.45, windX:0.3,  windY:0,   dark:false, darkR:0,   ambient:'snow'      },
+    // 6: 砂漠 — 砂色、移動大幅遅い、強風(右)
+    { bg:'#C09040', tint:'rgba(220,150,40,0.35)',speedMult:0.60, windX:0.8,  windY:0,   dark:false, darkR:0,   ambient:'sandstorm' },
+    // 7: 廃墟 — 暗紫灰、灰煙
+    { bg:'#404048', tint:'rgba(40,0,60,0.40)',   speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'ashes'     },
+    // 8: 橋 — 嵐、強い右風、大雨
+    { bg:'#2A3A50', tint:'rgba(20,30,80,0.35)',  speedMult:1.00, windX:1.2,  windY:0,   dark:false, darkR:0,   ambient:'rain'      },
+    // 9: 洞窟 — 漆黒、プレイヤー光のみ、滴り
+    { bg:'#101010', tint:null,                   speedMult:0.90, windX:0,    windY:0,   dark:true,  darkR:110, ambient:'drips'     },
+    // 10: 夜の森 — 超暗黒、ホタル
+    { bg:'#050A05', tint:null,                   speedMult:0.80, windX:0,    windY:0,   dark:true,  darkR:80,  ambient:'fireflies' },
+    // 11: 城 — 冷石灰、松明の炎
+    { bg:'#505060', tint:'rgba(10,10,40,0.35)',  speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'torches'   },
+    // 12: 夕焼け — 橙赤、塵が舞う
+    { bg:'#C05818', tint:'rgba(255,100,0,0.25)', speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'dust_motes'},
+    // 13: 天空 — 白青、超高速、上昇風
+    { bg:'#B0D8F8', tint:'rgba(220,245,255,0.30)',speedMult:1.30, windX:0,   windY:-0.7,dark:false, darkR:0,   ambient:'clouds'    },
+    // 14: 海底 — 濃青、超遅い、暗い、泡
+    { bg:'#050830', tint:'rgba(0,10,80,0.50)',   speedMult:0.50, windX:0,    windY:0,   dark:true,  darkR:140, ambient:'bubbles'   },
+    // 15: 火山 — 暗赤、地震、燃える灰
+    { bg:'#280600', tint:'rgba(180,30,0,0.35)',  speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'embers'    },
+    // 16: ドラゴン巣 — 血赤、煙
+    { bg:'#180000', tint:'rgba(140,0,0,0.40)',   speedMult:1.10, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'embers'    },
+    // 17: 魔界 — 暗黒紫、暗い、魔力の光
+    { bg:'#0A0014', tint:'rgba(80,0,120,0.45)',  speedMult:0.90, windX:0,    windY:0,   dark:true,  darkR:120, ambient:'wisps'     },
+    // 18: 塔 — 嵐、強い上昇風、稲光
+    { bg:'#202040', tint:'rgba(10,10,60,0.40)',  speedMult:1.00, windX:0,    windY:-1.5,dark:false, darkR:0,   ambient:'lightning' },
+    // 19: 神殿 — 金白、聖なる光
+    { bg:'#806010', tint:'rgba(255,230,100,0.20)',speedMult:1.00, windX:0,   windY:0,   dark:false, darkR:0,   ambient:'holy'      },
+    // 20: 終焉の地 — 真っ黒、右風、暗い、虚無
+    { bg:'#060000', tint:'rgba(120,0,0,0.55)',   speedMult:1.10, windX:0.5,  windY:0,   dark:true,  darkR:95,  ambient:'void'      },
+];
         const STAGE_QUOTES = [
             '旅は始まった。存在するとはいかなることか？',
             '森の中で迷う者は、やがて自己の内面に迷い込む。',
@@ -1104,6 +1146,161 @@
             }
         }
 
+        function spawnAmbient() {
+            const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            const type = sc.ambient;
+            const MAX = 120;
+            if (ambientParticles.length >= MAX) return;
+            const t = Date.now();
+
+            if (type === 'rain') {
+                for (let i = 0; i < 4; i++) {
+                    ambientParticles.push({ type:'rain', x: Math.random()*VIEW_W, y:-10,
+                        vx:-0.5, vy:14+Math.random()*6, life:60, maxLife:60, color:'rgba(150,180,255,0.5)', size:1 });
+                }
+            } else if (type === 'snow') {
+                if (Math.random() < 0.6) ambientParticles.push({ type:'snow', x:Math.random()*VIEW_W, y:-10,
+                    vx:(Math.random()-0.5)*0.8, vy:1.2+Math.random()*1.2, life:160, maxLife:160, color:'rgba(220,240,255,0.8)', size:2+Math.random()*2 });
+            } else if (type === 'sandstorm') {
+                for (let i = 0; i < 3; i++) {
+                    ambientParticles.push({ type:'sandstorm', x:-10, y:Math.random()*VIEW_H,
+                        vx:12+Math.random()*8, vy:(Math.random()-0.5)*2, life:50, maxLife:50, color:'rgba(210,160,60,0.55)', size:2+Math.random()*3 });
+                }
+            } else if (type === 'embers') {
+                if (Math.random() < 0.5) {
+                    const ex = Math.random()*VIEW_W;
+                    ambientParticles.push({ type:'embers', x:ex, y:VIEW_H+5,
+                        vx:(Math.random()-0.5)*1.5, vy:-(2+Math.random()*3), life:80+Math.random()*60, maxLife:140,
+                        color: Math.random()<0.5 ? 'rgba(255,120,0,0.7)' : 'rgba(255,50,0,0.6)', size:1.5+Math.random()*2 });
+                }
+            } else if (type === 'bubbles') {
+                if (Math.random() < 0.35) ambientParticles.push({ type:'bubbles', x:Math.random()*VIEW_W, y:VIEW_H+5,
+                    vx:(Math.random()-0.5)*0.6, vy:-(1+Math.random()*2), life:120, maxLife:120, color:'rgba(100,160,255,0.35)', size:3+Math.random()*5 });
+            } else if (type === 'leaves') {
+                if (Math.random() < 0.2) ambientParticles.push({ type:'leaves', x:Math.random()*VIEW_W, y:-10,
+                    vx:(Math.random()-0.5)*2, vy:1+Math.random()*2, life:180, maxLife:180,
+                    color: Math.random()<0.5 ? 'rgba(80,140,40,0.7)' : 'rgba(140,100,30,0.7)', size:3+Math.random()*3, rot:Math.random()*Math.PI });
+            } else if (type === 'dust' || type === 'dust_motes') {
+                if (Math.random() < 0.25) ambientParticles.push({ type:'dust', x:Math.random()*VIEW_W, y:Math.random()*VIEW_H,
+                    vx:(Math.random()-0.5)*0.5, vy:-0.3-Math.random()*0.5, life:200, maxLife:200, color:'rgba(200,180,120,0.3)', size:2+Math.random()*3 });
+            } else if (type === 'ashes') {
+                if (Math.random() < 0.3) ambientParticles.push({ type:'ashes', x:Math.random()*VIEW_W, y:-5,
+                    vx:(Math.random()-0.5)*1.5, vy:0.5+Math.random(), life:220, maxLife:220, color:'rgba(150,140,160,0.45)', size:2+Math.random()*2 });
+            } else if (type === 'drips') {
+                if (Math.random() < 0.08) ambientParticles.push({ type:'drips', x:Math.random()*VIEW_W, y:Math.random()*VIEW_H*0.5,
+                    vx:0, vy:4+Math.random()*3, life:30, maxLife:30, color:'rgba(80,100,160,0.6)', size:2 });
+            } else if (type === 'fireflies') {
+                if (Math.random() < 0.05 && ambientParticles.length < 30) {
+                    const fx = Math.random()*VIEW_W, fy = Math.random()*VIEW_H;
+                    ambientParticles.push({ type:'fireflies', x:fx, y:fy,
+                        vx:(Math.random()-0.5)*0.8, vy:(Math.random()-0.5)*0.8, life:200+Math.random()*200, maxLife:400,
+                        color:'rgba(180,255,100,0.9)', size:2 });
+                }
+            } else if (type === 'torches') {
+                if (Math.random() < 0.4) ambientParticles.push({ type:'torches', x:Math.random()*VIEW_W, y:VIEW_H*0.6+Math.random()*VIEW_H*0.3,
+                    vx:(Math.random()-0.5)*0.8, vy:-(2+Math.random()*3), life:40, maxLife:40,
+                    color: Math.random()<0.5 ? 'rgba(255,160,0,0.7)' : 'rgba(255,80,0,0.5)', size:2+Math.random()*2 });
+            } else if (type === 'clouds') {
+                if (Math.random() < 0.04 && ambientParticles.length < 20) ambientParticles.push({ type:'clouds', x:-60, y:20+Math.random()*(VIEW_H-80),
+                    vx:0.6+Math.random()*0.4, vy:0, life:2000, maxLife:2000, color:'rgba(255,255,255,0.25)', size:30+Math.random()*40 });
+            } else if (type === 'wisps') {
+                if (Math.random() < 0.04 && ambientParticles.length < 25) ambientParticles.push({ type:'wisps', x:Math.random()*VIEW_W, y:Math.random()*VIEW_H,
+                    vx:(Math.random()-0.5)*0.7, vy:(Math.random()-0.5)*0.7, life:250, maxLife:250,
+                    color: Math.random()<0.5 ? 'rgba(180,0,255,0.55)' : 'rgba(100,0,200,0.5)', size:4+Math.random()*5 });
+            } else if (type === 'holy') {
+                if (Math.random() < 0.25) ambientParticles.push({ type:'holy', x:Math.random()*VIEW_W, y:Math.random()*VIEW_H,
+                    vx:(Math.random()-0.5)*0.5, vy:-1-Math.random(), life:100, maxLife:100,
+                    color: Math.random()<0.5 ? 'rgba(255,240,100,0.7)' : 'rgba(255,255,200,0.5)', size:2+Math.random()*3 });
+            } else if (type === 'lightning') {
+                if (Math.random() < 0.008) lightningFlash = 6;
+            } else if (type === 'void') {
+                if (Math.random() < 0.4) ambientParticles.push({ type:'void', x:Math.random()*VIEW_W, y:Math.random()*VIEW_H,
+                    vx:(Math.random()-0.5)*2, vy:(Math.random()-0.5)*2, life:60, maxLife:60, color:'rgba(80,0,0,0.5)', size:3+Math.random()*5 });
+            } else if (type === 'breeze') {
+                if (Math.random() < 0.1) ambientParticles.push({ type:'breeze', x:Math.random()*VIEW_W, y:Math.random()*VIEW_H,
+                    vx:0.5+Math.random()*0.5, vy:-0.3-Math.random()*0.3, life:150, maxLife:150, color:'rgba(200,240,160,0.25)', size:3+Math.random()*3 });
+            }
+        }
+
+        function updateAmbient() {
+            for (let i = ambientParticles.length - 1; i >= 0; i--) {
+                const p = ambientParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.type === 'fireflies' || p.type === 'wisps') {
+                    p.vx += (Math.random()-0.5)*0.15;
+                    p.vy += (Math.random()-0.5)*0.15;
+                    p.vx *= 0.97; p.vy *= 0.97;
+                }
+                if (p.type === 'leaves') p.rot = (p.rot || 0) + 0.05;
+                p.life--;
+                if (p.life <= 0 || p.x < -80 || p.x > VIEW_W+80 || p.y < -80 || p.y > VIEW_H+80) {
+                    ambientParticles.splice(i, 1);
+                }
+            }
+            if (lightningFlash > 0) lightningFlash--;
+        }
+
+        function drawAmbient() {
+            if (lightningFlash > 0) {
+                ctx.save();
+                ctx.fillStyle = `rgba(200,220,255,${lightningFlash * 0.06})`;
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.restore();
+            }
+            for (const p of ambientParticles) {
+                const alpha = p.type === 'fireflies' ? 0.5 + 0.5*Math.sin(Date.now()/400+p.x) :
+                              p.life / p.maxLife;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+                ctx.fillStyle = p.color;
+                if (p.type === 'rain') {
+                    ctx.strokeStyle = p.color;
+                    ctx.lineWidth = p.size;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x + p.vx*3, p.y + p.vy*3);
+                    ctx.stroke();
+                } else if (p.type === 'leaves') {
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot || 0);
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fill();
+                    if (p.type === 'fireflies' || p.type === 'wisps') {
+                        ctx.globalAlpha *= 0.3;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size*2.5, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                }
+                ctx.restore();
+            }
+        }
+
+        function drawDarknessOverlay(camX, camY) {
+            const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            if (!sc.dark) return;
+            const px = player.x - camX + SPRITE_SIZE / 2;
+            const py = player.y - camY + SPRITE_SIZE / 2;
+            const r = sc.darkR;
+            const grad = ctx.createRadialGradient(px, py, r * 0.2, px, py, r);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(0.6, 'rgba(0,0,0,0.4)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.97)');
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.97)';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(px, py, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
         function spawnParticles(x, y, color, count, speed) {
             for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -1181,6 +1378,8 @@
 
         let enemies = [];
         let particles = [];
+        let ambientParticles = [];
+        let lightningFlash = 0; // 稲光タイマー
         let screenShake = 0; // >0 の間は画面を揺らす
         let projectiles = [];
         let items = [];
@@ -1753,13 +1952,24 @@
                 dx /= len;
                 dy /= len;
 
-                const nextX = player.x + dx * player.speed;
-                const nextY = player.y + dy * player.speed; // 地形判定をして移動
+                const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+                const effSpeed = player.speed * sc.speedMult;
+                const nextX = player.x + dx * effSpeed;
+                const nextY = player.y + dy * effSpeed;
                 if (isWalkable(nextX, player.y)) {
                     player.x = nextX;
                 }
                 if (isWalkable(player.x, nextY)) {
                     player.y = nextY;
+                }
+                // 風の効果
+                if (sc.windX !== 0) {
+                    const wx = player.x + sc.windX;
+                    if (isWalkable(wx, player.y)) player.x = wx;
+                }
+                if (sc.windY !== 0) {
+                    const wy = player.y + sc.windY;
+                    if (isWalkable(player.x, wy)) player.y = wy;
                 }
 
                 // 向きの更新
@@ -2490,18 +2700,8 @@
 
             if (!isBgCached) {
                 // 背景テーマ設定
-                const bgColors = [
-                    '#2D5A27', // 1.草原
-                    '#1A3D18', // 2.森
-                    '#224466', // 3.川
-                    '#555544', // 4.山
-                    '#AADDFF', // 5.氷原
-                    '#DDAA55', // 6.砂漠
-                    '#555555', // 7.城
-                    '#88CCEE', // 8.天空
-                    '#440000'  // 9.魔界
-                ];
-                bgCtx.fillStyle = bgColors[currentStageIndex];
+                const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+                bgCtx.fillStyle = sc.bg;
                 bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
                 // 背景とマップの描画
