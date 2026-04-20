@@ -4338,6 +4338,23 @@ const MEDITATION_DATA = [
             if (hasShield)    { ctx.fillText('[Shield]',    px + STATS_W / 2, iy); iy += 18; }
             if (hasBoots)     { ctx.fillText('[Boots]',     px + STATS_W / 2, iy); iy += 18; }
 
+            // 哲学アイテム表示
+            const philTotal = philItems.orb_reason + philItems.orb_emotion + philItems.key_freedom + philItems.chain_duty;
+            if (philTotal > 0) {
+                ctx.fillStyle = '#A020F0';
+                ctx.font = 'bold 10px monospace';
+                ctx.fillText('— 哲学 —', px + STATS_W / 2, iy); iy += 14;
+                ctx.font = '10px monospace';
+                const philLabel = [
+                    philItems.orb_reason   > 0 ? `理×${philItems.orb_reason}`   : null,
+                    philItems.orb_emotion  > 0 ? `感×${philItems.orb_emotion}`  : null,
+                    philItems.key_freedom  > 0 ? `鍵×${philItems.key_freedom}`  : null,
+                    philItems.chain_duty   > 0 ? `鎖×${philItems.chain_duty}`   : null,
+                ].filter(Boolean).join(' ');
+                ctx.fillStyle = '#DDAAFF';
+                ctx.fillText(philLabel, px + STATS_W / 2, iy); iy += 16;
+            }
+
             // カルマ表示
             const karmaY = 230;
             ctx.fillStyle = '#666666';
@@ -4379,7 +4396,7 @@ const MEDITATION_DATA = [
             // 操作説明
             ctx.fillStyle = '#445566';
             ctx.font = '11px monospace';
-            const hints = ['WASD/Arrow:Move', 'Space:Attack', 'Shift:Shield', 'Q/E:Weapon', 'P:Pause'];
+            const hints = ['WASD/Arrow:Move', 'Space:Attack', 'Shift:Shield', 'Q/E:Weapon', 'C:合成 V:哲学合成', 'P:Pause'];
             hints.forEach((h, i) => ctx.fillText(h, px + STATS_W / 2, VIEW_H - 95 + i * 18));
 
             ctx.textAlign = 'left';
