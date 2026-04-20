@@ -2740,6 +2740,7 @@ const MEDITATION_DATA = [
             if (!hasStarted) return;
             if (narrativeTimer > 0) { narrativeTimer--; return; }
             if (meditationPending) return;
+            if (synthesisMenuOpen) return;
             if (bossDialogueActive) {
                 // 対話中もタイマーだけ進める
                 if (bossDialogueTimer > 0) {
@@ -3512,6 +3513,108 @@ const MEDITATION_DATA = [
             ctx.restore();
         }
 
+        function drawSynthesisOverlay() {
+            if (!synthesisMenuOpen) return;
+            const availableItems = [];
+            if (hasLongSword) availableItems.push('sword');
+            if (hasBow) availableItems.push('bow');
+            if (hasShield) availableItems.push('shield');
+            if (hasBoots) availableItems.push('boots');
+            availableItems.push('potion');
+            availableItems.push('key');
+
+            const ITEM_NAMES = { sword: '長剣', bow: '弓', shield: '盾', boots: '靴', potion: 'ポーション', key: '鍵' };
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.textAlign = 'center';
+
+            // タイトル
+            ctx.fillStyle = '#EFD02E';
+            ctx.font = 'bold 22px monospace';
+            ctx.fillText('⚗ アイテム合成', VIEW_W / 2, 50);
+
+            const panelW = 480, panelH = 360;
+            const px = VIEW_W / 2 - panelW / 2;
+            const py = 70;
+            ctx.fillStyle = 'rgba(20,20,40,0.9)';
+            ctx.fillRect(px, py, panelW, panelH);
+            ctx.strokeStyle = '#EFD02E';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px, py, panelW, panelH);
+
+            if (synthesisPhase === 0) {
+                ctx.fillStyle = '#AADDFF';
+                ctx.font = 'bold 16px monospace';
+                ctx.fillText('最初のアイテムを選んでください', VIEW_W / 2, py + 30);
+                availableItems.forEach((item, i) => {
+                    const sel = synthesisCursor === i;
+                    const iy = py + 60 + i * 44;
+                    ctx.fillStyle = sel ? 'rgba(239,208,46,0.18)' : 'rgba(255,255,255,0.04)';
+                    ctx.fillRect(px + 20, iy, panelW - 40, 36);
+                    ctx.strokeStyle = sel ? '#EFD02E' : '#333333';
+                    ctx.lineWidth = sel ? 2 : 1;
+                    ctx.strokeRect(px + 20, iy, panelW - 40, 36);
+                    ctx.fillStyle = sel ? '#FFFFFF' : '#AAAAAA';
+                    ctx.font = (sel ? 'bold ' : '') + '16px monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText((sel ? '▶ ' : '  ') + ITEM_NAMES[item], px + 36, iy + 24);
+                    ctx.textAlign = 'center';
+                });
+                ctx.fillStyle = '#555555';
+                ctx.font = '13px monospace';
+                ctx.fillText('↑↓ 選択   Enter 決定   Esc 閉じる', VIEW_W / 2, py + panelH - 14);
+            } else if (synthesisPhase === 1) {
+                ctx.fillStyle = '#AADDFF';
+                ctx.font = 'bold 16px monospace';
+                const firstName = ITEM_NAMES[synthesisSelected[0]] || synthesisSelected[0];
+                ctx.fillText(`[${firstName}] + ?を選択`, VIEW_W / 2, py + 30);
+                availableItems.forEach((item, i) => {
+                    const sel = synthesisCursor === i;
+                    const iy = py + 60 + i * 44;
+                    ctx.fillStyle = sel ? 'rgba(239,208,46,0.18)' : 'rgba(255,255,255,0.04)';
+                    ctx.fillRect(px + 20, iy, panelW - 40, 36);
+                    ctx.strokeStyle = sel ? '#EFD02E' : '#333333';
+                    ctx.lineWidth = sel ? 2 : 1;
+                    ctx.strokeRect(px + 20, iy, panelW - 40, 36);
+                    ctx.fillStyle = sel ? '#FFFFFF' : '#AAAAAA';
+                    ctx.font = (sel ? 'bold ' : '') + '16px monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText((sel ? '▶ ' : '  ') + ITEM_NAMES[item], px + 36, iy + 24);
+                    ctx.textAlign = 'center';
+                });
+                ctx.fillStyle = '#555555';
+                ctx.font = '13px monospace';
+                ctx.fillText('↑↓ 選択   Enter 決定   Esc 戻る', VIEW_W / 2, py + panelH - 14);
+            } else if (synthesisPhase === 2) {
+                const res = synthesisResult;
+                ctx.fillStyle = res && res.effect ? '#EFD02E' : '#FF6644';
+                ctx.font = 'bold 26px monospace';
+                ctx.fillText(res ? res.name : '?', VIEW_W / 2, py + 100);
+                ctx.fillStyle = '#AADDFF';
+                ctx.font = '18px monospace';
+                ctx.fillText(res ? res.desc : '', VIEW_W / 2, py + 140);
+                if (res && res.effect) {
+                    ctx.fillStyle = '#88FF88';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('合成成功！', VIEW_W / 2, py + 185);
+                    ctx.fillStyle = '#555555';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('Enter で効果を適用   Esc 閉じる', VIEW_W / 2, py + panelH - 14);
+                } else {
+                    ctx.fillStyle = '#FF6644';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('失敗…', VIEW_W / 2, py + 185);
+                    ctx.fillStyle = '#555555';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('Esc 閉じる', VIEW_W / 2, py + panelH - 14);
+                }
+            }
+
+            ctx.restore();
+        }
+
         function startNarrative(si) {
             narrativeTimer = 180;
             narrativeStage = si;
@@ -4280,6 +4383,9 @@ const MEDITATION_DATA = [
 
             // 思索オーバーレイ
             drawMeditationOverlay();
+
+            // アイテム合成オーバーレイ
+            drawSynthesisOverlay();
 
             // チュートリアル
             drawTutorial();
