@@ -776,11 +776,25 @@ const MEDITATION_DATA = [
             achievementStats.stagesCleared = Math.max(achievementStats.stagesCleared, currentStageIndex + 1);
             if (!stageDamageTaken) { achievementStats.nodamageClears++; checkAchievements(); }
             stageDamageTaken = false;
+            // デイリーチャレンジ: ステージクリアボーナス
+            if (dailyChallengeActive) {
+                const bonus = 500;
+                pScore += bonus;
+                // 全20ステージを1周したらクリア完了
+                if (currentStageIndex === 0) {
+                    markTodayChallengeCompleted(pScore);
+                    centerMessage = '今日のチャレンジ達成！';
+                    msgTimer = 180;
+                    dailyChallengeActive = false;
+                }
+            }
             keyItemPos = findKeyItemPos();
             spawnEnemies();
             saveGame();
-            centerMessage = `STAGE ${currentStageIndex + 1}`;
-            msgTimer = 120;
+            if (!dailyChallengeActive || currentStageIndex !== 0) {
+                centerMessage = `STAGE ${currentStageIndex + 1}`;
+                msgTimer = 120;
+            }
             startNarrative(currentStageIndex);
             if (currentStageIndex === 0) tutorialStep = 1;
             playSoundEffect('stageclear');
@@ -1190,13 +1204,13 @@ const MEDITATION_DATA = [
             if (gameState === 'title') {
                 initAudio();
                 if (e.code === 'ArrowUp' || e.code === 'KeyW') {
-                    titleSelectedOption = 0;
+                    titleSelectedOption = Math.max(0, titleSelectedOption - 1);
                 } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
-                    titleSelectedOption = 1;
+                    titleSelectedOption = Math.min(2, titleSelectedOption + 1);
                 } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                    difficultyLevel = Math.max(0, difficultyLevel - 1);
+                    if (titleSelectedOption !== 2) difficultyLevel = Math.max(0, difficultyLevel - 1);
                 } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                    difficultyLevel = Math.min(2, difficultyLevel + 1);
+                    if (titleSelectedOption !== 2) difficultyLevel = Math.min(2, difficultyLevel + 1);
                 } else if (e.code === 'Enter' || e.code === 'Space') {
                     if (titleSelectedOption === 0) {
                         // START: ステージ1から開始 (新規)
@@ -1206,6 +1220,12 @@ const MEDITATION_DATA = [
                         hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
                         playerLevel = 1; playerXP = 0; playerATK = 1.0;
                         player.maxHp = 5; player.hp = 5;
+                        dailyChallengeActive = false;
+                        currentDailyChallenge = null;
+                        dailyChallengeXpMult = 1.0;
+                        dailyChallengeNoWeapon = false;
+                        dailyChallengeAtkUp = false;
+                        dailyChallengeIronWill = false;
                         try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
                         mapData = STAGES[0];
                         hasStarted = true;
@@ -1215,8 +1235,14 @@ const MEDITATION_DATA = [
                         msgTimer = 120;
                         startNarrative(0);
                         tutorialStep = 1;
-                    } else {
+                    } else if (titleSelectedOption === 1) {
                         // CONTINUE: セーブデータを読み込んでステージ選択画面へ
+                        dailyChallengeActive = false;
+                        currentDailyChallenge = null;
+                        dailyChallengeXpMult = 1.0;
+                        dailyChallengeNoWeapon = false;
+                        dailyChallengeAtkUp = false;
+                        dailyChallengeIronWill = false;
                         const loaded = loadGame();
                         if (!loaded) {
                             // セーブなし→新規開始
@@ -1231,6 +1257,26 @@ const MEDITATION_DATA = [
                             stageSelectCursor = currentStageIndex;
                             gameState = 'stageSelect';
                         }
+                    } else {
+                        // 今日のチャレンジ: ステージ1から開始（チャレンジ適用）
+                        currentStageIndex = 0;
+                        maxReachedStage = 0;
+                        savedItemsForContinue = null;
+                        hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                        playerLevel = 1; playerXP = 0; playerATK = 1.0;
+                        player.maxHp = 5; player.hp = 5;
+                        karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
+                        try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+                        mapData = STAGES[0];
+                        dailyChallengeActive = true;
+                        const todayChallenge = getTodayChallenge();
+                        applyDailyChallenge(todayChallenge);
+                        hasStarted = true;
+                        gameState = 'playing';
+                        centerMessage = todayChallenge.name;
+                        msgTimer = 150;
+                        startNarrative(0);
+                        tutorialStep = 0; // チャレンジ中はチュートリアルなし
                     }
                     e.preventDefault();
                 } else if (e.code === 'KeyC') {
@@ -1369,25 +1415,45 @@ const MEDITATION_DATA = [
                     initAudio();
                     if (gameState === 'title') {
                         const tp = positions[0];
-                        if (tp.y < canvas.height / 2) titleSelectedOption = 0;
-                        else titleSelectedOption = 1;
-                        // Enterイベントをシミュレート
-                        const fakeEvent = { code: 'Enter', preventDefault: () => {} };
-                        // handle inline
+                        // 3等分でオプション選択
+                        if (tp.y < canvas.height / 3) titleSelectedOption = 0;
+                        else if (tp.y < canvas.height * 2 / 3) titleSelectedOption = 1;
+                        else titleSelectedOption = 2;
                         if (titleSelectedOption === 0) {
                             currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
                             hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
                             playerLevel = 1; playerXP = 0; playerATK = 1.0;
                             player.maxHp = 5; player.hp = 5;
+                            dailyChallengeActive = false; currentDailyChallenge = null;
+                            dailyChallengeXpMult = 1.0; dailyChallengeNoWeapon = false;
+                            dailyChallengeAtkUp = false; dailyChallengeIronWill = false;
                             try { localStorage.removeItem(SAVE_KEY); } catch(err) {}
                             mapData = STAGES[0]; hasStarted = true; gameState = 'playing';
                             centerMessage = "STAGE 1"; msgTimer = 120;
-                        } else {
+                        } else if (titleSelectedOption === 1) {
+                            dailyChallengeActive = false; currentDailyChallenge = null;
+                            dailyChallengeXpMult = 1.0; dailyChallengeNoWeapon = false;
+                            dailyChallengeAtkUp = false; dailyChallengeIronWill = false;
                             const loaded = loadGame();
                             if (!loaded) {
                                 currentStageIndex = 0; mapData = STAGES[0]; hasStarted = true;
                                 gameState = 'playing'; centerMessage = "STAGE 1"; msgTimer = 120;
                             } else { stageSelectCursor = currentStageIndex; gameState = 'stageSelect'; }
+                        } else {
+                            // 今日のチャレンジ
+                            currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
+                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            playerLevel = 1; playerXP = 0; playerATK = 1.0;
+                            player.maxHp = 5; player.hp = 5;
+                            karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
+                            try { localStorage.removeItem(SAVE_KEY); } catch(err) {}
+                            mapData = STAGES[0];
+                            dailyChallengeActive = true;
+                            const todayChallenge = getTodayChallenge();
+                            applyDailyChallenge(todayChallenge);
+                            hasStarted = true; gameState = 'playing';
+                            centerMessage = todayChallenge.name; msgTimer = 150;
+                            tutorialStep = 0;
                         }
                     }
                 }
@@ -2198,7 +2264,8 @@ const MEDITATION_DATA = [
         function spawnEnemies() {
             if (bossActive) return; // ボス戦中は通常敵スポーン停止
 
-            const maxOnScreen = Math.ceil((MAX_ENEMIES_PER_STAGE[currentStageIndex] || 4) * DIFF_SPAWN_MULT[difficultyLevel]);
+            const fastSpawnMult = (dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'fast_spawn') ? currentDailyChallenge.param : 1;
+            const maxOnScreen = Math.ceil((MAX_ENEMIES_PER_STAGE[currentStageIndex] || 4) * DIFF_SPAWN_MULT[difficultyLevel] * fastSpawnMult);
             const toSpawn = maxOnScreen - enemies.filter(e => !e.isBoss).length;
 
             for (let i = 0; i < toSpawn; i++) {
@@ -2309,15 +2376,18 @@ const MEDITATION_DATA = [
             // ゲームパッド: タイトル画面操作
             if (gameState === 'title') {
                 if (jpTimer === 0) {
-                    if (padUp || padDown) {
-                        titleSelectedOption = titleSelectedOption === 0 ? 1 : 0;
+                    if (padUp) {
+                        titleSelectedOption = Math.max(0, titleSelectedOption - 1);
+                        jpTimer = 15;
+                    } else if (padDown) {
+                        titleSelectedOption = Math.min(2, titleSelectedOption + 1);
                         jpTimer = 15;
                     }
-                    if (padLeft) {
+                    if (padLeft && titleSelectedOption !== 2) {
                         difficultyLevel = Math.max(0, difficultyLevel - 1);
                         jpTimer = 15;
                     }
-                    if (padRight) {
+                    if (padRight && titleSelectedOption !== 2) {
                         difficultyLevel = Math.min(2, difficultyLevel + 1);
                         jpTimer = 15;
                     }
@@ -2330,6 +2400,9 @@ const MEDITATION_DATA = [
                             hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
                             playerLevel = 1; playerXP = 0; playerATK = 1.0;
                             player.maxHp = 5; player.hp = 5;
+                            dailyChallengeActive = false; currentDailyChallenge = null;
+                            dailyChallengeXpMult = 1.0; dailyChallengeNoWeapon = false;
+                            dailyChallengeAtkUp = false; dailyChallengeIronWill = false;
                             try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
                             mapData = STAGES[0];
                             hasStarted = true;
@@ -2338,7 +2411,10 @@ const MEDITATION_DATA = [
                             centerMessage = "STAGE 1";
                             msgTimer = 120;
                             startNarrative(0);
-                        } else {
+                        } else if (titleSelectedOption === 1) {
+                            dailyChallengeActive = false; currentDailyChallenge = null;
+                            dailyChallengeXpMult = 1.0; dailyChallengeNoWeapon = false;
+                            dailyChallengeAtkUp = false; dailyChallengeIronWill = false;
                             const loaded = loadGame();
                             if (!loaded) {
                                 currentStageIndex = 0;
@@ -2352,6 +2428,24 @@ const MEDITATION_DATA = [
                                 stageSelectCursor = currentStageIndex;
                                 gameState = 'stageSelect';
                             }
+                        } else {
+                            // 今日のチャレンジ
+                            currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
+                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            playerLevel = 1; playerXP = 0; playerATK = 1.0;
+                            player.maxHp = 5; player.hp = 5;
+                            karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
+                            try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+                            mapData = STAGES[0];
+                            dailyChallengeActive = true;
+                            const todayChallenge = getTodayChallenge();
+                            applyDailyChallenge(todayChallenge);
+                            hasStarted = true;
+                            gameState = 'playing';
+                            centerMessage = todayChallenge.name;
+                            msgTimer = 150;
+                            startNarrative(0);
+                            tutorialStep = 0;
                         }
                         jpTimer = 30;
                     }
@@ -2459,6 +2553,10 @@ const MEDITATION_DATA = [
                     if (deathSceneTimer > 0) deathSceneTimer--;
                 } else {
                     // タイトル画面へ自動遷移
+                    if (dailyChallengeActive && dailyChallengeIronWill) {
+                        // 鉄の意志: デイリーチャレンジ失敗
+                        dailyChallengeActive = false;
+                    }
                     isGameOver = false;
                     deathScenePhase = 0;
                     deathSceneTimer = 0;
@@ -2501,12 +2599,15 @@ const MEDITATION_DATA = [
                     player.y = nextY;
                 }
                 // 風の効果
-                if (sc.windX !== 0) {
-                    const wx = player.x + sc.windX;
+                const _allWindStr = (dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'all_wind') ? currentDailyChallenge.param : 0;
+                const _effWindX = sc.windX !== 0 ? sc.windX : _allWindStr;
+                const _effWindY = sc.windY !== 0 ? sc.windY : 0;
+                if (_effWindX !== 0) {
+                    const wx = player.x + _effWindX;
                     if (isWalkable(wx, player.y)) player.x = wx;
                 }
-                if (sc.windY !== 0) {
-                    const wy = player.y + sc.windY;
+                if (_effWindY !== 0) {
+                    const wy = player.y + _effWindY;
                     if (isWalkable(player.x, wy)) player.y = wy;
                 }
 
@@ -2528,12 +2629,15 @@ const MEDITATION_DATA = [
                 player.walkTimer = 0;
                 // 風の効果（立ち止まっている時も適用）
                 const _scWind = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
-                if (_scWind.windX !== 0) {
-                    const wx = player.x + _scWind.windX;
+                const _allWindStr2 = (dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'all_wind') ? currentDailyChallenge.param : 0;
+                const _effWindX2 = _scWind.windX !== 0 ? _scWind.windX : _allWindStr2;
+                const _effWindY2 = _scWind.windY !== 0 ? _scWind.windY : 0;
+                if (_effWindX2 !== 0) {
+                    const wx = player.x + _effWindX2;
                     if (isWalkable(wx, player.y)) player.x = wx;
                 }
-                if (_scWind.windY !== 0) {
-                    const wy = player.y + _scWind.windY;
+                if (_effWindY2 !== 0) {
+                    const wy = player.y + _effWindY2;
                     if (isWalkable(player.x, wy)) player.y = wy;
                 }
             }
@@ -2582,10 +2686,10 @@ const MEDITATION_DATA = [
                             updateHTMLUI();
                         } else {
                             const r = Math.random();
-                            if (!hasLongSword && r < 0.25) {
+                            if (!hasLongSword && r < 0.25 && !dailyChallengeNoWeapon) {
                                 hasLongSword = true;
                                 updateHTMLUI();
-                            } else if (!hasBow && r < 0.5) {
+                            } else if (!hasBow && r < 0.5 && !dailyChallengeNoWeapon) {
                                 hasBow = true;
                                 updateHTMLUI();
                             } else if (!hasShield && r < 0.75) {
@@ -2596,11 +2700,11 @@ const MEDITATION_DATA = [
                                 player.speed = 3.0;
                                 updateHTMLUI();
                             } else {
-                                player.hp = Math.min(player.maxHp, player.hp + 1);
+                                if (!dailyChallengeAtkUp) player.hp = Math.min(player.maxHp, player.hp + 1);
                             }
                         }
                     } else {
-                        player.hp = Math.min(player.maxHp, player.hp + 1);
+                        if (!dailyChallengeAtkUp) player.hp = Math.min(player.maxHp, player.hp + 1);
                         playSoundEffect('stageclear');
                     }
                     items.splice(i, 1);
@@ -2818,7 +2922,9 @@ const MEDITATION_DATA = [
                     const tileType = mapData[ty * MAP_COLS + tx];
                     const isAttackBlocked = (comboStep !== 3) && (tileType === 1 || tileType === 2);
 
-                    if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er)) { // bossは当たり判定を大きくすべきだが簡略化
+                    // combo_only チャレンジ: 必要コンボ数未満ではダメージなし
+                    const comboMinRequired = (dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'combo_only') ? currentDailyChallenge.param : 1;
+                    if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er) && comboStep >= comboMinRequired) { // bossは当たり判定を大きくすべきだが簡略化
                         const bossBoost = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
                         enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost;
                         if (comboStep === 3) achievementStats.combo3Count++;
@@ -3328,15 +3434,27 @@ const MEDITATION_DATA = [
             ctx.strokeRect(px, 0, STATS_W, VIEW_H);
             ctx.textAlign = 'center';
 
+            // デイリーチャレンジ中インジケータ
+            if (dailyChallengeActive && currentDailyChallenge) {
+                ctx.fillStyle = '#FF8C00';
+                ctx.font = 'bold 11px monospace';
+                ctx.fillText('今日のチャレンジ中', px + STATS_W / 2, 14);
+                ctx.fillStyle = '#FFAA44';
+                ctx.font = '9px monospace';
+                const cNameShort = currentDailyChallenge.name.length > 10 ? currentDailyChallenge.name.slice(0, 9) + '…' : currentDailyChallenge.name;
+                ctx.fillText(cNameShort, px + STATS_W / 2, 24);
+            }
+
             // ステージ名
+            const stageNameY = (dailyChallengeActive && currentDailyChallenge) ? 36 : 24;
             ctx.fillStyle = '#EFD02E';
             ctx.font = 'bold 14px monospace';
-            ctx.fillText('STAGE ' + (currentStageIndex + 1), px + STATS_W / 2, 24);
+            ctx.fillText('STAGE ' + (currentStageIndex + 1), px + STATS_W / 2, stageNameY);
             ctx.fillStyle = '#aaccff';
             ctx.font = '10px monospace';
             const sn = STAGE_NAMES[currentStageIndex] || '';
             const snShort = sn.length > 18 ? sn.slice(0, 17) + '…' : sn;
-            ctx.fillText(snShort, px + STATS_W / 2, 38);
+            ctx.fillText(snShort, px + STATS_W / 2, stageNameY + 14);
             if (ngPlusLevel > 0) {
                 ctx.fillStyle = '#FF4444';
                 ctx.font = 'bold 12px monospace';
@@ -3484,38 +3602,70 @@ const MEDITATION_DATA = [
                 ctx.fillText('Switch Weapon: Q/E  |  Pause: P', VIEW_W / 2, 270);
 
                 // メニュー
-                const opts = ['START', 'CONTINUE'];
+                const opts = ['START', 'CONTINUE', '今日のチャレンジ'];
                 for (let i = 0; i < opts.length; i++) {
                     const sel = (titleSelectedOption === i);
-                    ctx.fillStyle = sel ? '#EFD02E' : '#aaaaaa';
-                    ctx.font = sel ? 'bold 34px monospace' : '28px monospace';
-                    ctx.fillText((sel ? '► ' : '  ') + opts[i], VIEW_W / 2, 330 + i * 60);
+                    if (i === 2) {
+                        // デイリーチャレンジオプション
+                        ctx.fillStyle = sel ? '#FF8C00' : '#996622';
+                        ctx.font = sel ? 'bold 26px monospace' : '22px monospace';
+                        ctx.fillText((sel ? '► ' : '  ') + opts[i], VIEW_W / 2, 330 + i * 55);
+                        if (isTodayChallengeCompleted()) {
+                            ctx.fillStyle = '#44ff88';
+                            ctx.font = '14px monospace';
+                            ctx.fillText('本日クリア済み ✓', VIEW_W / 2, 330 + i * 55 + 20);
+                        }
+                    } else {
+                        ctx.fillStyle = sel ? '#EFD02E' : '#aaaaaa';
+                        ctx.font = sel ? 'bold 34px monospace' : '28px monospace';
+                        ctx.fillText((sel ? '► ' : '  ') + opts[i], VIEW_W / 2, 330 + i * 55);
+                    }
                 }
-                // 難易度選択
-                ctx.fillStyle = '#888888';
-                ctx.font = '14px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('DIFFICULTY', VIEW_W / 2, 430);
-                const diffY = 455;
-                for (let d = 0; d < 3; d++) {
-                    const sel = (difficultyLevel === d);
-                    ctx.fillStyle = sel ? (d === 0 ? '#44ff44' : d === 1 ? '#EFD02E' : '#ff4444') : '#555555';
-                    ctx.font = sel ? 'bold 20px monospace' : '16px monospace';
+
+                // デイリーチャレンジ選択時: 詳細表示
+                if (titleSelectedOption === 2) {
+                    const todayChallenge = getTodayChallenge();
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(VIEW_W / 2 - 200, 498, 400, 62);
+                    ctx.strokeStyle = '#FF8C00';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(VIEW_W / 2 - 200, 498, 400, 62);
+                    ctx.fillStyle = '#FF8C00';
+                    ctx.font = 'bold 15px monospace';
+                    ctx.fillText(todayChallenge.name, VIEW_W / 2, 516);
+                    ctx.fillStyle = '#dddddd';
+                    ctx.font = '13px monospace';
+                    ctx.fillText(todayChallenge.desc, VIEW_W / 2, 534);
+                    ctx.fillStyle = '#aaaaaa';
+                    ctx.font = '11px monospace';
+                    ctx.fillText('Enterで開始', VIEW_W / 2, 552);
+                } else {
+                    // 難易度選択
+                    ctx.fillStyle = '#888888';
+                    ctx.font = '14px monospace';
                     ctx.textAlign = 'center';
-                    ctx.fillText(DIFF_NAMES[d], VIEW_W / 2 - 120 + d * 120, diffY);
+                    ctx.fillText('DIFFICULTY', VIEW_W / 2, 510);
+                    const diffY = 532;
+                    for (let d = 0; d < 3; d++) {
+                        const sel = (difficultyLevel === d);
+                        ctx.fillStyle = sel ? (d === 0 ? '#44ff44' : d === 1 ? '#EFD02E' : '#ff4444') : '#555555';
+                        ctx.font = sel ? 'bold 20px monospace' : '16px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(DIFF_NAMES[d], VIEW_W / 2 - 120 + d * 120, diffY);
+                    }
+                    ctx.fillStyle = '#666666';
+                    ctx.font = '12px monospace';
+                    ctx.fillText('← → to change', VIEW_W / 2, 556);
                 }
-                ctx.fillStyle = '#666666';
-                ctx.font = '12px monospace';
-                ctx.fillText('← → to change', VIEW_W / 2, 480);
 
                 ctx.fillStyle = '#555555';
                 ctx.font = '14px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText('[ C ] CREDITS', VIEW_W / 2, 395);
+                ctx.fillText('[ C ] CREDITS', VIEW_W / 2, 475);
 
                 ctx.fillStyle = '#666';
                 ctx.font = '13px monospace';
-                ctx.fillText('[↑↓]/[WS]: select  [Enter]/[Space]: confirm', VIEW_W / 2, VIEW_H - 40);
+                ctx.fillText('[↑↓]/[WS]: select  [Enter]/[Space]: confirm', VIEW_W / 2, VIEW_H - 20);
                 ctx.textAlign = 'left';
                 return;
             }
