@@ -790,6 +790,56 @@ const MEDITATION_DATA = [
             }
             keyItemPos = findKeyItemPos();
             spawnEnemies();
+
+            // ==== 賢者NPC スポーン (10%確率, ステージ1以降) ====
+            if (Math.random() < 0.10 && currentStageIndex > 0) {
+                const sageWisdoms = [
+                    '「強さとは自らを知ることだ」— ソクラテス',
+                    '「行動することによってのみ、意味が生まれる」— サルトル',
+                    '「汝自身を知れ」— デルフォイの神託',
+                    '「生きることは苦しむことだ。だが苦しみの中に意味を見出すこと、それが人間だ」— ニーチェ',
+                    '「無知の知こそが真の知恵の始まりだ」— ソクラテス',
+                    '「万物は流転する。同じ川に二度と入れない」— ヘラクレイトス',
+                    '「欲望なき者に自由あり。欲望ある者に試練あり」— エピクテトス',
+                    '「死を恐れるな。死を迎える前に十分に生きよ」— マルクス・アウレリウス',
+                    '「疑うことが、真実への最初の一歩だ」— デカルト',
+                    '「人間は自由の刑に処されている」— サルトル',
+                ];
+                let sx, sy;
+                let sageAttempts = 0;
+                do {
+                    sx = 80 + Math.random() * (WORLD_W - SPRITE_SIZE - 160);
+                    sy = 80 + Math.random() * (WORLD_H - SPRITE_SIZE - 160);
+                    sageAttempts++;
+                } while (!isWalkable(sx, sy) && sageAttempts < 500);
+                if (isWalkable(sx, sy)) {
+                    sageNPC = {
+                        x: sx, y: sy,
+                        stage: currentStageIndex,
+                        wisdom: sageWisdoms[Math.floor(Math.random() * sageWisdoms.length)],
+                        interacted: false
+                    };
+                } else {
+                    sageNPC = null;
+                }
+            } else {
+                sageNPC = null;
+            }
+
+            // ==== 知恵の欠片 スポーン (5%確率) ====
+            if (Math.random() < 0.05) {
+                let wx, wy;
+                let wAttempts = 0;
+                do {
+                    wx = 80 + Math.random() * (WORLD_W - SPRITE_SIZE - 160);
+                    wy = 80 + Math.random() * (WORLD_H - SPRITE_SIZE - 160);
+                    wAttempts++;
+                } while (!isWalkable(wx, wy) && wAttempts < 500);
+                if (isWalkable(wx, wy)) {
+                    items.push({ type: 'wisdom', x: wx, y: wy, sprite: WISDOM_ORB_SPRITE });
+                }
+            }
+
             saveGame();
             if (!dailyChallengeActive || currentStageIndex !== 0) {
                 centerMessage = `STAGE ${currentStageIndex + 1}`;
@@ -1304,6 +1354,7 @@ const MEDITATION_DATA = [
                     enemies = [];
                     projectiles = [];
                     items = [];
+                    sageNPC = null;
                     if (savedItemsForContinue) {
                         hasLongSword = savedItemsForContinue.hasLongSword;
                         hasBow = savedItemsForContinue.hasBow;
@@ -1325,6 +1376,92 @@ const MEDITATION_DATA = [
                 } else if (e.code === 'Escape') {
                     gameState = 'title';
                 }
+                return;
+            }
+
+            // アイテム合成メニュー 'C'キー
+            if (e.code === 'KeyC' && gameState === 'playing' && !isGameOver && !meditationPending) {
+                if (synthesisMenuOpen) {
+                    synthesisMenuOpen = false;
+                    synthesisPhase = 0;
+                    synthesisCursor = 0;
+                    synthesisSelected = [];
+                    synthesisResult = null;
+                } else {
+                    synthesisMenuOpen = true;
+                    synthesisPhase = 0;
+                    synthesisCursor = 0;
+                    synthesisSelected = [];
+                    synthesisResult = null;
+                }
+                e.preventDefault();
+                return;
+            }
+
+            // 合成メニュー操作
+            if (synthesisMenuOpen) {
+                const availableItems = [];
+                if (hasLongSword) availableItems.push('sword');
+                if (hasBow) availableItems.push('bow');
+                if (hasShield) availableItems.push('shield');
+                if (hasBoots) availableItems.push('boots');
+                availableItems.push('potion');
+                availableItems.push('key');
+
+                if (synthesisPhase === 0 || synthesisPhase === 1) {
+                    if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                        synthesisCursor = Math.max(0, synthesisCursor - 1);
+                    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                        synthesisCursor = Math.min(availableItems.length - 1, synthesisCursor + 1);
+                    } else if (e.code === 'Enter' || e.code === 'Space') {
+                        if (synthesisPhase === 0) {
+                            synthesisSelected = [availableItems[synthesisCursor]];
+                            synthesisPhase = 1;
+                            synthesisCursor = 0;
+                        } else {
+                            synthesisSelected.push(availableItems[synthesisCursor]);
+                            const [a, b] = synthesisSelected;
+                            const recipe = SYNTHESIS_RECIPES.find(r =>
+                                (r.needs[0] === a && r.needs[1] === b) ||
+                                (r.needs[0] === b && r.needs[1] === a)
+                            );
+                            if (recipe) {
+                                synthesisResult = recipe.result;
+                                synthesisPhase = 2;
+                            } else {
+                                synthesisResult = { name: '失敗', desc: '合成できない組み合わせ', effect: null };
+                                synthesisPhase = 2;
+                            }
+                        }
+                    } else if (e.code === 'Escape') {
+                        if (synthesisPhase === 1) {
+                            synthesisPhase = 0;
+                            synthesisSelected = [];
+                            synthesisCursor = 0;
+                        } else {
+                            synthesisMenuOpen = false;
+                        }
+                    }
+                } else if (synthesisPhase === 2) {
+                    if (e.code === 'Enter' || e.code === 'Space') {
+                        if (synthesisResult && synthesisResult.effect) {
+                            synthesisResult.effect();
+                            applySynthesisBonuses();
+                        }
+                        synthesisMenuOpen = false;
+                        synthesisPhase = 0;
+                        synthesisCursor = 0;
+                        synthesisSelected = [];
+                        synthesisResult = null;
+                    } else if (e.code === 'Escape') {
+                        synthesisMenuOpen = false;
+                        synthesisPhase = 0;
+                        synthesisCursor = 0;
+                        synthesisSelected = [];
+                        synthesisResult = null;
+                    }
+                }
+                e.preventDefault();
                 return;
             }
 
@@ -1549,6 +1686,14 @@ const MEDITATION_DATA = [
         let pScore = 0;
         let playerLevel = 1, playerXP = 0, playerATK = 1.0;
 
+        // ==== アイテム合成状態変数 ====
+        let synthesisMenuOpen = false;
+        let synthesisCursor = 0;
+        let synthesisPhase = 0; // 0=select first, 1=select second, 2=result
+        let synthesisSelected = []; // [itemName, itemName]
+        let synthesisResult = null; // { name, desc, effect }
+        let synthesisBonuses = { atkMult: 1.0, hpBonus: 0, spdBonus: 0.0, xpBonus: 0.0, arrowPower: 1.0 };
+
         // ==== デイリーチャレンジ状態変数 ====
         let dailyChallengeActive = false;
         let currentDailyChallenge = null;
@@ -1621,6 +1766,42 @@ const MEDITATION_DATA = [
 
         const XP_TABLE = [0, 30, 80, 160, 280, 440, 650, 920, 1260, 1680,
                            2200, 2820, 3560, 4440, 5480, 6700, 8120, 9760, 11650, 13800];
+
+        const SYNTHESIS_RECIPES = [
+            { needs: ['sword', 'sword'],   result: { name: '双剣の魂',   desc: 'ATK +30%',      effect: () => { synthesisBonuses.atkMult += 0.30; } } },
+            { needs: ['sword', 'bow'],     result: { name: '弓剣士',     desc: 'ATK +15% 矢力+20%', effect: () => { synthesisBonuses.atkMult += 0.15; synthesisBonuses.arrowPower += 0.20; } } },
+            { needs: ['sword', 'shield'],  result: { name: '盾剣士',     desc: 'ATK+10% HP+2',  effect: () => { synthesisBonuses.atkMult += 0.10; synthesisBonuses.hpBonus += 2; } } },
+            { needs: ['sword', 'boots'],   result: { name: '疾風剣士',   desc: 'ATK+10% SPD+0.3', effect: () => { synthesisBonuses.atkMult += 0.10; synthesisBonuses.spdBonus += 0.30; } } },
+            { needs: ['bow', 'bow'],       result: { name: '双弓の達人', desc: '矢力 +50%',     effect: () => { synthesisBonuses.arrowPower += 0.50; } } },
+            { needs: ['bow', 'shield'],    result: { name: '守りの弓手', desc: 'HP+2 矢力+15%', effect: () => { synthesisBonuses.hpBonus += 2; synthesisBonuses.arrowPower += 0.15; } } },
+            { needs: ['bow', 'boots'],     result: { name: '機動弓手',   desc: 'SPD+0.4 矢力+20%', effect: () => { synthesisBonuses.spdBonus += 0.40; synthesisBonuses.arrowPower += 0.20; } } },
+            { needs: ['shield', 'shield'], result: { name: '鉄壁',       desc: 'HP +4',         effect: () => { synthesisBonuses.hpBonus += 4; } } },
+            { needs: ['shield', 'boots'],  result: { name: '機動防衛',   desc: 'HP+2 SPD+0.3',  effect: () => { synthesisBonuses.hpBonus += 2; synthesisBonuses.spdBonus += 0.30; } } },
+            { needs: ['boots', 'boots'],   result: { name: '神速',       desc: 'SPD +0.6',      effect: () => { synthesisBonuses.spdBonus += 0.60; } } },
+            { needs: ['sword', 'potion'],  result: { name: '毒剣',       desc: 'ATK+20% 毒付与', effect: () => { synthesisBonuses.atkMult += 0.20; } } },
+            { needs: ['shield', 'potion'], result: { name: '回復の盾',   desc: 'HP+3 XP+10%',   effect: () => { synthesisBonuses.hpBonus += 3; synthesisBonuses.xpBonus += 0.10; } } },
+            { needs: ['bow', 'potion'],    result: { name: '癒しの矢',   desc: 'HP+1 矢力+25%', effect: () => { synthesisBonuses.hpBonus += 1; synthesisBonuses.arrowPower += 0.25; } } },
+            { needs: ['boots', 'potion'],  result: { name: '疾風の靴',   desc: 'SPD+0.5 HP+1',  effect: () => { synthesisBonuses.spdBonus += 0.50; synthesisBonuses.hpBonus += 1; } } },
+            { needs: ['sword', 'key'],     result: { name: '封印の剣',   desc: 'ATK+25%',       effect: () => { synthesisBonuses.atkMult += 0.25; } } },
+            { needs: ['shield', 'key'],    result: { name: '聖域の盾',   desc: 'HP+3',          effect: () => { synthesisBonuses.hpBonus += 3; } } },
+            { needs: ['bow', 'key'],       result: { name: '秘密の弓',   desc: '矢力+40%',      effect: () => { synthesisBonuses.arrowPower += 0.40; } } },
+            { needs: ['boots', 'key'],     result: { name: '転移の靴',   desc: 'SPD+0.5',       effect: () => { synthesisBonuses.spdBonus += 0.50; } } },
+            { needs: ['potion', 'potion'], result: { name: '万能薬',     desc: 'HP全回復+XP20%',effect: () => { player.hp = player.maxHp; synthesisBonuses.xpBonus += 0.20; } } },
+            { needs: ['potion', 'key'],    result: { name: '霊薬',       desc: 'HP+2 ATK+10% XP+15%', effect: () => { synthesisBonuses.hpBonus += 2; synthesisBonuses.atkMult += 0.10; synthesisBonuses.xpBonus += 0.15; } } },
+        ];
+
+        function applySynthesisBonuses() {
+            playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult;
+            if (synthesisBonuses.hpBonus > 0) {
+                player.maxHp += synthesisBonuses.hpBonus;
+                player.hp = Math.min(player.hp + synthesisBonuses.hpBonus, player.maxHp);
+                synthesisBonuses.hpBonus = 0;
+            }
+            if (synthesisBonuses.spdBonus > 0) {
+                player.speed = Math.min(3.5, player.speed + synthesisBonuses.spdBonus);
+                synthesisBonuses.spdBonus = 0;
+            }
+        }
 
         function checkAchievements() {
             const s = achievementStats;
@@ -1695,7 +1876,7 @@ const MEDITATION_DATA = [
 
         function gainXP(amt) {
             if (playerLevel >= 20) return;
-            playerXP += Math.floor(amt * (1.0 + meditationXpBonus) * dailyChallengeXpMult);
+            playerXP += Math.floor(amt * (1.0 + meditationXpBonus) * dailyChallengeXpMult * (1.0 + synthesisBonuses.xpBonus));
             while (playerLevel < 20 && playerXP >= XP_TABLE[playerLevel]) {
                 playerLevel++;
                 achievementStats.maxLevel = Math.max(achievementStats.maxLevel, playerLevel);
@@ -2160,6 +2341,30 @@ const MEDITATION_DATA = [
             [0, 0, 0, 0, 0, 0, 0, 0]
         ];
 
+        // 賢者NPC スプライト (白ローブ=7, 肌=23, 杖=15)
+        const SAGE_SPRITE = [
+            [0,0,0,7,7,7,0,0],
+            [0,0,7,23,23,7,0,0],
+            [0,0,0,7,7,7,0,0],
+            [0,7,7,7,7,7,7,0],
+            [0,7,15,7,7,7,7,0],
+            [15,7,7,7,7,7,7,0],
+            [0,7,7,0,0,7,7,0],
+            [0,7,7,0,0,7,7,0],
+        ];
+
+        // 知恵の欠片 (光る宝珠)
+        const WISDOM_ORB_SPRITE = [
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,15,15,0,0,0],
+            [0,0,15,7,7,15,0,0],
+            [0,15,7,7,15,7,15,0],
+            [0,15,7,15,7,7,15,0],
+            [0,0,15,7,7,15,0,0],
+            [0,0,0,15,15,0,0,0],
+            [0,0,0,0,0,0,0,0],
+        ];
+
         const ARROW_SPRITE = [
             [0, 0, 0, 1, 1, 0, 0, 0],
             [0, 0, 1, 9, 9, 1, 0, 0],
@@ -2237,6 +2442,9 @@ const MEDITATION_DATA = [
             }
             uiDiv.innerHTML = htmlText;
         }
+        // ==== 賢者NPC ====
+        let sageNPC = null; // null or { x, y, stage, wisdom, interacted }
+
         let isPaused = false;
         let pauseMenuCursor = 0; // 0=再開, 1=設定, 2=実績, 3=タイトルへ
         let pauseInSettings = false;
@@ -2474,6 +2682,7 @@ const MEDITATION_DATA = [
                         enemies = [];
                         projectiles = [];
                         items = [];
+                        sageNPC = null;
                         if (savedItemsForContinue) {
                             hasLongSword = savedItemsForContinue.hasLongSword;
                             hasBow = savedItemsForContinue.hasBow;
@@ -2678,6 +2887,16 @@ const MEDITATION_DATA = [
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
                 if (Math.hypot(player.x - item.x, player.y - item.y) < SPRITE_SIZE) {
+                    if (item.type === 'wisdom') {
+                        gainXP(30);
+                        centerMessage = '知恵の欠片を拾った';
+                        msgTimer = 90;
+                        playSoundEffect('stageclear');
+                        achievementStats.meditationCount++;
+                        checkAchievements();
+                        items.splice(i, 1);
+                        continue;
+                    }
                     if (item.isBox) {
                         playSoundEffect('stageclear');
                         // ステージ3（index=2）は玉を飛ばす敵が初出のため、必ずシールドを付与
@@ -2708,6 +2927,23 @@ const MEDITATION_DATA = [
                         playSoundEffect('stageclear');
                     }
                     items.splice(i, 1);
+                }
+            }
+
+            // ==== 賢者NPC インタラクション ====
+            if (sageNPC && sageNPC.stage === currentStageIndex && !sageNPC.interacted) {
+                if (Math.hypot(player.x + SPRITE_SIZE/2 - (sageNPC.x + SPRITE_SIZE/2),
+                               player.y + SPRITE_SIZE/2 - (sageNPC.y + SPRITE_SIZE/2)) < 60) {
+                    sageNPC.interacted = true;
+                    let wisdomMsg = sageNPC.wisdom;
+                    if (currentStageIndex === 8) {
+                        wisdomMsg += '\n「隠しステージへの道は...闇の中に」';
+                    }
+                    centerMessage = wisdomMsg;
+                    msgTimer = 180;
+                    gainXP(50);
+                    playSoundEffect('stageclear');
+                    spawnParticles(sageNPC.x + SPRITE_SIZE/2, sageNPC.y + SPRITE_SIZE/2, '#AADDFF', 20, 4);
                 }
             }
 
@@ -3860,6 +4096,21 @@ const MEDITATION_DATA = [
             // アイテム描画（カメラオフセット適用）
             for (let item of items) {
                 const wobble = Math.sin(Date.now() / 200) * 0.15;
+                if (item.type === 'wisdom') {
+                    // 知恵の欠片: 青い光のグロー
+                    const wix = item.x - camX + SPRITE_SIZE/2;
+                    const wiy = item.y - camY + SPRITE_SIZE/2;
+                    const wGlow = ctx.createRadialGradient(wix, wiy, 2, wix, wiy, 28);
+                    const wAlpha = 0.3 + 0.2 * Math.sin(Date.now() / 300);
+                    wGlow.addColorStop(0, `rgba(100,200,255,${wAlpha + 0.2})`);
+                    wGlow.addColorStop(1, 'rgba(100,200,255,0)');
+                    ctx.save();
+                    ctx.fillStyle = wGlow;
+                    ctx.beginPath();
+                    ctx.arc(wix, wiy, 28, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
                 drawShape(item.sprite, item.x - camX, item.y - camY, wobble, PIXEL_SCALE);
             }
 
@@ -3939,6 +4190,37 @@ const MEDITATION_DATA = [
                 ctx.arc(cx, cy, arcRadius * 0.85, sweepStart, sweepEnd);
                 ctx.stroke();
                 ctx.restore();
+            }
+
+            // ==== 賢者NPC 描画 ====
+            if (sageNPC && sageNPC.stage === currentStageIndex) {
+                const sx = sageNPC.x - camX;
+                const sy = sageNPC.y - camY;
+                if (sx > -SPRITE_SIZE && sx < VIEW_W + SPRITE_SIZE && sy > -SPRITE_SIZE && sy < VIEW_H + SPRITE_SIZE) {
+                    // 白いグロー円
+                    const sageGlow = ctx.createRadialGradient(sx + SPRITE_SIZE/2, sy + SPRITE_SIZE/2, 4,
+                                                              sx + SPRITE_SIZE/2, sy + SPRITE_SIZE/2, 36);
+                    sageGlow.addColorStop(0, 'rgba(180,220,255,0.35)');
+                    sageGlow.addColorStop(1, 'rgba(180,220,255,0)');
+                    ctx.save();
+                    ctx.fillStyle = sageGlow;
+                    ctx.beginPath();
+                    ctx.arc(sx + SPRITE_SIZE/2, sy + SPRITE_SIZE/2, 36, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                    // 賢者スプライト (8x8 * PIXEL_SCALE/2 = 24px)
+                    drawShape(SAGE_SPRITE, sx + SPRITE_SIZE/4, sy + SPRITE_SIZE/4, 0, PIXEL_SCALE/2);
+                    // 頭上に ? か ✓
+                    const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 400);
+                    ctx.save();
+                    ctx.globalAlpha = sageNPC.interacted ? 0.9 : pulse;
+                    ctx.font = 'bold 18px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = sageNPC.interacted ? '#88FF88' : '#EFD02E';
+                    ctx.fillText(sageNPC.interacted ? '✓' : '?', sx + SPRITE_SIZE/2, sy - 6);
+                    ctx.textAlign = 'left';
+                    ctx.restore();
+                }
             }
 
             // アンビエントパーティクル描画
