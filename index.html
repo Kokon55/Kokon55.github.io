@@ -434,6 +434,68 @@
     // 20: 終焉の地 — 真っ黒、右風、暗い、虚無
     { bg:'#060000', tint:'rgba(120,0,0,0.55)',   speedMult:1.10, windX:0.5,  windY:0,   dark:true,  darkR:95,  ambient:'void'      },
 ];
+const MEDITATION_DATA = [
+    [{ text:'我思う、ゆえに我あり', philosopher:'Descartes', effect:'atk', val:0.10, label:'攻撃力 +10%' },
+     { text:'存在は本質に先立つ', philosopher:'Sartre', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'無からの創造', philosopher:'Ex nihilo', effect:'xp', val:0.15, label:'XP獲得 +15%' }],
+    [{ text:'徳は知なり', philosopher:'Socrates', effect:'atk', val:0.10, label:'攻撃力 +10%' },
+     { text:'汝自身を知れ', philosopher:'Socrates', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'驚きは哲学の始まり', philosopher:'Aristotle', effect:'spd', val:0.15, label:'移動速度 +10%' }],
+    [{ text:'万物は流転する', philosopher:'Heraclitus', effect:'xp', val:0.15, label:'XP獲得 +15%' },
+     { text:'変化だけが不変だ', philosopher:'Heraclitus', effect:'spd', val:0.15, label:'移動速度 +10%' },
+     { text:'無常を受け入れよ', philosopher:'仏陀', effect:'hp', val:2, label:'最大HP +2' }],
+    [{ text:'力への意志', philosopher:'Nietzsche', effect:'atk', val:0.15, label:'攻撃力 +15%' },
+     { text:'苦しみこそ強さの源', philosopher:'Nietzsche', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'岩山も忍耐に屈する', philosopher:'Marcus Aurelius', effect:'xp', val:0.20, label:'XP獲得 +20%' }],
+    [{ text:'孤独は魂の学校だ', philosopher:'Schopenhauer', effect:'atk', val:0.10, label:'攻撃力 +10%' },
+     { text:'沈黙の中に真実がある', philosopher:'Pascal', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'自己を知る者は宇宙を知る', philosopher:'老子', effect:'spd', val:0.20, label:'移動速度 +13%' }],
+    [{ text:'欲望は苦しみの根源', philosopher:'仏陀', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'虚無こそ全てを含む', philosopher:'老子', effect:'xp', val:0.20, label:'XP獲得 +20%' },
+     { text:'渇望なき者に自由あり', philosopher:'Epictetus', effect:'spd', val:0.20, label:'移動速度 +13%' }],
+    [{ text:'死は人生に意味を与える', philosopher:'Heidegger', effect:'atk', val:0.15, label:'攻撃力 +15%' },
+     { text:'記憶こそが自己同一性だ', philosopher:'Locke', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'廃墟から文明は生まれる', philosopher:'Vico', effect:'xp', val:0.25, label:'XP獲得 +25%' }],
+    [{ text:'自由とは選択の重みだ', philosopher:'Sartre', effect:'atk', val:0.10, label:'攻撃力 +10%' },
+     { text:'橋は両岸を知っている', philosopher:'Zen', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'選択が人を作る', philosopher:'Sartre', effect:'spd', val:0.20, label:'移動速度 +13%' }],
+    [{ text:'闇の中で光の意味を知る', philosopher:'Jung', effect:'atk', val:0.15, label:'攻撃力 +15%' },
+     { text:'無意識が意識を支配する', philosopher:'Freud', effect:'xp', val:0.20, label:'XP獲得 +20%' },
+     { text:'内省なき人生は半分だ', philosopher:'Socrates', effect:'hp', val:2, label:'最大HP +2' }],
+    [{ text:'勇気とは恐怖を乗り越えること', philosopher:'Aristotle', effect:'atk', val:0.20, label:'攻撃力 +20%' },
+     { text:'深淵を覗く者は深淵に覗かれる', philosopher:'Nietzsche', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'恐怖の先に真実がある', philosopher:'Kierkegaard', effect:'spd', val:0.15, label:'移動速度 +10%' }],
+    [{ text:'権力は腐敗する', philosopher:'Acton', effect:'xp', val:0.25, label:'XP獲得 +25%' },
+     { text:'法は弱者のためにある', philosopher:'Rousseau', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'真の強さは制御にある', philosopher:'Plato', effect:'atk', val:0.12, label:'攻撃力 +12%' }],
+    [{ text:'時間のみが絶対の真実だ', philosopher:'Bergson', effect:'xp', val:0.20, label:'XP獲得 +20%' },
+     { text:'過去が現在を形作る', philosopher:'Hegel', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'今この瞬間に生きよ', philosopher:'禅', effect:'spd', val:0.25, label:'移動速度 +17%' }],
+    [{ text:'人間は超克されるべき存在だ', philosopher:'Nietzsche', effect:'atk', val:0.20, label:'攻撃力 +20%' },
+     { text:'超越は内なるものにある', philosopher:'Plotinus', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'限界は幻想に過ぎない', philosopher:'Spinoza', effect:'spd', val:0.25, label:'移動速度 +17%' }],
+    [{ text:'無意識が真の自己だ', philosopher:'Jung', effect:'atk', val:0.15, label:'攻撃力 +15%' },
+     { text:'深みに隠された宝を掘れ', philosopher:'Heraclitus', effect:'xp', val:0.25, label:'XP獲得 +25%' },
+     { text:'深淵と向き合う者だけが昇る', philosopher:'Nietzsche', effect:'hp', val:2, label:'最大HP +2' }],
+    [{ text:'情熱なき理性は死んでいる', philosopher:'Pascal', effect:'atk', val:0.20, label:'攻撃力 +20%' },
+     { text:'破壊の後に創造が来る', philosopher:'Schumpeter', effect:'hp', val:1, label:'最大HP +1' },
+     { text:'炎は魂を浄化する', philosopher:'Heraclitus', effect:'spd', val:0.20, label:'移動速度 +13%' }],
+    [{ text:'徳とはそれ自体が報酬だ', philosopher:'Aristotle', effect:'atk', val:0.15, label:'攻撃力 +15%' },
+     { text:'試練なき英雄はいない', philosopher:'Campbell', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'勇気は筋肉のように鍛えられる', philosopher:'Aristotle', effect:'xp', val:0.25, label:'XP獲得 +25%' }],
+    [{ text:'悪は善の欠如に過ぎない', philosopher:'Augustine', effect:'atk', val:0.15, label:'攻撃力 +15%' },
+     { text:'誘惑は人格を試す鏡だ', philosopher:'Kant', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'影は自己の一部だ', philosopher:'Jung', effect:'spd', val:0.20, label:'移動速度 +13%' }],
+    [{ text:'崩れると知りながら積め', philosopher:'Camus', effect:'atk', val:0.20, label:'攻撃力 +20%' },
+     { text:'過程こそが目標だ', philosopher:'Dewey', effect:'xp', val:0.25, label:'XP獲得 +25%' },
+     { text:'エントロピーは避けられない', philosopher:'Thermodynamics', effect:'spd', val:0.25, label:'移動速度 +17%' }],
+    [{ text:'神は死んだ、では今何をすべきか', philosopher:'Nietzsche', effect:'atk', val:0.20, label:'攻撃力 +20%' },
+     { text:'神性は内なるものにある', philosopher:'Meister Eckhart', effect:'hp', val:2, label:'最大HP +2' },
+     { text:'全てを問え、何も当然と思うな', philosopher:'Socrates', effect:'xp', val:0.30, label:'XP獲得 +30%' }],
+    [{ text:'死を知る者のみが生を知る', philosopher:'Heidegger', effect:'atk', val:0.25, label:'攻撃力 +25%' },
+     { text:'永劫回帰——全ては繰り返す', philosopher:'Nietzsche', effect:'hp', val:3, label:'最大HP +3' },
+     { text:'死から再生へ——これが真理だ', philosopher:'仏教', effect:'xp', val:0.30, label:'XP獲得 +30%' }],
+];
         const STAGE_QUOTES = [
             '旅は始まった。存在するとはいかなることか？',
             '森の中で迷う者は、やがて自己の内面に迷い込む。',
@@ -906,6 +968,20 @@
 
             if (narrativeTimer > 30) { narrativeTimer = 30; return; }
 
+            // 思索選択画面の操作
+            if (meditationPending) {
+                const opts = MEDITATION_DATA[meditationPendingStage] || MEDITATION_DATA[0];
+                if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                    meditationCursor = Math.max(0, meditationCursor - 1);
+                } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                    meditationCursor = Math.min(opts.length - 1, meditationCursor + 1);
+                } else if (e.code === 'Enter' || e.code === 'Space') {
+                    applyMeditation(opts[meditationCursor]);
+                }
+                e.preventDefault();
+                return;
+            }
+
             if (gameState === 'credits') {
                 gameState = 'title';
                 return;
@@ -1162,6 +1238,14 @@
         let hasStarted = _hadRestart;
         let gameState = _hadRestart ? 'playing' : 'title'; // 'title', 'stageSelect', 'playing'
         let titleSelectedOption = 0; // 0=START, 1=CONTINUE
+        let meditationPending = false;
+        let meditationCursor = 0;
+        let meditationChoices = []; // 選択した思索の記録
+        let meditationAtkBonus = 0.0;  // 累積ATK倍率加算
+        let meditationHpBonus = 0;     // 累積HP加算
+        let meditationXpBonus = 0.0;   // 累積XP倍率加算
+        let meditationSpdBonus = 0.0;  // 累積速度加算
+        let meditationPendingStage = 0;
         let difficultyLevel = 1; // 0=EASY, 1=NORMAL, 2=HARD
         const DIFF_NAMES = ['EASY', 'NORMAL', 'HARD'];
         const DIFF_ENEMY_MULT = [0.6, 1.0, 1.4];  // 敵HP倍率
@@ -1185,9 +1269,40 @@
         const XP_TABLE = [0, 30, 80, 160, 280, 440, 650, 920, 1260, 1680,
                            2200, 2820, 3560, 4440, 5480, 6700, 8120, 9760, 11650, 13800];
 
+        function applyMeditation(choice) {
+            meditationChoices.push({ stage: meditationPendingStage, text: choice.text, label: choice.label });
+            if (choice.effect === 'atk') {
+                meditationAtkBonus += choice.val;
+                playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus);
+            } else if (choice.effect === 'hp') {
+                meditationHpBonus += choice.val;
+                player.maxHp += choice.val;
+                player.hp = Math.min(player.maxHp, player.hp + choice.val);
+            } else if (choice.effect === 'xp') {
+                meditationXpBonus += choice.val;
+            } else if (choice.effect === 'spd') {
+                meditationSpdBonus += choice.val;
+                if (!hasBoots) player.speed = Math.min(3.0, 1.44 + meditationSpdBonus);
+            }
+            meditationPending = false;
+            centerMessage = `思索: ${choice.text}`;
+            msgTimer = 90;
+            playSoundEffect('stageclear');
+            if (meditationPendingStage >= 19) {
+                isStageAdvancing = true;
+                setTimeout(() => {
+                    centerMessage = "GAME CLEAR! — 哲学の旅が終わる";
+                    msgTimer = 999;
+                }, 800);
+            } else {
+                isStageAdvancing = true;
+                setTimeout(advanceStage, 1200);
+            }
+        }
+
         function gainXP(amt) {
             if (playerLevel >= 20) return;
-            playerXP += amt;
+            playerXP += Math.floor(amt * (1.0 + meditationXpBonus));
             while (playerLevel < 20 && playerXP >= XP_TABLE[playerLevel]) {
                 playerLevel++;
                 player.maxHp = 5 + Math.floor((playerLevel - 1) * 0.5);
@@ -1403,7 +1518,10 @@
                     stage: currentStageIndex, maxStage: maxReachedStage,
                     level: playerLevel, xp: playerXP, atk: playerATK,
                     score: pScore, maxHp: player.maxHp,
-                    sword: hasLongSword, bow: hasBow, shield: hasShield, boots: hasBoots
+                    sword: hasLongSword, bow: hasBow, shield: hasShield, boots: hasBoots,
+                    mAtk: meditationAtkBonus, mHp: meditationHpBonus,
+                    mXp: meditationXpBonus, mSpd: meditationSpdBonus,
+                    mCount: meditationChoices.length
                 }));
             } catch(e) {}
         }
@@ -1424,6 +1542,11 @@
                 hasBow = !!d.bow;
                 hasShield = !!d.shield;
                 hasBoots = !!d.boots;
+                meditationAtkBonus = d.mAtk || 0;
+                meditationHpBonus  = d.mHp  || 0;
+                meditationXpBonus  = d.mXp  || 0;
+                meditationSpdBonus = d.mSpd || 0;
+                if (meditationAtkBonus > 0) playerATK = (1.0 + (playerLevel-1)*0.12) * (1.0 + meditationAtkBonus);
                 mapData = STAGES[Math.min(currentStageIndex, STAGES.length - 1)];
                 return true;
             } catch(e) { return false; }
@@ -1975,6 +2098,7 @@
 
             if (!hasStarted) return;
             if (narrativeTimer > 0) { narrativeTimer--; return; }
+            if (meditationPending) return;
             if (isPaused) return; // ポーズ中は処理を止める
             if (isGameOver) {
                 if (gameOverTimer > 0) {
@@ -2178,16 +2302,12 @@
                                 enemies.splice(j, 1);
 
                                 if (wasBoss && !isStageAdvancing) {
-                                    isStageAdvancing = true;
                                     bossActive = false;
-                                    if (currentStageIndex >= 19) {
-                                        centerMessage = "GAME CLEAR! — 哲学の旅が終わる";
-                                        msgTimer = 999;
-                                    } else {
-                                        setTimeout(advanceStage, 1500);
-                                        centerMessage = "STAGE CLEAR!";
-                                        msgTimer = 120;
-                                    }
+                                    meditationPendingStage = currentStageIndex;
+                                    meditationPending = true;
+                                    meditationCursor = 0;
+                                    centerMessage = "思索せよ...";
+                                    msgTimer = 60;
                                 } else if (!wasBoss && !isStageAdvancing) {
                                     spawnEnemies();
                                 }
@@ -2355,16 +2475,12 @@
                             enemies.splice(i, 1);
 
                             if (wasBoss2 && !isStageAdvancing) {
-                                isStageAdvancing = true;
                                 bossActive = false;
-                                if (currentStageIndex >= 19) {
-                                    centerMessage = "GAME CLEAR! — 哲学の旅が終わる";
-                                    msgTimer = 999;
-                                } else {
-                                    setTimeout(advanceStage, 1500);
-                                    centerMessage = "STAGE CLEAR!";
-                                    msgTimer = 120;
-                                }
+                                meditationPendingStage = currentStageIndex;
+                                meditationPending = true;
+                                meditationCursor = 0;
+                                centerMessage = "思索せよ...";
+                                msgTimer = 60;
                             } else if (!wasBoss2 && !isStageAdvancing) {
                                 spawnEnemies();
                             }
@@ -2538,6 +2654,61 @@
             ctx.restore();
         }
 
+        function drawMeditationOverlay() {
+            if (!meditationPending) return;
+            const opts = MEDITATION_DATA[meditationPendingStage] || MEDITATION_DATA[0];
+            const stageName = STAGE_NAMES[meditationPendingStage] || '';
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.90)';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#EFD02E';
+            ctx.font = 'bold 15px monospace';
+            ctx.fillText('— 思索の時 —', VIEW_W / 2, 52);
+            ctx.fillStyle = '#AADDFF';
+            ctx.font = '20px monospace';
+            ctx.fillText(stageName, VIEW_W / 2, 82);
+            ctx.fillStyle = '#666666';
+            ctx.font = '13px monospace';
+            ctx.fillText(`思索の記録: ${meditationChoices.length} / 20`, VIEW_W / 2, 108);
+            const boxW = 560, boxH = 78;
+            opts.forEach((opt, i) => {
+                const sel = meditationCursor === i;
+                const bx = VIEW_W / 2 - boxW / 2;
+                const by = 130 + i * (boxH + 12);
+                ctx.fillStyle = sel ? 'rgba(239,208,46,0.13)' : 'rgba(255,255,255,0.04)';
+                ctx.fillRect(bx, by, boxW, boxH);
+                ctx.strokeStyle = sel ? '#EFD02E' : '#333333';
+                ctx.lineWidth = sel ? 2 : 1;
+                ctx.strokeRect(bx, by, boxW, boxH);
+                const badgeColor = opt.effect === 'atk' ? '#FF6644' :
+                                   opt.effect === 'hp'  ? '#44FF88' :
+                                   opt.effect === 'xp'  ? '#AADDFF' : '#FFDD44';
+                ctx.fillStyle = badgeColor;
+                ctx.font = 'bold 11px monospace';
+                ctx.textAlign = 'right';
+                ctx.fillText(`[ ${opt.label} ]`, bx + boxW - 12, by + 22);
+                ctx.fillStyle = sel ? '#FFFFFF' : '#CCCCCC';
+                ctx.font = (sel ? 'bold ' : '') + '16px monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText((sel ? '▶ ' : '  ') + opt.text, bx + 14, by + 30);
+                ctx.fillStyle = '#777777';
+                ctx.font = 'italic 12px monospace';
+                ctx.fillText(`— ${opt.philosopher}`, bx + 26, by + 56);
+            });
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#444444';
+            ctx.font = '13px monospace';
+            ctx.fillText('↑↓ 選択   Enter / Space 決定', VIEW_W / 2, VIEW_H - 30);
+            if (meditationChoices.length > 0) {
+                ctx.fillStyle = '#3a3a3a';
+                ctx.font = '11px monospace';
+                const s = `累積: ATK+${(meditationAtkBonus*100).toFixed(0)}%  HP+${meditationHpBonus}  XP+${(meditationXpBonus*100).toFixed(0)}%  SPD+${(meditationSpdBonus*100).toFixed(0)}%`;
+                ctx.fillText(s, VIEW_W / 2, VIEW_H - 12);
+            }
+            ctx.restore();
+        }
+
         function drawNarrativeOverlay() {
             if (narrativeTimer <= 0) return;
             const alpha = narrativeTimer > 150 ? 1.0 :
@@ -2663,6 +2834,13 @@
             ctx.fillStyle = '#aaaaaa';
             ctx.font = '10px monospace';
             ctx.fillText(playerLevel >= 20 ? 'MAX' : `XP ${playerXP}/${xpMax}`, px + STATS_W / 2, 117);
+
+            if (meditationChoices.length > 0) {
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = '11px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`思索 ×${meditationChoices.length}`, px + STATS_W / 2, 122);
+            }
 
             // スコア
             ctx.fillStyle = '#aaddff';
@@ -3077,6 +3255,9 @@
 
             // ナラティブオーバーレイ
             drawNarrativeOverlay();
+
+            // 思索オーバーレイ
+            drawMeditationOverlay();
 
             // チュートリアル
             drawTutorial();
