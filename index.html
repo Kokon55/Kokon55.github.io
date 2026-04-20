@@ -403,8 +403,28 @@
             { id:'meditation10', label:'十の思索',           desc:'思索を10個積み上げた',          condition: s => s.meditationCount >= 10 },
             { id:'stage20',      label:'哲学の旅路の果て',   desc:'全20ステージをクリアした',      condition: s => s.stagesCleared >= 20 },
             { id:'nihilist',     label:'ニヒリスト',         desc:'全ボスを対話なしで撃破した',    condition: s => s.bossKills >= 20 && s.dialogueWins === 0 },
+            { id:'stage5',       label:'旅の始まり',       desc:'5ステージクリアした',          condition: s => s.stagesCleared >= 5 },
+            { id:'stage10',      label:'半ばの哲学者',      desc:'10ステージクリアした',         condition: s => s.stagesCleared >= 10 },
+            { id:'boss10',       label:'十の問い',          desc:'ボスを10体撃破した',           condition: s => s.bossKills >= 10 },
+            { id:'boss15',       label:'十五の試練',        desc:'ボスを15体撃破した',           condition: s => s.bossKills >= 15 },
+            { id:'dialogue5',    label:'対話の使者',        desc:'ボス対話に5回正解した',        condition: s => s.dialogueWins >= 5 },
+            { id:'dialogue10',   label:'弁証法の達人',      desc:'ボス対話に10回正解した',       condition: s => s.dialogueWins >= 10 },
+            { id:'combo5',       label:'五連の剣閃',        desc:'3段コンボを5回決めた',         condition: s => s.combo3Count >= 5 },
+            { id:'combo20',      label:'剣の求道者',        desc:'3段コンボを20回決めた',        condition: s => s.combo3Count >= 20 },
+            { id:'nodamage3',    label:'三度の無傷',        desc:'ノーダメクリアを3回達成した',  condition: s => s.nodamageClears >= 3 },
+            { id:'nodamage5',    label:'不死の哲学者',      desc:'ノーダメクリアを5回達成した',  condition: s => s.nodamageClears >= 5 },
+            { id:'lv15',         label:'熟達の境地',        desc:'レベル15に到達した',           condition: s => s.maxLevel >= 15 },
+            { id:'meditation5',  label:'五つの思索',        desc:'思索を5回積み上げた',          condition: s => s.meditationCount >= 5 },
+            { id:'meditation15', label:'十五の思索',        desc:'思索を15回積み上げた',         condition: s => s.meditationCount >= 15 },
+            { id:'meditation20', label:'満ちた思索者',      desc:'全20の思索を選択した',         condition: s => s.meditationCount >= 20 },
+            { id:'score1000',    label:'哲学の冒険者',      desc:'スコア1000点を達成した',       condition: s => s.maxScore >= 1000 },
+            { id:'score5000',    label:'哲学の英雄',        desc:'スコア5000点を達成した',       condition: s => s.maxScore >= 5000 },
+            { id:'synthesis1',   label:'初めての合成',      desc:'アイテム合成を1回行った',      condition: s => s.synthesisCount >= 1 },
+            { id:'synthesis5',   label:'錬金術師',          desc:'アイテム合成を5回行った',      condition: s => s.synthesisCount >= 5 },
+            { id:'daily1',       label:'今日の挑戦者',      desc:'デイリーチャレンジを達成した', condition: s => s.dailyCompleted >= 1 },
+            { id:'ng_plus2',     label:'二度の輪廻',        desc:'NG++を開始した',               condition: s => s.ngPlusLevel >= 2 },
         ];
-        let achievementStats = { bossKills:0, nodamageClears:0, dialogueWins:0, combo3Count:0, maxLevel:1, meditationCount:0, stagesCleared:0 };
+        let achievementStats = { bossKills:0, nodamageClears:0, dialogueWins:0, combo3Count:0, maxLevel:1, meditationCount:0, stagesCleared:0, maxScore:0, synthesisCount:0, dailyCompleted:0, ngPlusLevel:0 };
         let unlockedAchievements = new Set();
         let achievementPopup = null; // { label, timer }
 
@@ -1447,6 +1467,8 @@ const MEDITATION_DATA = [
                         if (synthesisResult && synthesisResult.effect) {
                             synthesisResult.effect();
                             applySynthesisBonuses();
+                            achievementStats.synthesisCount++;
+                            checkAchievements();
                         }
                         synthesisMenuOpen = false;
                         synthesisPhase = 0;
@@ -1805,6 +1827,7 @@ const MEDITATION_DATA = [
 
         function checkAchievements() {
             const s = achievementStats;
+            s.ngPlusLevel = ngPlusLevel;
             for (const ach of ACHIEVEMENTS) {
                 if (!unlockedAchievements.has(ach.id) && ach.condition(s)) {
                     unlockedAchievements.add(ach.id);
@@ -2757,6 +2780,7 @@ const MEDITATION_DATA = [
                 return;
             }
             if (isPaused) return; // ポーズ中は処理を止める
+            achievementStats.maxScore = Math.max(achievementStats.maxScore, pScore);
             if (isGameOver) {
                 if (gameOverTimer > 0) {
                     gameOverTimer--;
