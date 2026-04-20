@@ -486,9 +486,17 @@
         ];
 
         function getTodayChallenge() {
-            const today = new Date();
-            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
-            return DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
+            const day = new Date().getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+            const weeklyRules = [
+                { name: '日曜:探求の日',   desc: 'XP獲得2倍',               rule: 'double_xp',  param: 2.0 },  // Sun
+                { name: '月曜:禁欲の日',   desc: 'アイテム使用不可',         rule: 'no_weapon',  param: 0   },  // Mon
+                { name: '火曜:闘争の日',   desc: '敵スポーン2倍',            rule: 'fast_spawn', param: 2   },  // Tue
+                { name: '水曜:沈黙の日',   desc: '体力半分でスタート',       rule: 'half_hp',    param: 0.5 },  // Wed
+                { name: '木曜:鍛錬の日',   desc: 'ATK2倍・HP回復なし',       rule: 'atk_up',     param: 2.0 },  // Thu
+                { name: '金曜:闇の日',     desc: '全ステージ暗闇',           rule: 'all_dark',   param: 80  },  // Fri
+                { name: '土曜:嵐の日',     desc: '全ステージ強風',           rule: 'all_wind',   param: 1.5 },  // Sat
+            ];
+            return weeklyRules[day];
         }
 
         const STAGE_CONFIG = [
@@ -1749,6 +1757,8 @@ const MEDITATION_DATA = [
             try {
                 localStorage.setItem(DAILY_CHALLENGE_KEY, JSON.stringify({ date: dateStr, completed: true, score: score }));
             } catch(e) {}
+            achievementStats.dailyCompleted++;
+            checkAchievements();
         }
 
         function applyDailyChallenge(challenge) {
@@ -4602,15 +4612,20 @@ const MEDITATION_DATA = [
                 } else if (pauseInAchievements) {
                     ctx.fillStyle = '#EFD02E'; ctx.font = 'bold 22px monospace'; ctx.textAlign = 'center';
                     ctx.fillText('🏆 実績', VIEW_W/2, VIEW_H/2 - 220);
+                    const colCount = 2;
+                    const perCol = Math.ceil(ACHIEVEMENTS.length / colCount);
+                    const colX = [VIEW_W/2 - 250, VIEW_W/2 + 10];
                     ACHIEVEMENTS.forEach((ach, i) => {
+                        const col = Math.floor(i / perCol);
+                        const row = i % perCol;
                         const unlocked = unlockedAchievements.has(ach.id);
                         ctx.fillStyle = unlocked ? '#EFD02E' : '#444444';
-                        ctx.font = (unlocked ? 'bold ' : '') + '13px monospace';
+                        ctx.font = (unlocked ? 'bold ' : '') + '11px monospace';
                         ctx.textAlign = 'left';
-                        ctx.fillText((unlocked ? '✓ ' : '○ ') + ach.label + ' — ' + ach.desc, VIEW_W/2 - 240, VIEW_H/2 - 185 + i*28);
+                        ctx.fillText((unlocked ? '✓ ' : '○ ') + ach.label + ' — ' + ach.desc, colX[col], VIEW_H/2 - 195 + row * 26);
                     });
                     ctx.fillStyle = '#555'; ctx.font = '12px monospace'; ctx.textAlign = 'center';
-                    ctx.fillText('Esc 戻る', VIEW_W/2, VIEW_H/2 + 110);
+                    ctx.fillText('Esc 戻る', VIEW_W/2, VIEW_H/2 + 215);
                 }
                 ctx.textAlign = 'left';
             } else if (isPaused && !isGameOver) {
