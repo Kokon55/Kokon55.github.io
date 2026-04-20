@@ -392,6 +392,29 @@
             '神殿 — 神性と問い',        // 19
             '終焉の地 — 死と再生',      // 20
         ];
+        const BOSS_DIALOGUES = [
+            { q:'汝は本当に存在しているのか？', answers:['我思う、ゆえに我あり','存在など幻に過ぎない'], correct:0 },
+            { q:'知識とは何か？それは善か？', answers:['徳は知識なり','無知の知こそ真の知'],  correct:1 },
+            { q:'変化を止めることはできるか？', answers:['全ては流れ変化する','意志で流れは止められる'], correct:0 },
+            { q:'真の強さとはどこから来るか？', answers:['力への意志から','苦しみを越えた先にある'], correct:1 },
+            { q:'孤独は弱さか、それとも力か？', answers:['孤独は魂を強くする','孤独は人を滅ぼす'], correct:0 },
+            { q:'欲望を断てば自由になれるか？', answers:['欲望こそが生命力だ','欲望を断つと自由になる'], correct:1 },
+            { q:'滅びた文明に意味はあるか？', answers:['意味は後世が決める','滅んだ全ては無意味だ'], correct:0 },
+            { q:'本当の自由とは何か？', answers:['選択の重みを引き受けること','全ての制約からの解放'], correct:0 },
+            { q:'闇を知らずして光を語れるか？', answers:['闇なくして光は存在しない','光は闇に依存しない'], correct:0 },
+            { q:'恐怖に勝つ方法は何か？', answers:['恐怖と向き合い続けること','恐怖を完全に無視すること'], correct:0 },
+            { q:'権力を持つ者は何を失うか？', answers:['権力は必ず魂を腐らせる','権力者こそ最も自由だ'], correct:0 },
+            { q:'過去は変えられないが意味はあるか？', answers:['過去は現在の礎だ','過去を忘れることが前進だ'], correct:0 },
+            { q:'人間を超えた存在になれるか？', answers:['超克は自己との戦いにある','神のみが超越できる'], correct:0 },
+            { q:'深淵に潜る者は何を得るか？', answers:['自己の真実を得る','深淵には何もない'], correct:0 },
+            { q:'炎は何を象徴するか？', answers:['破壊と再生の両方だ','炎は純粋な破壊だ'], correct:0 },
+            { q:'勇気と無謀の違いは何か？', answers:['恐怖を知った上での行動が勇気','恐怖を感じないことが勇気'], correct:0 },
+            { q:'悪は存在するのか？', answers:['悪は善の欠如に過ぎない','悪は独立した力として存在する'], correct:0 },
+            { q:'崩れゆくものを積み上げる意味は？', answers:['過程そのものに意味がある','意味などない、それでも積め'], correct:0 },
+            { q:'神が死んだ後、何が残るか？', answers:['人間自身が意味を創造する','何も残らない、虚無のみだ'], correct:0 },
+            { q:'死を前にして何が本質か？', answers:['生きた証と愛した記憶','死は全てを無意味にする'], correct:0 },
+        ];
+
         const STAGE_CONFIG = [
     // 1: 草原 — 明るい緑、Normal
     { bg:'#5A8030', tint:null,                 speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'breeze'    },
@@ -676,6 +699,10 @@ const MEDITATION_DATA = [
             bossActive = false;
             player.hp = player.maxHp;
             enemies = [];
+            bossDialogueActive = false;
+            bossDialogueTriggered = false;
+            bossDebuffTarget = null;
+            bossDebuffTimer = 0;
             projectiles = [];
             items = [];
             graveMarkers = graveMarkers.filter(g => g.stage !== currentStageIndex);
@@ -982,6 +1009,27 @@ const MEDITATION_DATA = [
                 return;
             }
 
+            // ボス対話の操作
+            if (bossDialogueActive) {
+                const dlg = BOSS_DIALOGUES[currentStageIndex % BOSS_DIALOGUES.length];
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                    bossDialogueCursor = 0;
+                } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                    bossDialogueCursor = 1;
+                } else if (e.code === 'Enter' || e.code === 'Space') {
+                    bossDialogueActive = false;
+                    bossDialogueTimer = 0;
+                    const correct = bossDialogueCursor === dlg.correct;
+                    bossDebuffTarget = correct ? 'boss' : 'player';
+                    bossDebuffTimer = 480; // 8秒
+                    centerMessage = correct ? '正解！ボスが動揺した！' : '不正解…ボスが激昂した！';
+                    msgTimer = 120;
+                    screenShake = correct ? 12 : 8;
+                }
+                e.preventDefault();
+                return;
+            }
+
             if (gameState === 'credits') {
                 gameState = 'title';
                 return;
@@ -1242,6 +1290,12 @@ const MEDITATION_DATA = [
         let gameState = _hadRestart ? 'playing' : 'title'; // 'title', 'stageSelect', 'playing'
         let titleSelectedOption = 0; // 0=START, 1=CONTINUE
         let meditationPending = false;
+        let bossDialogueActive = false;
+        let bossDialogueCursor = 0;
+        let bossDialogueTimer = 0;    // 600 = 10秒
+        let bossDialogueTriggered = false; // このボス戦で既に発動したか
+        let bossDebuffTarget = null;  // 'boss' or 'player'
+        let bossDebuffTimer = 0;      // debuff持続フレーム数
         let meditationCursor = 0;
         let meditationChoices = []; // 選択した思索の記録
         let meditationAtkBonus = 0.0;  // 累積ATK倍率加算
@@ -2102,6 +2156,21 @@ const MEDITATION_DATA = [
             if (!hasStarted) return;
             if (narrativeTimer > 0) { narrativeTimer--; return; }
             if (meditationPending) return;
+            if (bossDialogueActive) {
+                // 対話中もタイマーだけ進める
+                if (bossDialogueTimer > 0) {
+                    bossDialogueTimer--;
+                    if (bossDialogueTimer === 0) {
+                        // タイムアウト→不正解扱い
+                        bossDialogueActive = false;
+                        bossDebuffTarget = 'player';
+                        bossDebuffTimer = 480;
+                        centerMessage = '時間切れ…ボスが激昂した！';
+                        msgTimer = 120;
+                    }
+                }
+                return;
+            }
             if (isPaused) return; // ポーズ中は処理を止める
             if (isGameOver) {
                 if (gameOverTimer > 0) {
@@ -2208,6 +2277,9 @@ const MEDITATION_DATA = [
                     keyItemPos = null;
                     const boss = getStageBoss(currentStageIndex);
                     enemies.push(boss);
+                    bossDialogueTriggered = false;
+                    bossDebuffTarget = null;
+                    bossDebuffTimer = 0;
                     screenShake = 20;
                     spawnParticles(boss.x, boss.y, '#FF0000', 30, 8);
                     spawnParticles(boss.x, boss.y, '#FF8800', 20, 6);
@@ -2279,13 +2351,21 @@ const MEDITATION_DATA = [
                         const er = SPRITE_SIZE * 0.4;
                         if (Math.hypot(ecx - (p.x + 12), ecy - (p.y + 12)) < er + 10) {
                             // Hit enemy!
-                            enemy.hp -= playerATK * 0.66;
+                            const bossBoostP = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
+                            enemy.hp -= playerATK * 0.66 * bossBoostP;
                             enemy.hitTimer = 10;
                             enemy.x += p.dx * 15; // Knockback
                             enemy.y += p.dy * 15;
                             spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FF4444', 6, 3);
                             screenShake = Math.max(screenShake, 4);
                             playSoundEffect('hit');
+                            // ボス50%で哲学対話発動
+                            if (enemy.isBoss && !bossDialogueTriggered && enemy.hp <= enemy.maxHp * 0.5 && enemy.hp > 0) {
+                                bossDialogueTriggered = true;
+                                bossDialogueActive = true;
+                                bossDialogueCursor = 0;
+                                bossDialogueTimer = 600;
+                            }
                             if (enemy.hp <= 0) {
                                 playSoundEffect('kill');
                                 pScore += enemy.maxHp * (enemy.isBoss ? 5 : 1);
@@ -2343,7 +2423,8 @@ const MEDITATION_DATA = [
 
                     const pr = SPRITE_SIZE * 0.4;
                     if (player.invincibleTimer === 0 && Math.hypot(pcx - (p.x + 12), pcy - (p.y + 12)) < pr + 10) {
-                        player.hp -= 1;
+                        const playerDebuffP = (bossDebuffTarget === 'player' && bossDebuffTimer > 0 && p.isBossProjectile) ? 2 : 1;
+                        player.hp -= playerDebuffP;
                         player.invincibleTimer = 60;
                         playSoundEffect('damage');
                         projectiles.splice(i, 1);
@@ -2369,6 +2450,7 @@ const MEDITATION_DATA = [
             for (let i = enemies.length - 1; i >= 0; i--) {
                 let enemy = enemies[i];
                 if (enemy.hp <= 0) continue;
+                if (bossDialogueActive && enemy.isBoss) continue; // 対話中はボス停止
 
                 if (enemy.hitTimer > 0) enemy.hitTimer--;
 
@@ -2406,7 +2488,8 @@ const MEDITATION_DATA = [
                                         x: ecx - 12, y: ecy - 12,
                                         dx: Math.cos(Math.atan2(pdirY, pdirX) + a * 0.3),
                                         dy: Math.sin(Math.atan2(pdirY, pdirX) + a * 0.3),
-                                        speed: 3, sprite: MAGIC_SPRITE, timer: 150
+                                        speed: 3, sprite: MAGIC_SPRITE, timer: 150,
+                                        isBossProjectile: true
                                     });
                                 }
                             } else {
@@ -2450,7 +2533,8 @@ const MEDITATION_DATA = [
                     const isAttackBlocked = (comboStep !== 3) && (tileType === 1 || tileType === 2);
 
                     if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er)) { // bossは当たり判定を大きくすべきだが簡略化
-                        enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult;
+                        const bossBoost = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
+                        enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost;
                         enemy.hitTimer = 10;
                         spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FF4444', 6, 3);
                         screenShake = Math.max(screenShake, 4);
@@ -2459,6 +2543,14 @@ const MEDITATION_DATA = [
                         const kbForce = comboStep === 3 ? 35 : 15;
                         enemy.x += (comboStep === 3 ? (enemy.x > player.x ? 1 : -1) : player.dirX) * kbForce;
                         enemy.y += (comboStep === 3 ? (enemy.y > player.y ? 1 : -1) : player.dirY) * kbForce;
+
+                        // ボス50%で哲学対話発動
+                        if (enemy.isBoss && !bossDialogueTriggered && enemy.hp <= enemy.maxHp * 0.5 && enemy.hp > 0) {
+                            bossDialogueTriggered = true;
+                            bossDialogueActive = true;
+                            bossDialogueCursor = 0;
+                            bossDialogueTimer = 600;
+                        }
 
                         if (enemy.hp <= 0) {
                             playSoundEffect('kill');
@@ -2502,7 +2594,8 @@ const MEDITATION_DATA = [
                     const pcy = player.y + SPRITE_SIZE / 2;
                     let bossScale = enemy.type === 'boss' ? 1.5 : 1;
                     if (Math.hypot(pcx - ecx, pcy - ecy) < (pr + er * bossScale) * 0.8) {
-                        player.hp -= 1;
+                        const playerDebuff = (bossDebuffTarget === 'player' && bossDebuffTimer > 0 && enemy.isBoss) ? 2 : 1;
+                        player.hp -= playerDebuff;
                         player.invincibleTimer = 60;
                         playSoundEffect('damage');
 
@@ -2560,6 +2653,7 @@ const MEDITATION_DATA = [
             if ((STAGE_CONFIG[currentStageIndex] || {}).ambient === 'embers' && Math.random() < 0.004) {
                 screenShake = Math.max(screenShake, 5 + Math.random() * 8);
             }
+            if (bossDebuffTimer > 0) bossDebuffTimer--;
             updateParticles();
         }
 
@@ -2661,6 +2755,68 @@ const MEDITATION_DATA = [
             ctx.textBaseline = 'middle';
             ctx.fillText('WPN', VPAD.weaponX, VPAD.weaponY);
 
+            ctx.restore();
+        }
+
+        function drawBossDialogue() {
+            if (!bossDialogueActive) {
+                // debuff中のボスに視覚効果表示
+                if (bossDebuffTimer > 0 && bossDebuffTarget === 'boss') {
+                    ctx.save();
+                    ctx.fillStyle = `rgba(0,255,100,${(bossDebuffTimer % 20 < 10) ? 0.08 : 0})`;
+                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                    ctx.restore();
+                } else if (bossDebuffTimer > 0 && bossDebuffTarget === 'player') {
+                    ctx.save();
+                    ctx.fillStyle = `rgba(255,0,0,${(bossDebuffTimer % 20 < 10) ? 0.07 : 0})`;
+                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                    ctx.restore();
+                }
+                return;
+            }
+            const dlg = BOSS_DIALOGUES[currentStageIndex % BOSS_DIALOGUES.length];
+            const timeRatio = bossDialogueTimer / 600;
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.82)';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.textAlign = 'center';
+
+            // タイマーバー
+            ctx.fillStyle = timeRatio > 0.4 ? '#EFD02E' : '#FF4444';
+            ctx.fillRect(VIEW_W / 2 - 200, 28, 400 * timeRatio, 10);
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(VIEW_W / 2 - 200, 28, 400, 10);
+
+            ctx.fillStyle = '#FF6666';
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText(`— ボスの問いかけ — (${Math.ceil(bossDialogueTimer/60)}秒)`, VIEW_W / 2, 60);
+
+            // 問い
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 22px monospace';
+            ctx.fillText(`「${dlg.q}」`, VIEW_W / 2, 110);
+
+            // 2択
+            dlg.answers.forEach((ans, i) => {
+                const sel = bossDialogueCursor === i;
+                const bx = VIEW_W / 2 - 240 + i * 260;
+                const by = 160;
+                ctx.fillStyle = sel ? 'rgba(239,208,46,0.2)' : 'rgba(255,255,255,0.05)';
+                ctx.fillRect(bx - 110, by, 220, 70);
+                ctx.strokeStyle = sel ? '#EFD02E' : '#444444';
+                ctx.lineWidth = sel ? 2 : 1;
+                ctx.strokeRect(bx - 110, by, 220, 70);
+                ctx.fillStyle = sel ? '#FFFFFF' : '#AAAAAA';
+                ctx.font = (sel ? 'bold ' : '') + '15px monospace';
+                ctx.fillText((sel ? '▶ ' : '  ') + ans, bx, by + 40);
+            });
+
+            ctx.fillStyle = '#555';
+            ctx.font = '13px monospace';
+            ctx.fillText('← → 選択   Enter 回答', VIEW_W / 2, 260);
+            ctx.textAlign = 'left';
             ctx.restore();
         }
 
@@ -3286,6 +3442,9 @@ const MEDITATION_DATA = [
 
             // ナラティブオーバーレイ
             drawNarrativeOverlay();
+
+            // ボス哲学対話オーバーレイ
+            drawBossDialogue();
 
             // 思索オーバーレイ
             drawMeditationOverlay();
