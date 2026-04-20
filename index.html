@@ -2974,7 +2974,7 @@ const MEDITATION_DATA = [
                         if (Math.hypot(ecx - (p.x + 12), ecy - (p.y + 12)) < er + 10) {
                             // Hit enemy!
                             const bossBoostP = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
-                            enemy.hp -= playerATK * 0.66 * bossBoostP;
+                            enemy.hp -= playerATK * 0.66 * bossBoostP * synthesisBonuses.arrowPower;
                             enemy.hitTimer = 10;
                             enemy.x += p.dx * 15; // Knockback
                             enemy.y += p.dy * 15;
