@@ -755,6 +755,14 @@ const MEDITATION_DATA = [
         let bgmCurrentStage = -1; // ステージ変化検出用
         let reverbDelay = null, reverbGain = null;
 
+        // ==== 動的BGMシステム ====
+        let bgmMasterGain = null;   // BGM全体のマスターゲイン
+        let bgmFilter = null;       // BGMのEQフィルター (stage ambient 対応)
+        let bgmDynamicSpeedMult = 1.0; // テンポ乗数 (1.0 = 通常)
+        let bgmDynamicVolMult  = 1.0;  // 音量乗数 (1.0 = 通常)
+        let bgmDynamicFrame    = 0;    // フレームカウンター (60フレームごとに更新)
+        let bgmLastAmbient     = '';   // 前回のambient種別 (不要な再設定を避ける)
+
         // ステージ別BGM設定（雰囲気に合わせたテンポ・波形・音量）
         const bgmStages = [
             // Stage1 草原 - 穏やか・牧歌的 (C major, slow, sine)
@@ -835,6 +843,16 @@ const MEDITATION_DATA = [
             reverbDelay.connect(reverbGain);
             reverbGain.connect(reverbDelay);
             reverbGain.connect(audioCtx.destination);
+
+            // ==== 動的BGMシステム: マスターゲイン + EQフィルター ====
+            // 信号経路: BGMオシレーター -> bgmFilter -> bgmMasterGain -> destination
+            bgmFilter = audioCtx.createBiquadFilter();
+            bgmFilter.type = 'allpass'; // 初期値: フラット (全帯域通過)
+            bgmFilter.frequency.value = 1000;
+            bgmMasterGain = audioCtx.createGain();
+            bgmMasterGain.gain.value = 1.0;
+            bgmFilter.connect(bgmMasterGain);
+            bgmMasterGain.connect(audioCtx.destination);
         }
 
         function playSoundEffect(type) {
@@ -917,7 +935,13 @@ const MEDITATION_DATA = [
                 bgmIndex = 0;
                 nextNoteTime = audioCtx.currentTime + 0.05;
             }
-            const noteLen = cfg.speed * 0.9;
+            // 動的テンポ: bgmDynamicSpeedMult が大きいほど早い (stepを短縮)
+            const dynStep = cfg.speed / bgmDynamicSpeedMult;
+            const noteLen = dynStep * 0.9;
+            // 動的音量: bgmDynamicVolMult を個々のゲインに適用
+            const dynGain = cfg.gain * bgmDynamicVolMult;
+            // BGMルーティング先: bgmFilter が存在すればそこへ、なければ直接 destination
+            const bgmDest = bgmFilter || audioCtx.destination;
 
             while (nextNoteTime < audioCtx.currentTime + 0.25) {
                 const freq = cfg.notes[bgmIndex % cfg.notes.length];
@@ -929,11 +953,11 @@ const MEDITATION_DATA = [
                     osc.type = cfg.type;
                     osc.frequency.setValueAtTime(freq, nextNoteTime);
                     osc.connect(gn);
-                    gn.connect(audioCtx.destination);
+                    gn.connect(bgmDest);
                     if (reverbDelay) gn.connect(reverbDelay);
                     gn.gain.setValueAtTime(0.001, nextNoteTime);
-                    gn.gain.linearRampToValueAtTime(cfg.gain, nextNoteTime + cfg.speed * 0.08);
-                    gn.gain.setValueAtTime(cfg.gain, nextNoteTime + noteLen * 0.45);
+                    gn.gain.linearRampToValueAtTime(dynGain, nextNoteTime + dynStep * 0.08);
+                    gn.gain.setValueAtTime(dynGain, nextNoteTime + noteLen * 0.45);
                     gn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc.start(nextNoteTime);
                     osc.stop(nextNoteTime + noteLen + 0.05);
@@ -944,8 +968,8 @@ const MEDITATION_DATA = [
                     osc2.type = 'sine';
                     osc2.frequency.setValueAtTime(freq * 1.5, nextNoteTime);
                     osc2.connect(gn2);
-                    gn2.connect(audioCtx.destination);
-                    gn2.gain.setValueAtTime(cfg.gain * 0.18, nextNoteTime);
+                    gn2.connect(bgmDest);
+                    gn2.gain.setValueAtTime(dynGain * 0.18, nextNoteTime);
                     gn2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc2.start(nextNoteTime);
                     osc2.stop(nextNoteTime + noteLen);
@@ -960,11 +984,11 @@ const MEDITATION_DATA = [
                         bOsc.type = 'sine';
                         bOsc.frequency.setValueAtTime(bassFreq, nextNoteTime);
                         bOsc.connect(bGn);
-                        bGn.connect(audioCtx.destination);
-                        bGn.gain.setValueAtTime(cfg.gain * 1.2, nextNoteTime);
-                        bGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + cfg.speed * 3.8);
+                        bGn.connect(bgmDest);
+                        bGn.gain.setValueAtTime(dynGain * 1.2, nextNoteTime);
+                        bGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 3.8);
                         bOsc.start(nextNoteTime);
-                        bOsc.stop(nextNoteTime + cfg.speed * 4);
+                        bOsc.stop(nextNoteTime + dynStep * 4);
                     }
                 }
 
@@ -976,18 +1000,78 @@ const MEDITATION_DATA = [
                         cOsc.type = 'sine';
                         cOsc.frequency.setValueAtTime(freq * ratio * 0.5, nextNoteTime);
                         cOsc.connect(cGn);
-                        cGn.connect(audioCtx.destination);
+                        cGn.connect(bgmDest);
                         if (reverbDelay) cGn.connect(reverbDelay);
                         cGn.gain.setValueAtTime(0.001, nextNoteTime);
-                        cGn.gain.linearRampToValueAtTime(cfg.gain * 0.22, nextNoteTime + cfg.speed * 0.5);
-                        cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + cfg.speed * 7.5);
+                        cGn.gain.linearRampToValueAtTime(dynGain * 0.22, nextNoteTime + dynStep * 0.5);
+                        cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 7.5);
                         cOsc.start(nextNoteTime);
-                        cOsc.stop(nextNoteTime + cfg.speed * 8);
+                        cOsc.stop(nextNoteTime + dynStep * 8);
                     });
                 }
 
-                nextNoteTime += cfg.speed;
+                nextNoteTime += dynStep;
                 bgmIndex = (bgmIndex + 1) % cfg.notes.length;
+            }
+        }
+
+        // ==== updateBGMDynamic: ゲーム状態に応じてBGMを動的に変化させる ====
+        function updateBGMDynamic() {
+            if (!audioStarted || !audioCtx || !bgmMasterGain) return;
+            const now = audioCtx.currentTime;
+
+            // --- テンポ乗数 (ボス戦 > 低HP > 通常) ---
+            let newSpeedMult;
+            if (bossActive) {
+                newSpeedMult = 1.4;
+            } else if (player && player.hp < player.maxHp * 0.3) {
+                newSpeedMult = 1.2;
+            } else {
+                newSpeedMult = 1.0;
+            }
+            bgmDynamicSpeedMult = newSpeedMult;
+
+            // --- 音量乗数 (敵の数に応じて) ---
+            const enemyCount = enemies ? enemies.filter(e => !e.isBoss).length : 0;
+            let newVolMult;
+            if (enemyCount === 0) {
+                newVolMult = 0.6;
+            } else if (enemyCount <= 3) {
+                newVolMult = 1.0;
+            } else {
+                newVolMult = 1.15;
+            }
+            bgmDynamicVolMult = newVolMult;
+            // マスターゲインをスムーズに更新 (0.8秒でターゲット値に到達)
+            bgmMasterGain.gain.setTargetAtTime(newVolMult, now, 0.8);
+
+            // --- ステージ別EQフィルター (ambient タイプに応じて) ---
+            if (!bgmFilter) return;
+            const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            const ambient = sc.ambient;
+            if (ambient === bgmLastAmbient) return; // 変化なければスキップ
+            bgmLastAmbient = ambient;
+
+            if (ambient === 'snow' || ambient === 'ice') {
+                // 氷・雪: こもった音 (ローパスフィルター ~800Hz)
+                bgmFilter.type = 'lowpass';
+                bgmFilter.frequency.setTargetAtTime(800, now, 1.0);
+                bgmFilter.Q.setTargetAtTime(0.7, now, 0.5);
+            } else if (ambient === 'embers' || ambient === 'sandstorm') {
+                // 炎・砂嵐: 荒い音 (ハイパスフィルター ~200Hz)
+                bgmFilter.type = 'highpass';
+                bgmFilter.frequency.setTargetAtTime(200, now, 1.0);
+                bgmFilter.Q.setTargetAtTime(0.7, now, 0.5);
+            } else if (ambient === 'cave' || ambient === 'dungeon' || ambient === 'drips') {
+                // 洞窟・地下: リバーブ強化 (ディレイ量を増やし、allpass で広がりを付ける)
+                bgmFilter.type = 'allpass';
+                bgmFilter.frequency.setTargetAtTime(500, now, 0.5);
+                if (reverbGain) reverbGain.gain.setTargetAtTime(0.38, now, 1.0);
+            } else {
+                // その他: フラットEQ (全帯域通過)
+                bgmFilter.type = 'allpass';
+                bgmFilter.frequency.setTargetAtTime(1000, now, 0.5);
+                if (reverbGain) reverbGain.gain.setTargetAtTime(0.18, now, 1.0);
             }
         }
 
@@ -2100,6 +2184,13 @@ const MEDITATION_DATA = [
             }
 
             updateBgm(); // タイトル/ステージ選択中もBGMを流す
+
+            // 動的BGMシステム: 60フレームごとにゲーム状態を評価
+            bgmDynamicFrame++;
+            if (bgmDynamicFrame >= 60) {
+                bgmDynamicFrame = 0;
+                updateBGMDynamic();
+            }
 
             // ゲームパッド: タイトル画面操作
             if (gameState === 'title') {
