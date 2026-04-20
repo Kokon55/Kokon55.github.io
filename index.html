@@ -423,6 +423,7 @@
             { id:'synthesis5',   label:'錬金術師',          desc:'アイテム合成を5回行った',      condition: s => s.synthesisCount >= 5 },
             { id:'daily1',       label:'今日の挑戦者',      desc:'デイリーチャレンジを達成した', condition: s => s.dailyCompleted >= 1 },
             { id:'ng_plus2',     label:'二度の輪廻',        desc:'NG++を開始した',               condition: s => s.ngPlusLevel >= 2 },
+            { id:'true_ending',  label:'真理の化身',        desc:'隠しステージをクリアした',      condition: () => false },
         ];
         let achievementStats = { bossKills:0, nodamageClears:0, dialogueWins:0, combo3Count:0, maxLevel:1, meditationCount:0, stagesCleared:0, maxScore:0, synthesisCount:0, dailyCompleted:0, ngPlusLevel:0 };
         let unlockedAchievements = new Set();
@@ -865,6 +866,27 @@ const MEDITATION_DATA = [
                 } while (!isWalkable(wx, wy) && wAttempts < 500);
                 if (isWalkable(wx, wy)) {
                     items.push({ type: 'wisdom', x: wx, y: wy, sprite: WISDOM_ORB_SPRITE });
+                }
+            }
+
+            // ==== 哲学アイテム スポーン (8%確率) ====
+            if (Math.random() < 0.08) {
+                const philTypes = [
+                    { type: 'orb_reason',  sprite: PHIL_ORB_REASON },
+                    { type: 'orb_emotion', sprite: PHIL_ORB_EMOTION },
+                    { type: 'key_freedom', sprite: PHIL_KEY_FREEDOM },
+                    { type: 'chain_duty',  sprite: PHIL_CHAIN_DUTY },
+                ];
+                const chosen = philTypes[Math.floor(Math.random() * philTypes.length)];
+                let px2, py2;
+                let pAttempts = 0;
+                do {
+                    px2 = 80 + Math.random() * (WORLD_W - SPRITE_SIZE - 160);
+                    py2 = 80 + Math.random() * (WORLD_H - SPRITE_SIZE - 160);
+                    pAttempts++;
+                } while (!isWalkable(px2, py2) && pAttempts < 500);
+                if (isWalkable(px2, py2)) {
+                    items.push({ type: chosen.type, x: px2, y: py2, sprite: chosen.sprite });
                 }
             }
 
@@ -1495,6 +1517,87 @@ const MEDITATION_DATA = [
                 return;
             }
 
+            // 哲学アイテム合成メニュー 'V'キー
+            if (e.code === 'KeyV' && gameState === 'playing' && !isGameOver && !meditationPending && !synthesisMenuOpen) {
+                if (philSynthMenuOpen) {
+                    philSynthMenuOpen = false;
+                    philSynthPhase = 0;
+                    philSynthCursor = 0;
+                    philSynthSelected = [];
+                    philSynthResult = null;
+                } else {
+                    philSynthMenuOpen = true;
+                    philSynthPhase = 0;
+                    philSynthCursor = 0;
+                    philSynthSelected = [];
+                    philSynthResult = null;
+                }
+                e.preventDefault();
+                return;
+            }
+
+            // 哲学合成メニュー操作
+            if (philSynthMenuOpen) {
+                const philAvailableKeys = Object.keys(philItems).filter(k => philItems[k] >= 1);
+                const philNames2 = { orb_reason: '理性の宝珠', orb_emotion: '感情の宝珠', key_freedom: '自由の鍵', chain_duty: '責任の鎖' };
+                if (philSynthPhase === 0 || philSynthPhase === 1) {
+                    if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+                        philSynthCursor = Math.max(0, philSynthCursor - 1);
+                    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                        philSynthCursor = Math.min(Math.max(0, philAvailableKeys.length - 1), philSynthCursor + 1);
+                    } else if (e.code === 'Enter' || e.code === 'Space') {
+                        if (philAvailableKeys.length === 0) {
+                            philSynthMenuOpen = false;
+                        } else if (philSynthPhase === 0) {
+                            philSynthSelected = [philAvailableKeys[philSynthCursor]];
+                            philSynthPhase = 1;
+                            philSynthCursor = 0;
+                        } else {
+                            const bItem = philAvailableKeys[philSynthCursor];
+                            philSynthSelected.push(bItem);
+                            const [pa, pb] = philSynthSelected;
+                            const philRecipe = PHIL_RECIPES.find(r =>
+                                (r.needs[0] === pa && r.needs[1] === pb) ||
+                                (r.needs[0] === pb && r.needs[1] === pa)
+                            );
+                            philSynthResult = philRecipe ? philRecipe.result : { name: '失敗', desc: '合成できない組み合わせ', effect: null };
+                            philSynthPhase = 2;
+                        }
+                    } else if (e.code === 'Escape') {
+                        if (philSynthPhase === 1) {
+                            philSynthPhase = 0;
+                            philSynthSelected = [];
+                            philSynthCursor = 0;
+                        } else {
+                            philSynthMenuOpen = false;
+                        }
+                    }
+                } else if (philSynthPhase === 2) {
+                    if (e.code === 'Enter' || e.code === 'Space') {
+                        if (philSynthResult && philSynthResult.effect) {
+                            const [pa2, pb2] = philSynthSelected;
+                            philItems[pa2]--;
+                            philItems[pb2]--;
+                            philSynthResult.effect();
+                            applyPhilSynthBonuses();
+                        }
+                        philSynthMenuOpen = false;
+                        philSynthPhase = 0;
+                        philSynthCursor = 0;
+                        philSynthSelected = [];
+                        philSynthResult = null;
+                    } else if (e.code === 'Escape') {
+                        philSynthMenuOpen = false;
+                        philSynthPhase = 0;
+                        philSynthCursor = 0;
+                        philSynthSelected = [];
+                        philSynthResult = null;
+                    }
+                }
+                e.preventDefault();
+                return;
+            }
+
             if (e.code === 'KeyP' || e.code === 'Escape') {
                 if (isPaused && pauseInAchievements) {
                     pauseInAchievements = false;
@@ -1695,6 +1798,9 @@ const MEDITATION_DATA = [
         let meditationPendingStage = 0;
         let difficultyLevel = 1; // 0=EASY, 1=NORMAL, 2=HARD
         let ngPlusLevel = 0; // 0=通常, 1=NG+, 2=NG++
+        let wisdomFragmentCount = 0;
+        let hiddenStageUnlocked = false, hiddenStageActive = false;
+        let hiddenBossActive = false;
         const NG_MULT = [1.0, 1.5, 2.0]; // 敵HP/ATK倍率
         const DIFF_NAMES = ['EASY', 'NORMAL', 'HARD'];
         const DIFF_ENEMY_MULT = [0.6, 1.0, 1.4];  // 敵HP倍率
@@ -1723,6 +1829,15 @@ const MEDITATION_DATA = [
         let synthesisSelected = []; // [itemName, itemName]
         let synthesisResult = null; // { name, desc, effect }
         let synthesisBonuses = { atkMult: 1.0, hpBonus: 0, spdBonus: 0.0, xpBonus: 0.0, arrowPower: 1.0 };
+
+        // ==== 哲学アイテム合成状態変数 ====
+        let philItems = { orb_reason: 0, orb_emotion: 0, key_freedom: 0, chain_duty: 0 };
+        let philSynthBonuses = { aoeChance: 0, dmgXP: 0, atkBonus: 0, hpBonus: 0, dmgReduce: 0, noKnockback: false, spdBonus: 0, xpBonus: 0 };
+        let philSynthMenuOpen = false;
+        let philSynthCursor = 0;
+        let philSynthPhase = 0; // 0=select first, 1=select second, 2=result
+        let philSynthSelected = [];
+        let philSynthResult = null;
 
         // ==== デイリーチャレンジ状態変数 ====
         let dailyChallengeActive = false;
@@ -1822,8 +1937,57 @@ const MEDITATION_DATA = [
             { needs: ['potion', 'key'],    result: { name: '霊薬',       desc: 'HP+2 ATK+10% XP+15%', effect: () => { synthesisBonuses.hpBonus += 2; synthesisBonuses.atkMult += 0.10; synthesisBonuses.xpBonus += 0.15; } } },
         ];
 
+        // ==== 哲学合成レシピ ====
+        const PHIL_RECIPES = [
+            { needs: ['orb_reason', 'orb_emotion'],
+              result: { name: '弁証法の杖', desc: '攻撃時に確率で全画面攻撃',
+                        effect: () => { philSynthBonuses.aoeChance = 0.15; } } },
+            { needs: ['key_freedom', 'chain_duty'],
+              result: { name: '実存の指輪', desc: '被ダメ時にXP獲得',
+                        effect: () => { philSynthBonuses.dmgXP = 5; } } },
+            { needs: ['orb_reason', 'key_freedom'],
+              result: { name: '純粋理性の剣', desc: 'ATK +40%',
+                        effect: () => { philSynthBonuses.atkBonus += 0.40; } } },
+            { needs: ['orb_emotion', 'chain_duty'],
+              result: { name: '情熱の鎧', desc: 'HP+3 被ダメ軽減10%',
+                        effect: () => { philSynthBonuses.hpBonus += 3; philSynthBonuses.dmgReduce = 0.10; } } },
+            { needs: ['orb_reason', 'chain_duty'],
+              result: { name: '義務論の盾', desc: 'ノックバック無効化',
+                        effect: () => { philSynthBonuses.noKnockback = true; } } },
+            { needs: ['orb_emotion', 'key_freedom'],
+              result: { name: '自由の魂', desc: '速度+0.5 XP+20%',
+                        effect: () => { philSynthBonuses.spdBonus += 0.5; philSynthBonuses.xpBonus += 0.20; } } },
+            { needs: ['orb_reason', 'orb_reason'],
+              result: { name: '二重思考の輪', desc: 'XP+30% ボス対話時間+5秒',
+                        effect: () => { philSynthBonuses.xpBonus += 0.30; } } },
+            { needs: ['orb_emotion', 'orb_emotion'],
+              result: { name: '情熱の双球', desc: 'ATK+20% コンボ窓拡大',
+                        effect: () => { philSynthBonuses.atkBonus += 0.20; } } },
+            { needs: ['key_freedom', 'key_freedom'],
+              result: { name: '二重解放', desc: 'SPD+0.4',
+                        effect: () => { philSynthBonuses.spdBonus += 0.40; } } },
+            { needs: ['chain_duty', 'chain_duty'],
+              result: { name: '鉄の意志', desc: 'HP+5 被ダメ-15%',
+                        effect: () => { philSynthBonuses.hpBonus += 5; philSynthBonuses.dmgReduce = Math.min(0.4, (philSynthBonuses.dmgReduce||0) + 0.15); } } },
+        ];
+
+        function applyPhilSynthBonuses() {
+            // atkBonus and xpBonus are applied dynamically; only apply immediate effects here
+            if (philSynthBonuses.hpBonus > 0) {
+                player.maxHp += philSynthBonuses.hpBonus;
+                player.hp = Math.min(player.hp + philSynthBonuses.hpBonus, player.maxHp);
+                philSynthBonuses.hpBonus = 0;
+            }
+            if (philSynthBonuses.spdBonus > 0) {
+                player.speed = Math.min(3.5, player.speed + philSynthBonuses.spdBonus);
+                philSynthBonuses.spdBonus = 0;
+            }
+            // Recompute playerATK to include philSynthBonuses.atkBonus
+            playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
+        }
+
         function applySynthesisBonuses() {
-            playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult;
+            playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
             if (synthesisBonuses.hpBonus > 0) {
                 player.maxHp += synthesisBonuses.hpBonus;
                 player.hp = Math.min(player.hp + synthesisBonuses.hpBonus, player.maxHp);
@@ -1847,12 +2011,47 @@ const MEDITATION_DATA = [
             }
         }
 
+        function unlockAchievement(id) {
+            if (unlockedAchievements.has(id)) return;
+            const ach = ACHIEVEMENTS.find(a => a.id === id);
+            if (!ach) return;
+            unlockedAchievements.add(id);
+            achievementPopup = { label: ach.label, desc: ach.desc, timer: 200 };
+            playSoundEffect('stageclear');
+        }
+
+        // 隠しステージマップ (40x30, 全フロア+外壁)
+        const hiddenStageMap = new Uint8Array(MAP_COLS * MAP_ROWS).fill(0);
+        (function() {
+            for (let r = 0; r < MAP_ROWS; r++)
+                for (let c = 0; c < MAP_COLS; c++)
+                    if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1)
+                        hiddenStageMap[r * MAP_COLS + c] = 1;
+        })();
+
+        function spawnHiddenBoss() {
+            hiddenBossActive = true;
+            bossActive = true;
+            const hb = {
+                x: WORLD_W / 2 - SPRITE_SIZE / 2, y: WORLD_H / 2 - SPRITE_SIZE / 2,
+                hp: 80, maxHp: 80, isBoss: true, isHiddenBoss: true,
+                speed: 1.8, type: 0, hitTimer: 0, walkTimer: 0, walkFrame: 0,
+                fireInterval: 80, fireTimer: 0,
+                phase: 1, phaseTimer: 0,
+                orbitAngle: 0
+            };
+            enemies.push(hb);
+            centerMessage = '「無の化身」が現れた！\n存在と無の境界を守る者よ';
+            msgTimer = 150;
+            bossDialogueTriggered = false;
+        }
+
         function applyMeditation(choice) {
             meditationChoices.push({ stage: meditationPendingStage, text: choice.text, label: choice.label });
             achievementStats.meditationCount = meditationChoices.length;
             if (choice.effect === 'atk') {
                 meditationAtkBonus += choice.val;
-                playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus);
+                playerATK = (1.0 + (playerLevel - 1) * 0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
             } else if (choice.effect === 'hp') {
                 meditationHpBonus += choice.val;
                 player.maxHp += choice.val;
@@ -1879,27 +2078,53 @@ const MEDITATION_DATA = [
                     };
                     centerMessage = endings[dominantKarma] || endings.bu;
                     msgTimer = 999;
-                    setTimeout(() => {
-                        ngPlusLevel = Math.min(2, ngPlusLevel + 1);
-                        currentStageIndex = 0;
-                        bossActive = false;
-                        isStageAdvancing = false;
-                        mapData = STAGES[0];
-                        isBgCached = false;
-                        player.hp = player.maxHp;
-                        enemies = []; projectiles = []; items = [];
-                        ambientParticles = [];
-                        do {
-                            player.x = 40 + Math.random()*(WORLD_W-SPRITE_SIZE-80);
-                            player.y = 40 + Math.random()*(WORLD_H-SPRITE_SIZE-80);
-                        } while (!isWalkable(player.x, player.y));
-                        keyItemPos = findKeyItemPos();
-                        spawnEnemies();
-                        const ngLabel = ngPlusLevel === 1 ? 'NG+' : 'NG++';
-                        centerMessage = `${ngLabel} 開始！`;
-                        msgTimer = 180;
-                        startNarrative(0);
-                    }, 4000);
+                    if (hiddenStageUnlocked && !hiddenStageActive) {
+                        // 隠しステージへ移行
+                        setTimeout(() => {
+                            hiddenStageActive = true;
+                            bossActive = false;
+                            isStageAdvancing = false;
+                            mapData = hiddenStageMap;
+                            isBgCached = false;
+                            player.hp = player.maxHp;
+                            enemies = []; projectiles = []; items = [];
+                            ambientParticles = [];
+                            player.x = WORLD_W / 2 - SPRITE_SIZE / 2;
+                            player.y = WORLD_H / 2 + 200;
+                            centerMessage = '「真理の間」— 無と存在の彼方へ';
+                            msgTimer = 180;
+                            spawnHiddenBoss();
+                        }, 6000);
+                    } else {
+                        setTimeout(() => {
+                            ngPlusLevel = Math.min(2, ngPlusLevel + 1);
+                            currentStageIndex = 0;
+                            bossActive = false;
+                            isStageAdvancing = false;
+                            mapData = STAGES[0];
+                            isBgCached = false;
+                            player.hp = player.maxHp;
+                            enemies = []; projectiles = []; items = [];
+                            ambientParticles = [];
+                            do {
+                                player.x = 40 + Math.random()*(WORLD_W-SPRITE_SIZE-80);
+                                player.y = 40 + Math.random()*(WORLD_H-SPRITE_SIZE-80);
+                            } while (!isWalkable(player.x, player.y));
+                            keyItemPos = findKeyItemPos();
+                            spawnEnemies();
+                            const ngLabel = ngPlusLevel === 1 ? 'NG+' : 'NG++';
+                            centerMessage = `${ngLabel} 開始！`;
+                            msgTimer = 180;
+                            startNarrative(0);
+                            // NG+でのヒント
+                            if (ngPlusLevel >= 1 && Math.random() < 0.1) {
+                                setTimeout(() => {
+                                    centerMessage = '「無の化身」の気配を感じる...';
+                                    msgTimer = 180;
+                                }, 5000);
+                            }
+                        }, 4000);
+                    }
                 }, 800);
             } else {
                 isStageAdvancing = true;
@@ -1909,13 +2134,13 @@ const MEDITATION_DATA = [
 
         function gainXP(amt) {
             if (playerLevel >= 20) return;
-            playerXP += Math.floor(amt * (1.0 + meditationXpBonus) * dailyChallengeXpMult * (1.0 + synthesisBonuses.xpBonus));
+            playerXP += Math.floor(amt * (1.0 + meditationXpBonus) * dailyChallengeXpMult * (1.0 + synthesisBonuses.xpBonus) * (1.0 + philSynthBonuses.xpBonus));
             while (playerLevel < 20 && playerXP >= XP_TABLE[playerLevel]) {
                 playerLevel++;
                 achievementStats.maxLevel = Math.max(achievementStats.maxLevel, playerLevel);
                 player.maxHp = 5 + Math.floor((playerLevel - 1) * 0.5);
                 player.hp = Math.min(player.hp + 2, player.maxHp);
-                playerATK = 1.0 + (playerLevel - 1) * 0.12;
+                playerATK = (1.0 + (playerLevel - 1) * 0.12) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
                 centerMessage = `Lv.${playerLevel} UP!`;
                 msgTimer = 90;
                 playSoundEffect('stageclear');
@@ -2156,7 +2381,7 @@ const MEDITATION_DATA = [
                 meditationHpBonus  = d.mHp  || 0;
                 meditationXpBonus  = d.mXp  || 0;
                 meditationSpdBonus = d.mSpd || 0;
-                if (meditationAtkBonus > 0) playerATK = (1.0 + (playerLevel-1)*0.12) * (1.0 + meditationAtkBonus);
+                if (meditationAtkBonus > 0) playerATK = (1.0 + (playerLevel-1)*0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
                 karma.bu = d.karmaB || 0; karma.chi = d.karmaC || 0;
                 karma.mamori = d.karmaM || 0; karma.tetsu = d.karmaT || 0;
                 mapData = STAGES[Math.min(currentStageIndex, STAGES.length - 1)];
@@ -2396,6 +2621,28 @@ const MEDITATION_DATA = [
             [0,0,15,7,7,15,0,0],
             [0,0,0,15,15,0,0,0],
             [0,0,0,0,0,0,0,0],
+        ];
+
+        // ==== 哲学アイテム スプライト ====
+        const PHIL_ORB_REASON = [ // 理性の宝珠 (blue orb)
+          [0,0,15,15,15,0,0,0],[0,15,7,7,15,15,0,0],[15,7,7,7,7,15,0,0],
+          [15,7,7,7,7,15,0,0],[15,7,7,7,15,15,0,0],[0,15,15,15,15,0,0,0],
+          [0,0,0,15,0,0,0,0],[0,0,0,0,0,0,0,0]
+        ];
+        const PHIL_ORB_EMOTION = [ // 感情の宝珠 (red orb)
+          [0,0,8,8,8,0,0,0],[0,8,7,7,8,8,0,0],[8,7,7,7,7,8,0,0],
+          [8,7,7,7,7,8,0,0],[8,7,7,7,8,8,0,0],[0,8,8,8,8,0,0,0],
+          [0,0,0,8,0,0,0,0],[0,0,0,0,0,0,0,0]
+        ];
+        const PHIL_KEY_FREEDOM = [ // 自由の鍵 (gold key)
+          [0,0,0,2,2,0,0,0],[0,0,2,7,7,2,0,0],[0,0,2,7,2,0,0,0],
+          [0,0,0,2,0,0,0,0],[0,0,0,2,0,0,0,0],[0,0,0,2,2,0,0,0],
+          [0,0,0,2,0,0,0,0],[0,0,0,2,0,0,0,0]
+        ];
+        const PHIL_CHAIN_DUTY = [ // 責任の鎖 (silver chain)
+          [0,3,3,0,3,3,0,0],[3,0,0,3,0,0,3,0],[3,0,0,3,0,0,3,0],
+          [0,3,3,0,3,3,0,0],[0,0,3,3,3,0,0,0],[0,0,0,3,0,0,0,0],
+          [0,0,0,3,0,0,0,0],[0,0,0,0,0,0,0,0]
         ];
 
         const ARROW_SPRITE = [
@@ -2774,6 +3021,7 @@ const MEDITATION_DATA = [
             if (narrativeTimer > 0) { narrativeTimer--; return; }
             if (meditationPending) return;
             if (synthesisMenuOpen) return;
+            if (philSynthMenuOpen) return;
             if (bossDialogueActive) {
                 // 対話中もタイマーだけ進める
                 if (bossDialogueTimer > 0) {
@@ -2924,11 +3172,29 @@ const MEDITATION_DATA = [
                 if (Math.hypot(player.x - item.x, player.y - item.y) < SPRITE_SIZE) {
                     if (item.type === 'wisdom') {
                         gainXP(30);
-                        centerMessage = '知恵の欠片を拾った';
-                        msgTimer = 90;
+                        wisdomFragmentCount++;
+                        if (wisdomFragmentCount >= 5 && !hiddenStageUnlocked) {
+                            hiddenStageUnlocked = true;
+                            centerMessage = '叡智の欠片を5個集めた！\n「真理の間」への扉が開いた...';
+                            msgTimer = 180;
+                        } else {
+                            centerMessage = '知恵の欠片を拾った';
+                            msgTimer = 90;
+                        }
                         playSoundEffect('stageclear');
                         achievementStats.meditationCount++;
                         checkAchievements();
+                        items.splice(i, 1);
+                        continue;
+                    }
+                    // 哲学アイテム 拾得
+                    if (item.type === 'orb_reason' || item.type === 'orb_emotion' ||
+                        item.type === 'key_freedom' || item.type === 'chain_duty') {
+                        philItems[item.type]++;
+                        const philNames = { orb_reason: '理性の宝珠', orb_emotion: '感情の宝珠', key_freedom: '自由の鍵', chain_duty: '責任の鎖' };
+                        centerMessage = `${philNames[item.type]}を拾った！[V]で合成`;
+                        msgTimer = 120;
+                        playSoundEffect('stageclear');
                         items.splice(i, 1);
                         continue;
                     }
@@ -3084,7 +3350,9 @@ const MEDITATION_DATA = [
                     const pr = SPRITE_SIZE * 0.4;
                     if (player.invincibleTimer === 0 && Math.hypot(pcx - (p.x + 12), pcy - (p.y + 12)) < pr + 10) {
                         const playerDebuffP = (bossDebuffTarget === 'player' && bossDebuffTimer > 0 && p.isBossProjectile) ? 2 : 1;
-                        player.hp -= playerDebuffP;
+                        const dmgP = Math.max(1, Math.floor(playerDebuffP * (1.0 - philSynthBonuses.dmgReduce)));
+                        player.hp -= dmgP;
+                        if (philSynthBonuses.dmgXP > 0) gainXP(philSynthBonuses.dmgXP);
                         stageDamageTaken = true;
                         player.invincibleTimer = 60;
                         playSoundEffect('damage');
@@ -3121,13 +3389,77 @@ const MEDITATION_DATA = [
                 const er = SPRITE_SIZE * 0.4; // 敵の当たり判定半径
                 const pr = SPRITE_SIZE * 0.4; // プレイヤーの当たり判定半径
 
+                // 隠しボス「無の化身」の特殊フェーズ処理
+                if (enemy.isHiddenBoss) {
+                    if (enemy.hp <= enemy.maxHp * 0.3 && enemy.phase === 1) {
+                        enemy.phase = 2;
+                        centerMessage = '「無の化身」が変貌した！';
+                        msgTimer = 90;
+                    }
+                    enemy.phaseTimer++;
+                    if (enemy.phase === 2 && enemy.phaseTimer % 300 === 0) {
+                        // フェーズ2: 300フレームごとに通常敵を2体スポーン
+                        for (let s = 0; s < 2; s++) {
+                            let ex = enemy.x + (s === 0 ? -100 : 100);
+                            let ey = enemy.y + (s === 0 ? 100 : -100);
+                            ex = Math.max(SPRITE_SIZE, Math.min(WORLD_W - SPRITE_SIZE * 2, ex));
+                            ey = Math.max(SPRITE_SIZE, Math.min(WORLD_H - SPRITE_SIZE * 2, ey));
+                            enemies.push({
+                                x: ex, y: ey,
+                                hp: 3, maxHp: 3, speed: 1.5, type: 0,
+                                sprite: null, fireInterval: 0, fireTimer: 0, hitTimer: 0
+                            });
+                        }
+                    }
+                }
+
                 // 敵の移動・攻撃処理（ノックバック中は動かない）
                 if (enemy.hitTimer === 0) {
                     let edx = player.x - enemy.x;
                     let edy = player.y - enemy.y;
                     const dist = Math.sqrt(edx * edx + edy * edy);
 
-                    if (enemy.type === 'mage' || enemy.type === 'archer' || enemy.type === 'boss') {
+                    // 隠しボスの移動AI
+                    if (enemy.isHiddenBoss) {
+                        const orbitRadius = enemy.phase === 2 ? 120 : 200;
+                        const orbitSpeed = enemy.phase === 2 ? 0.04 : 0.025;
+                        enemy.orbitAngle = (enemy.orbitAngle || 0) + orbitSpeed;
+                        const targetX = player.x + Math.cos(enemy.orbitAngle) * orbitRadius - SPRITE_SIZE / 2;
+                        const targetY = player.y + Math.sin(enemy.orbitAngle) * orbitRadius - SPRITE_SIZE / 2;
+                        const tdx = targetX - enemy.x;
+                        const tdy = targetY - enemy.y;
+                        const tdist = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
+                        const spd = enemy.phase === 2 ? enemy.speed * 1.5 : enemy.speed;
+                        const moveX = enemy.x + (tdx / tdist) * spd;
+                        const moveY = enemy.y + (tdy / tdist) * spd;
+                        enemy.x = Math.max(SPRITE_SIZE, Math.min(WORLD_W - SPRITE_SIZE * 2, moveX));
+                        enemy.y = Math.max(SPRITE_SIZE, Math.min(WORLD_H - SPRITE_SIZE * 2, moveY));
+                        // ダッシュ攻撃
+                        const dashInterval = enemy.phase === 2 ? 90 : 150;
+                        if (enemy.phaseTimer % dashInterval === 50) {
+                            const dashDist = dist || 1;
+                            enemy.x = Math.max(SPRITE_SIZE, Math.min(WORLD_W - SPRITE_SIZE * 2, enemy.x + (edx / dashDist) * 60));
+                            enemy.y = Math.max(SPRITE_SIZE, Math.min(WORLD_H - SPRITE_SIZE * 2, enemy.y + (edy / dashDist) * 60));
+                        }
+                        // 弾発射
+                        enemy.fireTimer++;
+                        if (enemy.fireTimer > enemy.fireInterval) {
+                            enemy.fireTimer = 0;
+                            const angle = Math.atan2(edy, edx);
+                            const shots = enemy.phase === 2 ? 5 : 3;
+                            for (let a = 0; a < shots; a++) {
+                                const spread = (a - Math.floor(shots / 2)) * 0.3;
+                                projectiles.push({
+                                    x: enemy.x + SPRITE_SIZE / 2 - 12,
+                                    y: enemy.y + SPRITE_SIZE / 2 - 12,
+                                    dx: Math.cos(angle + spread),
+                                    dy: Math.sin(angle + spread),
+                                    speed: 3.5, sprite: MAGIC_SPRITE, timer: 150,
+                                    isBossProjectile: true
+                                });
+                            }
+                        }
+                    } else if (enemy.type === 'mage' || enemy.type === 'archer' || enemy.type === 'boss') {
                         // 遠距離タイプは一定距離を保つ、または火を噴く
                         enemy.fireTimer++;
                         if (dist > 250) {
@@ -3203,13 +3535,25 @@ const MEDITATION_DATA = [
                         spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FF4444', 6, 3);
                         screenShake = Math.max(screenShake, 4);
 
+                        // AOE攻撃 (弁証法の杖)
+                        if (philSynthBonuses.aoeChance > 0 && Math.random() < philSynthBonuses.aoeChance) {
+                            for (let k = 0; k < enemies.length; k++) {
+                                if (k !== i) {
+                                    enemies[k].hp -= playerATK * 0.5;
+                                    enemies[k].hitTimer = 10;
+                                    spawnParticles(enemies[k].x + SPRITE_SIZE/2, enemies[k].y + SPRITE_SIZE/2, '#AADDFF', 4, 3);
+                                }
+                            }
+                            spawnParticles(player.x + SPRITE_SIZE/2, player.y + SPRITE_SIZE/2, '#AADDFF', 12, 5);
+                        }
+
                         // ノックバック
                         const kbForce = comboStep === 3 ? 35 : 15;
                         enemy.x += (comboStep === 3 ? (enemy.x > player.x ? 1 : -1) : player.dirX) * kbForce;
                         enemy.y += (comboStep === 3 ? (enemy.y > player.y ? 1 : -1) : player.dirY) * kbForce;
 
-                        // ボス50%で哲学対話発動
-                        if (enemy.isBoss && !bossDialogueTriggered && enemy.hp <= enemy.maxHp * 0.5 && enemy.hp > 0) {
+                        // ボス50%で哲学対話発動（隠しボスは除く）
+                        if (enemy.isBoss && !enemy.isHiddenBoss && !bossDialogueTriggered && enemy.hp <= enemy.maxHp * 0.5 && enemy.hp > 0) {
                             bossDialogueTriggered = true;
                             bossDialogueActive = true;
                             bossDialogueCursor = 0;
@@ -3239,7 +3583,15 @@ const MEDITATION_DATA = [
                             screenShake = Math.max(screenShake, 8);
                             enemies.splice(i, 1);
 
-                            if (wasBoss2 && !isStageAdvancing) {
+                            if (wasBoss2 && enemy && enemy.isHiddenBoss) {
+                                // 隠しボス撃破 → 真エンディング
+                                bossActive = false;
+                                hiddenBossActive = false;
+                                isStageAdvancing = true;
+                                centerMessage = 'TRUE ENDING: 真理の化身\n叡智を集めし者よ\n汝は無と存在の境界を越えた\n— あなたは真の哲学者だ —';
+                                msgTimer = 999;
+                                unlockAchievement('true_ending');
+                            } else if (wasBoss2 && !isStageAdvancing) {
                                 bossActive = false;
                                 achievementStats.bossKills++;
                                 checkAchievements();
@@ -3265,7 +3617,9 @@ const MEDITATION_DATA = [
                     let bossScale = enemy.type === 'boss' ? 1.5 : 1;
                     if (Math.hypot(pcx - ecx, pcy - ecy) < (pr + er * bossScale) * 0.8) {
                         const playerDebuff = (bossDebuffTarget === 'player' && bossDebuffTimer > 0 && enemy.isBoss) ? 2 : 1;
-                        player.hp -= playerDebuff;
+                        const dmgE = Math.max(1, Math.floor(playerDebuff * (1.0 - philSynthBonuses.dmgReduce)));
+                        player.hp -= dmgE;
+                        if (philSynthBonuses.dmgXP > 0) gainXP(philSynthBonuses.dmgXP);
                         stageDamageTaken = true;
                         player.invincibleTimer = 60;
                         playSoundEffect('damage');
@@ -3278,9 +3632,9 @@ const MEDITATION_DATA = [
                         const knockBackX = player.x + (kbDx / len) * 30;
                         const knockBackY = player.y + (kbDy / len) * 30;
 
-                        if (isWalkable(knockBackX, player.y)) player.x = knockBackX;
+                        if (!philSynthBonuses.noKnockback && isWalkable(knockBackX, player.y)) player.x = knockBackX;
 
-                        if (isWalkable(player.x, knockBackY)) player.y = knockBackY;
+                        if (!philSynthBonuses.noKnockback && isWalkable(player.x, knockBackY)) player.y = knockBackY;
 
                         if (player.x < 0) player.x = 0;
                         else if (player.x > WORLD_W - SPRITE_SIZE) player.x = WORLD_W - SPRITE_SIZE;
@@ -3640,6 +3994,97 @@ const MEDITATION_DATA = [
                     ctx.fillStyle = '#FF6644';
                     ctx.font = '14px monospace';
                     ctx.fillText('失敗…', VIEW_W / 2, py + 185);
+                    ctx.fillStyle = '#555555';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('Esc 閉じる', VIEW_W / 2, py + panelH - 14);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        // ==== 哲学合成オーバーレイ ====
+        function drawPhilSynthOverlay() {
+            if (!philSynthMenuOpen) return;
+            const philNames3 = { orb_reason: '理性の宝珠', orb_emotion: '感情の宝珠', key_freedom: '自由の鍵', chain_duty: '責任の鎖' };
+            const philAvail = Object.keys(philItems).filter(k => philItems[k] >= 1);
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.textAlign = 'center';
+
+            // タイトル
+            ctx.fillStyle = '#A020F0';
+            ctx.font = 'bold 22px monospace';
+            ctx.fillText('哲 哲学アイテム合成', VIEW_W / 2, 50);
+
+            const panelW = 480, panelH = 380;
+            const px = VIEW_W / 2 - panelW / 2;
+            const py = 70;
+            ctx.fillStyle = 'rgba(15,10,35,0.95)';
+            ctx.fillRect(px, py, panelW, panelH);
+            ctx.strokeStyle = '#A020F0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px, py, panelW, panelH);
+
+            if (philSynthPhase === 0 || philSynthPhase === 1) {
+                ctx.fillStyle = '#DDAAFF';
+                ctx.font = 'bold 15px monospace';
+                if (philSynthPhase === 0) {
+                    ctx.fillText('最初のアイテムを選んでください', VIEW_W / 2, py + 28);
+                } else {
+                    const fn = philNames3[philSynthSelected[0]] || philSynthSelected[0];
+                    ctx.fillText(`[${fn}] + ? を選択`, VIEW_W / 2, py + 28);
+                }
+
+                // 所持アイテム一覧
+                const allTypes = ['orb_reason','orb_emotion','key_freedom','chain_duty'];
+                const labelColors = { orb_reason:'#3878F8', orb_emotion:'#E02020', key_freedom:'#EFD02E', chain_duty:'#D0D0D0' };
+                let row = 0;
+                allTypes.forEach(k => {
+                    const cnt = philItems[k];
+                    const isSel = philAvail[philSynthCursor] === k && cnt >= 1;
+                    const iy2 = py + 55 + row * 44;
+                    ctx.fillStyle = cnt >= 1 ? (isSel ? 'rgba(160,32,240,0.25)' : 'rgba(255,255,255,0.05)') : 'rgba(0,0,0,0.1)';
+                    ctx.fillRect(px + 20, iy2, panelW - 40, 36);
+                    ctx.strokeStyle = isSel ? '#A020F0' : '#333333';
+                    ctx.lineWidth = isSel ? 2 : 1;
+                    ctx.strokeRect(px + 20, iy2, panelW - 40, 36);
+                    ctx.fillStyle = cnt >= 1 ? (isSel ? '#FFFFFF' : labelColors[k]) : '#444444';
+                    ctx.font = (isSel ? 'bold ' : '') + '14px monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText((isSel ? '▶ ' : '  ') + philNames3[k] + '  ×' + cnt, px + 36, iy2 + 24);
+                    ctx.textAlign = 'center';
+                    row++;
+                });
+                ctx.fillStyle = '#555555';
+                ctx.font = '12px monospace';
+                ctx.fillText('↑↓ 選択   Enter 決定   Esc 戻る/閉じる', VIEW_W / 2, py + panelH - 14);
+                if (philAvail.length === 0) {
+                    ctx.fillStyle = '#FF6644';
+                    ctx.font = 'bold 16px monospace';
+                    ctx.fillText('哲学アイテムを持っていない', VIEW_W / 2, py + panelH / 2);
+                }
+            } else if (philSynthPhase === 2) {
+                const res = philSynthResult;
+                ctx.fillStyle = res && res.effect ? '#EFD02E' : '#FF6644';
+                ctx.font = 'bold 26px monospace';
+                ctx.fillText(res ? res.name : '?', VIEW_W / 2, py + 100);
+                ctx.fillStyle = '#DDAAFF';
+                ctx.font = '18px monospace';
+                ctx.fillText(res ? res.desc : '', VIEW_W / 2, py + 145);
+                if (res && res.effect) {
+                    ctx.fillStyle = '#88FF88';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('合成成功！', VIEW_W / 2, py + 195);
+                    ctx.fillStyle = '#555555';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('Enter で効果を適用   Esc 閉じる', VIEW_W / 2, py + panelH - 14);
+                } else {
+                    ctx.fillStyle = '#FF6644';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('失敗…', VIEW_W / 2, py + 195);
                     ctx.fillStyle = '#555555';
                     ctx.font = '13px monospace';
                     ctx.fillText('Esc 閉じる', VIEW_W / 2, py + panelH - 14);
@@ -4420,6 +4865,9 @@ const MEDITATION_DATA = [
 
             // アイテム合成オーバーレイ
             drawSynthesisOverlay();
+
+            // 哲学アイテム合成オーバーレイ
+            drawPhilSynthOverlay();
 
             // チュートリアル
             drawTutorial();
