@@ -622,6 +622,8 @@ const MEDITATION_DATA = [
         let centerMessage = "STAGE 1";
         let narrativeTimer = 0;   // >0 の間はナラティブオーバーレイを表示
         let narrativeStage = -1;  // 表示中のステージ番号
+        let narrativeTypewriter = { text: '', target: '', charIndex: 0, charTimer: 0 };
+        let narrativeParticles = []; // UI-space gold particles for typewriter effect
         let tutorialStep = 1; // 0=off, 1=move, 2=attack, 3=shield, 4=keyitem, 5=done
         let tutorialMoveShown = false;
 
@@ -739,8 +741,7 @@ const MEDITATION_DATA = [
             saveGame();
             centerMessage = `STAGE ${currentStageIndex + 1}`;
             msgTimer = 120;
-            narrativeTimer = 180; // 3秒間表示
-            narrativeStage = currentStageIndex;
+            startNarrative(currentStageIndex);
             if (currentStageIndex === 0) tutorialStep = 1;
             playSoundEffect('stageclear');
         }
@@ -1096,7 +1097,13 @@ const MEDITATION_DATA = [
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
 
-            if (narrativeTimer > 30) { narrativeTimer = 30; return; }
+            if (narrativeTimer > 30) {
+                narrativeTimer = 30;
+                // Complete typewriter instantly on skip
+                const tw = narrativeTypewriter;
+                tw.charIndex = tw.totalLen || 0;
+                return;
+            }
 
             // 思索選択画面の操作
             if (meditationPending) {
@@ -1166,8 +1173,7 @@ const MEDITATION_DATA = [
                         gameState = 'playing';
                         centerMessage = "STAGE 1";
                         msgTimer = 120;
-                        narrativeTimer = 180;
-                        narrativeStage = 0;
+                        startNarrative(0);
                         tutorialStep = 1;
                     } else {
                         // CONTINUE: セーブデータを読み込んでステージ選択画面へ
@@ -1180,8 +1186,7 @@ const MEDITATION_DATA = [
                             gameState = 'playing';
                             centerMessage = "STAGE 1";
                             msgTimer = 120;
-                            narrativeTimer = 180;
-                            narrativeStage = 0;
+                            startNarrative(0);
                         } else {
                             stageSelectCursor = currentStageIndex;
                             gameState = 'stageSelect';
@@ -1229,8 +1234,7 @@ const MEDITATION_DATA = [
                     gameState = 'playing';
                     centerMessage = `STAGE ${currentStageIndex + 1}`;
                     msgTimer = 120;
-                    narrativeTimer = 180;
-                    narrativeStage = currentStageIndex;
+                    startNarrative(currentStageIndex);
                     e.preventDefault();
                 } else if (e.code === 'Escape') {
                     gameState = 'title';
@@ -1504,8 +1508,7 @@ const MEDITATION_DATA = [
                         const ngLabel = ngPlusLevel === 1 ? 'NG+' : 'NG++';
                         centerMessage = `${ngLabel} 開始！`;
                         msgTimer = 180;
-                        narrativeTimer = 180;
-                        narrativeStage = 0;
+                        startNarrative(0);
                     }, 4000);
                 }, 800);
             } else {
@@ -2223,8 +2226,7 @@ const MEDITATION_DATA = [
                             gameState = 'playing';
                             centerMessage = "STAGE 1";
                             msgTimer = 120;
-                            narrativeTimer = 180;
-                            narrativeStage = 0;
+                            startNarrative(0);
                         } else {
                             const loaded = loadGame();
                             if (!loaded) {
@@ -2234,8 +2236,7 @@ const MEDITATION_DATA = [
                                 gameState = 'playing';
                                 centerMessage = "STAGE 1";
                                 msgTimer = 120;
-                                narrativeTimer = 180;
-                                narrativeStage = 0;
+                                startNarrative(0);
                             } else {
                                 stageSelectCursor = currentStageIndex;
                                 gameState = 'stageSelect';
@@ -2284,8 +2285,7 @@ const MEDITATION_DATA = [
                         gameState = 'playing';
                         centerMessage = `STAGE ${currentStageIndex + 1}`;
                         msgTimer = 120;
-                        narrativeTimer = 180;
-                        narrativeStage = currentStageIndex;
+                        startNarrative(currentStageIndex);
                         jpTimer = 30;
                     } else if (padB) {
                         gameState = 'title';
@@ -3059,6 +3059,37 @@ const MEDITATION_DATA = [
             ctx.restore();
         }
 
+        function startNarrative(si) {
+            narrativeTimer = 180;
+            narrativeStage = si;
+            const name = STAGE_NAMES[si] || '';
+            const quote = STAGE_QUOTES[si] || '';
+            const line1 = `STAGE ${si + 1}  —  ${name}`;
+            const line2 = quote;
+            // Full target text: line1 + newline marker + line2
+            narrativeTypewriter = {
+                text: '',
+                line1Target: line1,
+                line2Target: line2,
+                charIndex: 0,
+                charTimer: 0,
+                totalLen: line1.length + line2.length
+            };
+            narrativeParticles = [];
+        }
+
+        function updateNarrativeParticles() {
+            for (let i = narrativeParticles.length - 1; i >= 0; i--) {
+                const p = narrativeParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.88;
+                p.vy *= 0.88;
+                p.life--;
+                if (p.life <= 0) narrativeParticles.splice(i, 1);
+            }
+        }
+
         function drawNarrativeOverlay() {
             if (narrativeTimer <= 0) return;
             const alpha = narrativeTimer > 150 ? 1.0 :
@@ -3068,26 +3099,72 @@ const MEDITATION_DATA = [
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
+            // Update typewriter state
+            const tw = narrativeTypewriter;
+            const totalLen = tw.totalLen || 1;
+            if (tw.charIndex < totalLen) {
+                tw.charTimer--;
+                if (tw.charTimer <= 0) {
+                    tw.charTimer = 3;
+                    tw.charIndex++;
+                    // Spawn gold particles at text position when a new char appears
+                    const textX = VIEW_W / 2;
+                    const textY = tw.charIndex <= (tw.line1Target || '').length
+                        ? VIEW_H / 2 - 30
+                        : VIEW_H / 2 + 20;
+                    for (let i = 0; i < 5; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const spd = 1 + Math.random() * 2;
+                        narrativeParticles.push({
+                            x: textX + (Math.random() - 0.5) * 80,
+                            y: textY,
+                            vx: Math.cos(angle) * spd,
+                            vy: Math.sin(angle) * spd,
+                            life: 15 + Math.floor(Math.random() * 15),
+                            maxLife: 30,
+                            color: '#FFD700',
+                            size: 1.5 + Math.random() * 2,
+                        });
+                    }
+                }
+            }
+
+            // Split typewriter progress into line1 / line2
+            const l1 = tw.line1Target || '';
+            const l2 = tw.line2Target || '';
+            const l1Shown = l1.slice(0, Math.min(tw.charIndex, l1.length));
+            const l2Shown = l2.slice(0, Math.max(0, tw.charIndex - l1.length));
+            const typing = tw.charIndex < totalLen;
+            const cursorChar = (typing && Math.floor(Date.now() / 300) % 2 === 0) ? '|' : '';
+
             ctx.globalAlpha = alpha;
-            const si = narrativeStage;
-            const name = STAGE_NAMES[si] || '';
-            const quote = STAGE_QUOTES[si] || '';
 
-            // ステージ番号
-            ctx.fillStyle = '#EFD02E';
-            ctx.font = 'bold 18px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(`— STAGE ${si + 1} —`, VIEW_W / 2, VIEW_H / 2 - 70);
+            // Draw narrative particles (UI-space, no camera offset)
+            updateNarrativeParticles();
+            for (const p of narrativeParticles) {
+                const pAlpha = p.life / p.maxLife;
+                ctx.save();
+                ctx.globalAlpha = alpha * pAlpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * pAlpha, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            ctx.globalAlpha = alpha;
 
-            // ステージ名
+            // ステージ番号 + 名前 (line 1)
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 28px monospace';
-            ctx.fillText(name, VIEW_W / 2, VIEW_H / 2 - 30);
+            ctx.font = 'bold 22px monospace';
+            ctx.textAlign = 'center';
+            const displayL1 = l1Shown + (tw.charIndex <= l1.length ? cursorChar : '');
+            ctx.fillText(displayL1, VIEW_W / 2, VIEW_H / 2 - 30);
 
-            // 哲学的テキスト
+            // 哲学的テキスト (line 2)
             ctx.fillStyle = '#AADDFF';
             ctx.font = '17px monospace';
-            ctx.fillText(quote, VIEW_W / 2, VIEW_H / 2 + 20);
+            const displayL2 = l2Shown + (tw.charIndex > l1.length ? cursorChar : '');
+            ctx.fillText(displayL2, VIEW_W / 2, VIEW_H / 2 + 20);
 
             // フェードアウト指示
             if (narrativeTimer < 60) {
