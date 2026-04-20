@@ -431,6 +431,46 @@
             { q:'死を前にして何が本質か？', answers:['生きた証と愛した記憶','死は全てを無意味にする'], correct:0 },
         ];
 
+        // ==== デイリーチャレンジ定義 ====
+        const DAILY_CHALLENGES = [
+            { name: 'スピードラン',       desc: '各ステージを60秒以内にクリア',       rule: 'speed_run',   param: 60   },
+            { name: '無武装の哲学者',     desc: '武器なしでプレイ',                   rule: 'no_weapon',   param: 0    },
+            { name: '体力半分',           desc: '最大HPが半分',                       rule: 'half_hp',     param: 0.5  },
+            { name: '連鎖の試練',         desc: 'コンボなしで倒せない',               rule: 'combo_only',  param: 2    },
+            { name: '知の探求者',         desc: 'XP獲得2倍',                         rule: 'double_xp',   param: 2.0  },
+            { name: '嵐の中の旅',         desc: '全ステージで強風',                   rule: 'all_wind',    param: 1.5  },
+            { name: '暗闇の旅',           desc: '全ステージで暗闇',                   rule: 'all_dark',    param: 80   },
+            { name: '無限の敵',           desc: '敵が倍速で再スポーン',               rule: 'fast_spawn',  param: 2    },
+            { name: '鉄の意志',           desc: 'ゲームオーバー時リスタートなし',     rule: 'iron_will',   param: 0    },
+            { name: '哲学者の剣',         desc: 'ATK2倍だがHP回復なし',              rule: 'atk_up',      param: 2.0  },
+            { name: '超スピードラン',     desc: '各ステージを45秒以内にクリア',       rule: 'speed_run',   param: 45   },
+            { name: '素手の勇者',         desc: '武器なし・体力1.5倍',               rule: 'no_weapon',   param: 0    },
+            { name: '体力四分の一',       desc: '最大HPが25%',                       rule: 'half_hp',     param: 0.25 },
+            { name: '三連の試練',         desc: '3コンボ以上でのみ倒せる',           rule: 'combo_only',  param: 3    },
+            { name: '賢者の道',           desc: 'XP獲得3倍',                         rule: 'double_xp',   param: 3.0  },
+            { name: '嵐の巡礼',           desc: '全ステージで超強風',                 rule: 'all_wind',    param: 2.5  },
+            { name: '漆黒の旅',           desc: '全ステージで深い暗闇',               rule: 'all_dark',    param: 60   },
+            { name: '無限湧き',           desc: '敵が3倍速で再スポーン',             rule: 'fast_spawn',  param: 3    },
+            { name: '不死の哲学者',       desc: '1ライフ制・挑戦',                   rule: 'iron_will',   param: 0    },
+            { name: '覇王の剣',           desc: 'ATK3倍だがHP回復なし',              rule: 'atk_up',      param: 3.0  },
+            { name: '疾風スピードラン',   desc: '各ステージを30秒以内にクリア',       rule: 'speed_run',   param: 30   },
+            { name: '禅の旅人',           desc: '武器なし・コンボのみ',               rule: 'no_weapon',   param: 0    },
+            { name: '幽霊の体力',         desc: '最大HPが1',                         rule: 'half_hp',     param: 0.1  },
+            { name: '連打の求道者',       desc: '2コンボ以上でのみ倒せる',           rule: 'combo_only',  param: 2    },
+            { name: '神秘の学者',         desc: 'XP獲得4倍',                         rule: 'double_xp',   param: 4.0  },
+            { name: '永遠の嵐',           desc: '全ステージで最強の風',               rule: 'all_wind',    param: 3.0  },
+            { name: '深淵の闇',           desc: '全ステージで極限の暗闇',             rule: 'all_dark',    param: 50   },
+            { name: '怒涛の波',           desc: '敵が4倍速で再スポーン',             rule: 'fast_spawn',  param: 4    },
+            { name: '魂の試練',           desc: 'ワンミス終了・極限の挑戦',           rule: 'iron_will',   param: 0    },
+            { name: '剣聖の境地',         desc: 'ATK4倍だがHP回復なし',              rule: 'atk_up',      param: 4.0  },
+        ];
+
+        function getTodayChallenge() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+            return DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
+        }
+
         const STAGE_CONFIG = [
     // 1: 草原 — 明るい緑、Normal
     { bg:'#5A8030', tint:null,                 speedMult:1.00, windX:0,    windY:0,   dark:false, darkR:0,   ambient:'breeze'    },
@@ -1443,6 +1483,76 @@ const MEDITATION_DATA = [
         let pScore = 0;
         let playerLevel = 1, playerXP = 0, playerATK = 1.0;
 
+        // ==== デイリーチャレンジ状態変数 ====
+        let dailyChallengeActive = false;
+        let currentDailyChallenge = null;
+        let dailyChallengeXpMult = 1.0; // XP倍率 (double_xp チャレンジで使用)
+        let dailyChallengeNoWeapon = false; // no_weapon チャレンジフラグ
+        let dailyChallengeIronWill = false; // iron_will チャレンジフラグ
+        let dailyChallengeAtkUp = false;    // atk_up チャレンジフラグ
+        const DAILY_CHALLENGE_KEY = 'daily_challenge_v1';
+
+        function getDailyChallengeRecord() {
+            try {
+                return JSON.parse(localStorage.getItem(DAILY_CHALLENGE_KEY) || 'null');
+            } catch(e) { return null; }
+        }
+
+        function isTodayChallengeCompleted() {
+            const rec = getDailyChallengeRecord();
+            if (!rec) return false;
+            const today = new Date();
+            const dateStr = today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0');
+            return rec.date === dateStr && rec.completed;
+        }
+
+        function markTodayChallengeCompleted(score) {
+            const today = new Date();
+            const dateStr = today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0');
+            try {
+                localStorage.setItem(DAILY_CHALLENGE_KEY, JSON.stringify({ date: dateStr, completed: true, score: score }));
+            } catch(e) {}
+        }
+
+        function applyDailyChallenge(challenge) {
+            currentDailyChallenge = challenge;
+            dailyChallengeXpMult = 1.0;
+            dailyChallengeNoWeapon = false;
+            dailyChallengeIronWill = false;
+            dailyChallengeAtkUp = false;
+            switch (challenge.rule) {
+                case 'half_hp':
+                    player.maxHp = Math.max(1, Math.floor(player.maxHp * challenge.param));
+                    player.hp = player.maxHp;
+                    break;
+                case 'double_xp':
+                    dailyChallengeXpMult = challenge.param;
+                    break;
+                case 'no_weapon':
+                    dailyChallengeNoWeapon = true;
+                    hasLongSword = false;
+                    hasBow = false;
+                    break;
+                case 'all_dark':
+                    // 全ステージを暗くする (drawDarknessOverlay で参照)
+                    break;
+                case 'fast_spawn':
+                    // spawnEnemies で参照
+                    break;
+                case 'atk_up':
+                    dailyChallengeAtkUp = true;
+                    playerATK *= challenge.param;
+                    break;
+                case 'iron_will':
+                    dailyChallengeIronWill = true;
+                    break;
+            }
+        }
+
         const XP_TABLE = [0, 30, 80, 160, 280, 440, 650, 920, 1260, 1680,
                            2200, 2820, 3560, 4440, 5480, 6700, 8120, 9760, 11650, 13800];
 
@@ -1519,7 +1629,7 @@ const MEDITATION_DATA = [
 
         function gainXP(amt) {
             if (playerLevel >= 20) return;
-            playerXP += Math.floor(amt * (1.0 + meditationXpBonus));
+            playerXP += Math.floor(amt * (1.0 + meditationXpBonus) * dailyChallengeXpMult);
             while (playerLevel < 20 && playerXP >= XP_TABLE[playerLevel]) {
                 playerLevel++;
                 achievementStats.maxLevel = Math.max(achievementStats.maxLevel, playerLevel);
@@ -1668,10 +1778,11 @@ const MEDITATION_DATA = [
 
         function drawDarknessOverlay(camX, camY) {
             const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
-            if (!sc.dark) return;
+            const isAllDark = dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'all_dark';
+            if (!sc.dark && !isAllDark) return;
             const px = player.x - camX + SPRITE_SIZE / 2;
             const py = player.y - camY + SPRITE_SIZE / 2;
-            const r = sc.darkR;
+            const r = isAllDark && !sc.dark ? currentDailyChallenge.param : sc.darkR;
             const grad = ctx.createRadialGradient(px, py, r * 0.2, px, py, r);
             grad.addColorStop(0, 'rgba(0,0,0,0)');
             grad.addColorStop(0.6, 'rgba(0,0,0,0.4)');
