@@ -5118,21 +5118,31 @@ const MEDITATION_DATA = [
                 }
                 ctx.textAlign = 'left';
             } else if (msgTimer > 0 && currentStageIndex !== 7) {
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(0, VIEW_H / 2 - 40, VIEW_W, 80);
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 40px monospace';
+                const cmLines = centerMessage.split('\n');
+                const cmH = Math.max(80, cmLines.length * 36 + 20);
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, VIEW_H / 2 - cmH / 2, VIEW_W, cmH);
                 ctx.textAlign = 'center';
-                ctx.fillText(centerMessage, VIEW_W / 2, VIEW_H / 2 + 15);
+                cmLines.forEach((ln, li) => {
+                    const isFirst = li === 0;
+                    ctx.fillStyle = isFirst ? '#fff' : '#CCDDFF';
+                    ctx.font = isFirst ? 'bold 28px monospace' : '16px monospace';
+                    ctx.fillText(ln, VIEW_W / 2, VIEW_H / 2 - cmH / 2 + 36 + li * (isFirst ? 32 : 22));
+                });
                 ctx.textAlign = 'left';
                 msgTimer--;
             } else if (msgTimer > 0 && currentStageIndex === 8 && enemiesDefeatedInStage >= 1) {
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(0, VIEW_H / 2 - 40, VIEW_W, 80);
-                ctx.fillStyle = '#EFD02E';
-                ctx.font = 'bold 40px monospace';
+                const cmLines2 = centerMessage.split('\n');
+                const cmH2 = Math.max(80, cmLines2.length * 36 + 20);
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0, VIEW_H / 2 - cmH2 / 2, VIEW_W, cmH2);
                 ctx.textAlign = 'center';
-                ctx.fillText(centerMessage, VIEW_W / 2, VIEW_H / 2 + 15);
+                cmLines2.forEach((ln, li) => {
+                    const isFirst = li === 0;
+                    ctx.fillStyle = isFirst ? '#EFD02E' : '#CCDDFF';
+                    ctx.font = isFirst ? 'bold 28px monospace' : '16px monospace';
+                    ctx.fillText(ln, VIEW_W / 2, VIEW_H / 2 - cmH2 / 2 + 36 + li * (isFirst ? 32 : 22));
+                });
                 ctx.textAlign = 'left';
                 msgTimer--;
             }
