@@ -1831,7 +1831,7 @@ const MEDITATION_DATA = [
         });
 
         const player = {
-            x: 400, y: 300, speed: 2.074,
+            x: 400, y: 300, speed: 1.728,
             dirX: 0, dirY: 1,
             isAttacking: false, attackTimer: 0,
             hp: 5, maxHp: 5,
@@ -2043,7 +2043,7 @@ const MEDITATION_DATA = [
                 philSynthBonuses.hpBonus = 0;
             }
             if (philSynthBonuses.spdBonus > 0) {
-                player.speed = Math.min(4.32, player.speed + philSynthBonuses.spdBonus);
+                player.speed = Math.min(3.6, player.speed + philSynthBonuses.spdBonus);
                 philSynthBonuses.spdBonus = 0;
             }
             // Recompute playerATK to include philSynthBonuses.atkBonus
@@ -2058,7 +2058,7 @@ const MEDITATION_DATA = [
                 synthesisBonuses.hpBonus = 0;
             }
             if (synthesisBonuses.spdBonus > 0) {
-                player.speed = Math.min(4.32, player.speed + synthesisBonuses.spdBonus);
+                player.speed = Math.min(3.6, player.speed + synthesisBonuses.spdBonus);
                 synthesisBonuses.spdBonus = 0;
             }
         }
@@ -2124,7 +2124,7 @@ const MEDITATION_DATA = [
                 meditationXpBonus += choice.val;
             } else if (choice.effect === 'spd') {
                 meditationSpdBonus += choice.val;
-                if (!hasBoots) player.speed = Math.min(4.32, 2.074 + meditationSpdBonus);
+                if (!hasBoots) player.speed = Math.min(3.6, 1.728 + meditationSpdBonus);
             }
             meditationPending = false;
             centerMessage = `思索: ${choice.text}`;
@@ -3302,7 +3302,7 @@ const MEDITATION_DATA = [
                                 updateHTMLUI();
                             } else if (!hasBoots) {
                                 hasBoots = true;
-                                player.speed = 4.32;
+                                player.speed = 3.6;
                                 updateHTMLUI();
                             } else {
                                 if (!dailyChallengeAtkUp) player.hp = Math.min(player.maxHp, player.hp + 1);
