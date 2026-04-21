@@ -1772,7 +1772,7 @@ const MEDITATION_DATA = [
         });
 
         const player = {
-            x: 400, y: 300, speed: 1.44,
+            x: 400, y: 300, speed: 1.728,
             dirX: 0, dirY: 1,
             isAttacking: false, attackTimer: 0,
             hp: 5, maxHp: 5,
@@ -1916,8 +1916,8 @@ const MEDITATION_DATA = [
             }
         }
 
-        const XP_TABLE = [0, 30, 80, 160, 280, 440, 650, 920, 1260, 1680,
-                           2200, 2820, 3560, 4440, 5480, 6700, 8120, 9760, 11650, 13800];
+        const XP_TABLE = [0, 39, 104, 208, 364, 572, 845, 1196, 1638, 2184,
+                           2860, 3666, 4628, 5772, 7124, 8710, 10556, 12688, 15145, 17940];
 
         const SYNTHESIS_RECIPES = [
             { needs: ['sword', 'sword'],   result: { name: '双剣の魂',   desc: 'ATK +30%',      effect: () => { synthesisBonuses.atkMult += 0.30; } } },
@@ -2065,7 +2065,7 @@ const MEDITATION_DATA = [
                 meditationXpBonus += choice.val;
             } else if (choice.effect === 'spd') {
                 meditationSpdBonus += choice.val;
-                if (!hasBoots) player.speed = Math.min(3.0, 1.44 + meditationSpdBonus);
+                if (!hasBoots) player.speed = Math.min(3.6, 1.728 + meditationSpdBonus);
             }
             meditationPending = false;
             centerMessage = `思索: ${choice.text}`;
@@ -2867,7 +2867,7 @@ const MEDITATION_DATA = [
                     padA = padA || gp.buttons[0]?.pressed || gp.buttons[2]?.pressed;
                     padStart = padStart || gp.buttons[9]?.pressed;
                     padB = padB || gp.buttons[1]?.pressed;
-                    padShield = padShield || gp.buttons[4]?.pressed || gp.buttons[5]?.pressed || gp.buttons[6]?.pressed || gp.buttons[7]?.pressed;
+                    padShield = padShield || gp.buttons[5]?.pressed;
                 }
             }
 
@@ -3032,7 +3032,7 @@ const MEDITATION_DATA = [
             }
 
             if (hasShield) {
-                isShielding = (keys['ShiftLeft'] || keys['ShiftRight'] || padShield || touch.shield) && !player.isAttacking;
+                isShielding = (keys['KeyR'] || padShield || touch.shield) && !player.isAttacking;
                 if (isShielding && currentStageIndex === 0 && tutorialStep === 3) tutorialStep = 4;
             }
 
@@ -3219,8 +3219,8 @@ const MEDITATION_DATA = [
                     }
                     if (item.isBox) {
                         playSoundEffect('stageclear');
-                        // ステージ3（index=2）は玉を飛ばす敵が初出のため、必ずシールドを付与
-                        if (currentStageIndex === 2 && !hasShield) {
+                        // ステージ1（index=0）から盾を入手可能。ステージ1または3では必ずシールドを付与
+                        if ((currentStageIndex === 0 || currentStageIndex === 2) && !hasShield) {
                             hasShield = true;
                             updateHTMLUI();
                         } else {
@@ -3236,7 +3236,7 @@ const MEDITATION_DATA = [
                                 updateHTMLUI();
                             } else if (!hasBoots) {
                                 hasBoots = true;
-                                player.speed = 3.0;
+                                player.speed = 3.6;
                                 updateHTMLUI();
                             } else {
                                 if (!dailyChallengeAtkUp) player.hp = Math.min(player.maxHp, player.hp + 1);
@@ -4236,7 +4236,7 @@ const MEDITATION_DATA = [
                 null,
                 { text: '移動: WASD / 矢印キー', sub: 'まず歩いてみよう', color: '#88FFAA' },
                 { text: '攻撃: Space / Z', sub: '敵に近づいて攻撃！', color: '#FFAA44' },
-                { text: '盾: F キー長押し', sub: '盾で身を守ろう', color: '#44AAFF' },
+                { text: '盾: R キー長押し', sub: '盾で身を守ろう', color: '#44AAFF' },
                 { text: '光るアイテムを探せ！', sub: '哲学の鍵を見つけてボスを呼ぶ', color: '#EFD02E' },
             ];
             const hint = hints[tutorialStep];
