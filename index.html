@@ -1330,6 +1330,11 @@ const MEDITATION_DATA = [
                         mapData = STAGES[0];
                         hasStarted = true;
                         karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
+                        ngPlusLevel = 0;
+                        wisdomFragmentCount = 0; hiddenStageUnlocked = false; hiddenStageActive = false;
+                        philItems = { orb_reason:0, orb_emotion:0, key_freedom:0, chain_duty:0 };
+                        synthesisBonuses = { atkMult:1.0, hpBonus:0, spdBonus:0.0, xpBonus:0.0, arrowPower:1.0 };
+                        philSynthBonuses = { aoeChance:0, dmgXP:0, atkBonus:0, hpBonus:0, dmgReduce:0, noKnockback:false, spdBonus:0, xpBonus:0 };
                         gameState = 'playing';
                         centerMessage = "STAGE 1";
                         msgTimer = 120;
@@ -2356,7 +2361,15 @@ const MEDITATION_DATA = [
                     mAtk: meditationAtkBonus, mHp: meditationHpBonus,
                     mXp: meditationXpBonus, mSpd: meditationSpdBonus,
                     mCount: meditationChoices.length,
-                    karmaB: karma.bu, karmaC: karma.chi, karmaM: karma.mamori, karmaT: karma.tetsu
+                    karmaB: karma.bu, karmaC: karma.chi, karmaM: karma.mamori, karmaT: karma.tetsu,
+                    ngPlus: ngPlusLevel,
+                    wisdomCount: wisdomFragmentCount, hiddenUnlocked: hiddenStageUnlocked,
+                    philI: philItems,
+                    synth: { atkMult: synthesisBonuses.atkMult, xpBonus: synthesisBonuses.xpBonus, arrowPower: synthesisBonuses.arrowPower },
+                    philS: { aoeChance: philSynthBonuses.aoeChance, dmgXP: philSynthBonuses.dmgXP,
+                             atkBonus: philSynthBonuses.atkBonus, dmgReduce: philSynthBonuses.dmgReduce,
+                             noKnockback: philSynthBonuses.noKnockback, spdBonus: philSynthBonuses.spdBonus,
+                             xpBonus: philSynthBonuses.xpBonus }
                 }));
             } catch(e) {}
         }
@@ -2381,9 +2394,15 @@ const MEDITATION_DATA = [
                 meditationHpBonus  = d.mHp  || 0;
                 meditationXpBonus  = d.mXp  || 0;
                 meditationSpdBonus = d.mSpd || 0;
-                if (meditationAtkBonus > 0) playerATK = (1.0 + (playerLevel-1)*0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
                 karma.bu = d.karmaB || 0; karma.chi = d.karmaC || 0;
                 karma.mamori = d.karmaM || 0; karma.tetsu = d.karmaT || 0;
+                ngPlusLevel = d.ngPlus || 0;
+                wisdomFragmentCount = d.wisdomCount || 0;
+                hiddenStageUnlocked = !!d.hiddenUnlocked;
+                if (d.philI) { philItems.orb_reason = d.philI.orb_reason||0; philItems.orb_emotion = d.philI.orb_emotion||0; philItems.key_freedom = d.philI.key_freedom||0; philItems.chain_duty = d.philI.chain_duty||0; }
+                if (d.synth) { synthesisBonuses.atkMult = d.synth.atkMult||1.0; synthesisBonuses.xpBonus = d.synth.xpBonus||0; synthesisBonuses.arrowPower = d.synth.arrowPower||1.0; }
+                if (d.philS) { Object.assign(philSynthBonuses, d.philS); }
+                playerATK = (1.0 + (playerLevel-1)*0.12) * (1.0 + meditationAtkBonus) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
                 mapData = STAGES[Math.min(currentStageIndex, STAGES.length - 1)];
                 return true;
             } catch(e) { return false; }
