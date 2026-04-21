@@ -86,116 +86,122 @@
         };
 
         const PLAYER_SPRITE = [
+            // 旅人スプライト (正面): 広帽子、クローク、スタッフ
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0, 25, 11, 24, 25,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 25, 11, 24, 11, 25,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0, 25, 11, 11, 24, 11, 11, 25,  0,  0,  0,  0,  0,  0],
-            [0,  7,  0,  0, 23,  4,  4,  4, 23,  0,  0,  0,  0,  0,  0,  0],
-            [0,  7,  0,  0,  4, 11,  4,  4, 11,  4,  0,  0,  0,  0,  0,  0],
-            [0,  7,  0,  0,  4, 11,  4,  4, 11,  4,  0,  0, 11, 24, 11,  0],
-            [ 9,  9,  9,  0,  4,  4,  4,  4,  4,  4,  0, 11, 24,  7, 24, 11],
-            [0, 25,  0,  0, 25, 11, 20, 11, 25,  0, 11, 24, 20, 11, 20, 11],
-            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 24, 11, 24, 11],
-            [0,  0,  0,  0, 11, 11, 11, 11, 11, 11, 11, 24, 20, 11, 20, 11],
-            [0,  0,  0,  0, 25, 11, 11, 11, 11, 25,  0, 11, 24,  7, 24, 11],
-            [0,  0,  0,  0,  0, 19, 20,  0, 19, 20,  0,  0, 11, 24, 11,  0],
+            [0,  0,  0, 19, 12, 12, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0],
+            [0,  0, 19, 12, 21, 12, 12, 12, 21, 12, 19,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 23,  4,  4,  4, 23,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  4, 10,  4,  4, 10,  4,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  4, 10,  4,  4, 10,  4,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 18, 18, 18, 18, 18, 18,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0, 12, 18, 12, 20, 12, 18, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12, 12, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0, 19, 12,  0, 19, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 19, 19,  0, 19, 19,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 後ろ姿スプライト（上へ移動時）
         const PLAYER_BACK_SPRITE = [
+            // 旅人スプライト (後ろ姿): 広帽子の縁、クローク後ろ、スタッフ
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0, 25, 11, 24, 25,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 25, 11, 24, 11, 25,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0, 25, 11, 11, 24, 11, 11, 25,  0,  0,  0,  0,  0,  0],
-            [0,  7,  0,  0, 19, 19, 19, 19, 19,  0,  0,  0,  0,  0,  0,  0],
-            [0,  7,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
-            [0,  7,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0, 11, 24, 11,  0],
-            [ 9,  9,  9,  0,  4, 23, 23, 23,  4,  0, 11, 24,  7, 24, 11,  0],
-            [0, 25,  0,  0, 25, 11, 11, 11, 25,  0, 11, 24,  7, 11,  7, 11],
-            [0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 24, 11, 24, 11, 11],
-            [0,  0,  0,  0, 25, 11, 11, 11, 11, 25, 11, 24, 11, 24, 11, 11],
-            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0, 11, 24,  7, 24, 11,  0],
-            [0,  0,  0,  0,  0, 19, 20,  0, 19, 20,  0,  0, 11, 24, 11,  0],
+            [0,  0,  0, 19, 12, 12, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0],
+            [0,  0, 19, 12, 21, 12, 12, 12, 21, 12, 19,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 19, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 12, 12, 12, 12, 12,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 18, 18, 18, 18, 18, 18,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0, 12, 18, 12, 12, 12, 18, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 12, 12, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 12, 12, 21, 12, 12,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0, 19, 12,  0, 19, 12,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 19, 19,  0, 19, 19,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 右横顔スプライト（右へ移動時 / 左は反転）
         const PLAYER_RIGHT_SPRITE = [
+            // 旅人スプライト (右横): 広帽子、横向きクローク、スタッフ前
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 20, 11, 7, 20, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 11, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 11, 11, 11, 11, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 11, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 11, 11, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 11, 11, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 11, 11, 11, 20, 11, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 20, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 20, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 19, 12, 21, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 10, 4, 0, 16, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 4, 0, 16, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 18, 18, 18, 18, 12, 16, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 18, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 12, 12, 20, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
 
         // 歩行フレーム2 — 足を開いたポーズ (正面・後ろ・横)
         const PLAYER_SPRITE_W2 = [
+            // 旅人 歩行フレーム2 (正面) — 足開き
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 20, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 20, 11, 7, 11, 20, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 11, 11, 11, 11, 11, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 20, 4, 4, 4, 4, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 4, 11, 4, 4, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 4, 11, 4, 4, 11, 4, 0, 0, 11, 11, 11, 11],
-            [20, 20, 20, 0, 4, 4, 4, 4, 4, 4, 0, 11, 7, 7, 7, 11],
-            [0, 11, 0, 0, 11, 11, 20, 11, 11, 0, 11, 7, 20, 11, 7, 11],
-            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 11, 11, 11, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 11, 7, 20, 11, 7, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 0, 11, 7, 7, 7, 11],
-            [0, 0, 0, 20, 20, 0, 0, 0, 0, 20, 20, 0, 11, 11, 11, 11],
-            [0, 0, 0, 20, 20, 0, 0, 0, 0, 20, 20, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 19, 12, 12, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
+            [0, 0, 19, 12, 21, 12, 12, 12, 21, 12, 19, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 23, 4, 4, 4, 23, 0, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 4, 10, 4, 4, 10, 4, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 4, 10, 4, 4, 10, 4, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 12, 18, 12, 20, 12, 18, 12, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 19, 19, 0, 19, 12, 0, 0, 0, 19, 19, 0, 0, 0, 0],
+            [0, 0, 19, 19, 0, 19, 0, 0, 0, 0, 19, 19, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
         const PLAYER_BACK_SPRITE_W2 = [
+            // 旅人 歩行フレーム2 (後ろ) — 足開き
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 20, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 20, 11, 7, 11, 20, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 11, 11, 11, 11, 11, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 20, 19, 19, 19, 19, 20, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 19, 4, 4, 4, 4, 19, 0, 0, 0, 0, 0, 0],
-            [0, 7, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 11, 11, 11, 11],
-            [20, 20, 20, 0, 4, 4, 4, 4, 4, 4, 0, 11, 7, 7, 7, 11],
-            [0, 11, 0, 0, 11, 11, 20, 11, 11, 0, 11, 7, 20, 11, 7, 11],
-            [0, 11, 11, 11, 11, 11, 20, 11, 11, 11, 11, 11, 11, 11, 11, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 11, 7, 20, 11, 7, 11],
-            [0, 0, 0, 0, 11, 11, 11, 11, 11, 11, 0, 11, 7, 7, 7, 11],
-            [0, 0, 0, 20, 20, 0, 0, 0, 0, 20, 20, 0, 11, 11, 11, 11],
-            [0, 0, 0, 20, 20, 0, 0, 0, 0, 20, 20, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 19, 12, 12, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
+            [0, 0, 19, 12, 21, 12, 12, 12, 21, 12, 19, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 19, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 12, 12, 12, 12, 12, 0, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 0, 16, 0, 0, 0, 0],
+            [0, 0, 0, 12, 18, 12, 12, 12, 18, 12, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 12, 12, 21, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 19, 19, 0, 19, 12, 0, 0, 0, 19, 19, 0, 0, 0, 0],
+            [0, 0, 19, 19, 0, 19, 0, 0, 0, 0, 19, 19, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
         const PLAYER_RIGHT_SPRITE_W2 = [
+            // 旅人 歩行フレーム2 (右横) — 足開き
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 20, 11, 7, 20, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 11, 11, 7, 11, 20, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 11, 11, 11, 11, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 11, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 11, 11, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 11, 11, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 11, 11, 11, 20, 11, 11, 4, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 11, 11, 11, 11, 4, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 20, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 20, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 19, 12, 21, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 19, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 10, 4, 0, 16, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 4, 4, 4, 0, 16, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 18, 18, 18, 18, 12, 16, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 18, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 12, 12, 12, 20, 12, 12, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 19, 0, 0, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 19, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
@@ -626,6 +632,52 @@ const MEDITATION_DATA = [
             '神は存在するのか？問い続けること自体が信仰である。',
             '死を知る者のみが、真に生を理解できる。',
         ];
+        const STAGE_STORIES = [
+            '旅人は静かな草原を歩き出した。\n「存在するとは何か？」\nその問いが旅の始まりだった。',
+            '深い森の中、光は届かない。\n闇の中で旅人は問う—\n「知識とは何か？」',
+            '川のせせらぎが聞こえる。\n流れは止まらない。変化こそ唯一の真実か。',
+            '岩山の頂より大地を見下ろす。\n旅人の心に問いかける—\n「力とは何のためにある？」',
+            '吹雪の中、旅人は進む。\n凍える体で悟る—\n「苦しみの中にこそ意味がある」',
+            '砂漠の熱が足元を焼く。\n蜃気楼を見つめ問う—\n「欲望と真実は相容れるか？」',
+            '廃墟の中に過去が眠る。\n文明の残骸が語りかける—\n「栄枯盛衰、何が残るのか」',
+            '嵐の橋の上、旅人は立ち止まる。\n「恐怖を乗り越えた先に何がある？」',
+            '洞窟の奥深く、闇に包まれる。\n孤独の中で旅人は気づく—\n「自分自身を知ることが全ての始まり」',
+            '古代遺跡が語りかける。\n時を超えた知恵の石板—\n「過去は現在を作る礎だ」',
+            '高山の頂上、空気が薄い。\n限界を超えた先に—\n「人はどこまで成長できるのか」',
+            '溶岩の流れる炎の大地。\n破壊と創造の狭間で—\n「変革には何が必要か？」',
+            '毒沼の霧の中を進む。\n見えない危険が問いかける—\n「真の勇気とは何か？」',
+            '深海のような静寂の水中。\n深淵を覗く旅人—\n「探求することに終わりはない」',
+            '永遠に降り続ける雪の地。\n静寂の中で旅人は問う—\n「無常を受け入れることができるか？」',
+            '空に浮かぶ雲の上の城。\n足元は見えない。\n「理想と現実の境界はどこにある？」',
+            '影の世界、全てが歪む。\n鏡の中の自分を見つめ—\n「自己とは幻か、それとも実在か？」',
+            '崩れゆく世界の端で。\n終わりの中に始まりを見る—\n「創造と破壊は一つのものだ」',
+            '神々の住む神殿の前。\n旅人は問う—\n「神なき世界で人は何を信じるか？」',
+            '全ての旅の終わり、終焉の地。\n旅人は全ての問いを携えて—\n「死と向き合う時、何が残るのか？」',
+        ];
+
+        const BOSS_DEFEAT_STORIES = [
+            'ボスは倒れ、静かに問いかけた。\n「お前は何のために戦うのか？」',
+            '闇の者が囁く—\n「知識を得た者は、孤独を知る」',
+            '敵は消え去り、川は流れ続ける。\n変化する世界の中で旅人は立つ。',
+            '岩山の番人が最後に言った—\n「力を持つ者は、その重さを知れ」',
+            '氷の精霊が溶けながら告げる—\n「苦しみは宝だ。捨てるな」',
+            '砂の巨人が崩れながら問う—\n「お前の欲望の先に何がある？」',
+            '廃墟の守護者が眠りにつく—\n「忘れられることが、真の死だ」',
+            '嵐の化身が散り際に言った—\n「恐怖を知る者だけが勇敢になれる」',
+            '洞窟の闇が後退する—\n「光とは、闇を知る者が作り出すものだ」',
+            '遺跡の番人が問う—\n「過去を学んだか。では、前へ進め」',
+            '山の神が雲に消えながら—\n「頂上は、次の山の麓に過ぎない」',
+            '炎の魔物が燃え尽きて言う—\n「灰の中にこそ、再生の種がある」',
+            '毒の番人が最後に囁く—\n「苦しみの中にいる者だけが、救いを知る」',
+            '深海の主が問いかける—\n「深く潜るほど、真実は遠ざかるか？」',
+            '雪の女王が消えながら言う—\n「無常を受け入れた者は、何も失わない」',
+            '雲上の番人が告げる—\n「理想を持つ者は、現実を変える力を持つ」',
+            '影の王が最後に言った—\n「お前の影は、お前自身だ」',
+            '崩壊の化身が散り際に—\n「終わりのない旅に、意味はあるか？」',
+            '神殿の守護者が問う—\n「神を超えた先に、お前は何を見る？」',
+            '終焉の化身が最後に囁く—\n「全ての問いへの答えは、お前の中にある」',
+        ];
+
         const STAGE_MAP_CONFIGS = [
             { wallRate:0.05, waterRate:0.02 }, // 1 草原
             { wallRate:0.15, waterRate:0.03 }, // 2 森
@@ -1415,6 +1467,13 @@ const MEDITATION_DATA = [
                         hasBow = savedItemsForContinue.hasBow;
                         hasShield = savedItemsForContinue.hasShield;
                         hasBoots = savedItemsForContinue.hasBoots;
+                        if (savedItemsForContinue.philItems) { Object.assign(philItems, savedItemsForContinue.philItems); }
+                        if (savedItemsForContinue.synthesisBonuses) { Object.assign(synthesisBonuses, savedItemsForContinue.synthesisBonuses); }
+                        if (savedItemsForContinue.philSynthBonuses) { Object.assign(philSynthBonuses, savedItemsForContinue.philSynthBonuses); }
+                        if (savedItemsForContinue.meditationAtkBonus !== undefined) meditationAtkBonus = savedItemsForContinue.meditationAtkBonus;
+                        if (savedItemsForContinue.meditationHpBonus !== undefined) meditationHpBonus = savedItemsForContinue.meditationHpBonus;
+                        if (savedItemsForContinue.meditationXpBonus !== undefined) meditationXpBonus = savedItemsForContinue.meditationXpBonus;
+                        if (savedItemsForContinue.meditationSpdBonus !== undefined) meditationSpdBonus = savedItemsForContinue.meditationSpdBonus;
                     }
                     do {
                         player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
@@ -1772,7 +1831,7 @@ const MEDITATION_DATA = [
         });
 
         const player = {
-            x: 400, y: 300, speed: 1.728,
+            x: 400, y: 300, speed: 2.074,
             dirX: 0, dirY: 1,
             isAttacking: false, attackTimer: 0,
             hp: 5, maxHp: 5,
@@ -1984,7 +2043,7 @@ const MEDITATION_DATA = [
                 philSynthBonuses.hpBonus = 0;
             }
             if (philSynthBonuses.spdBonus > 0) {
-                player.speed = Math.min(3.5, player.speed + philSynthBonuses.spdBonus);
+                player.speed = Math.min(4.32, player.speed + philSynthBonuses.spdBonus);
                 philSynthBonuses.spdBonus = 0;
             }
             // Recompute playerATK to include philSynthBonuses.atkBonus
@@ -1999,7 +2058,7 @@ const MEDITATION_DATA = [
                 synthesisBonuses.hpBonus = 0;
             }
             if (synthesisBonuses.spdBonus > 0) {
-                player.speed = Math.min(3.5, player.speed + synthesisBonuses.spdBonus);
+                player.speed = Math.min(4.32, player.speed + synthesisBonuses.spdBonus);
                 synthesisBonuses.spdBonus = 0;
             }
         }
@@ -2065,7 +2124,7 @@ const MEDITATION_DATA = [
                 meditationXpBonus += choice.val;
             } else if (choice.effect === 'spd') {
                 meditationSpdBonus += choice.val;
-                if (!hasBoots) player.speed = Math.min(3.6, 1.728 + meditationSpdBonus);
+                if (!hasBoots) player.speed = Math.min(4.32, 2.074 + meditationSpdBonus);
             }
             meditationPending = false;
             centerMessage = `思索: ${choice.text}`;
@@ -2987,6 +3046,13 @@ const MEDITATION_DATA = [
                             hasBow = savedItemsForContinue.hasBow;
                             hasShield = savedItemsForContinue.hasShield;
                             hasBoots = savedItemsForContinue.hasBoots;
+                            if (savedItemsForContinue.philItems) { Object.assign(philItems, savedItemsForContinue.philItems); }
+                            if (savedItemsForContinue.synthesisBonuses) { Object.assign(synthesisBonuses, savedItemsForContinue.synthesisBonuses); }
+                            if (savedItemsForContinue.philSynthBonuses) { Object.assign(philSynthBonuses, savedItemsForContinue.philSynthBonuses); }
+                            if (savedItemsForContinue.meditationAtkBonus !== undefined) meditationAtkBonus = savedItemsForContinue.meditationAtkBonus;
+                            if (savedItemsForContinue.meditationHpBonus !== undefined) meditationHpBonus = savedItemsForContinue.meditationHpBonus;
+                            if (savedItemsForContinue.meditationXpBonus !== undefined) meditationXpBonus = savedItemsForContinue.meditationXpBonus;
+                            if (savedItemsForContinue.meditationSpdBonus !== undefined) meditationSpdBonus = savedItemsForContinue.meditationSpdBonus;
                         }
                         do {
                             player.x = 40 + Math.random() * (WORLD_W - SPRITE_SIZE - 80);
@@ -3236,7 +3302,7 @@ const MEDITATION_DATA = [
                                 updateHTMLUI();
                             } else if (!hasBoots) {
                                 hasBoots = true;
-                                player.speed = 3.6;
+                                player.speed = 4.32;
                                 updateHTMLUI();
                             } else {
                                 if (!dailyChallengeAtkUp) player.hp = Math.min(player.maxHp, player.hp + 1);
@@ -3297,7 +3363,7 @@ const MEDITATION_DATA = [
                             enemy.hitTimer = 10;
                             enemy.x += p.dx * 15; // Knockback
                             enemy.y += p.dy * 15;
-                            spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FF4444', 6, 3);
+                            spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#8844FF', 6, 3);
                             screenShake = Math.max(screenShake, 4);
                             playSoundEffect('hit');
                             // ボス50%で哲学対話発動
@@ -3333,8 +3399,8 @@ const MEDITATION_DATA = [
                                     meditationPendingStage = currentStageIndex;
                                     meditationPending = true;
                                     meditationCursor = 0;
-                                    centerMessage = "思索せよ...";
-                                    msgTimer = 60;
+                                    centerMessage = BOSS_DEFEAT_STORIES[currentStageIndex] || BOSS_DEFEAT_STORIES[0];
+                                    msgTimer = 210;
                                 } else if (!wasBoss && !isStageAdvancing) {
                                     spawnEnemies();
                                 }
@@ -3384,7 +3450,11 @@ const MEDITATION_DATA = [
                             deathX = player.x;
                             deathY = player.y;
                             graveMarkers.push({ x: player.x, y: player.y, stage: currentStageIndex });
-                            savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
+                            savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots,
+                                philItems: JSON.parse(JSON.stringify(philItems)),
+                                synthesisBonuses: JSON.parse(JSON.stringify(synthesisBonuses)),
+                                philSynthBonuses: JSON.parse(JSON.stringify(philSynthBonuses)),
+                                meditationAtkBonus, meditationHpBonus, meditationXpBonus, meditationSpdBonus };
                             saveGame();
                             playSoundEffect('gameover');
                         }
@@ -3551,7 +3621,7 @@ const MEDITATION_DATA = [
                         enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost;
                         if (comboStep === 3) achievementStats.combo3Count++;
                         enemy.hitTimer = 10;
-                        spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FF4444', 6, 3);
+                        spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#8844FF', 6, 3);
                         screenShake = Math.max(screenShake, 4);
 
                         // AOE攻撃 (弁証法の杖)
@@ -3617,8 +3687,8 @@ const MEDITATION_DATA = [
                                 meditationPendingStage = currentStageIndex;
                                 meditationPending = true;
                                 meditationCursor = 0;
-                                centerMessage = "思索せよ...";
-                                msgTimer = 60;
+                                centerMessage = BOSS_DEFEAT_STORIES[currentStageIndex] || BOSS_DEFEAT_STORIES[0];
+                                msgTimer = 210;
                             } else if (!wasBoss2 && !isStageAdvancing) {
                                 spawnEnemies();
                             }
@@ -3668,7 +3738,11 @@ const MEDITATION_DATA = [
                             deathX = player.x;
                             deathY = player.y;
                             graveMarkers.push({ x: player.x, y: player.y, stage: currentStageIndex });
-                            savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots };
+                            savedItemsForContinue = { hasLongSword, hasBow, hasShield, hasBoots,
+                                philItems: JSON.parse(JSON.stringify(philItems)),
+                                synthesisBonuses: JSON.parse(JSON.stringify(synthesisBonuses)),
+                                philSynthBonuses: JSON.parse(JSON.stringify(philSynthBonuses)),
+                                meditationAtkBonus, meditationHpBonus, meditationXpBonus, meditationSpdBonus };
                             saveGame();
                             playSoundEffect('gameover');
                         }
@@ -4114,20 +4188,22 @@ const MEDITATION_DATA = [
         }
 
         function startNarrative(si) {
-            narrativeTimer = 180;
+            narrativeTimer = 240;
             narrativeStage = si;
             const name = STAGE_NAMES[si] || '';
             const quote = STAGE_QUOTES[si] || '';
+            const story = STAGE_STORIES[si] || '';
             const line1 = `STAGE ${si + 1}  —  ${name}`;
             const line2 = quote;
-            // Full target text: line1 + newline marker + line2
+            const line3 = story;
             narrativeTypewriter = {
                 text: '',
                 line1Target: line1,
                 line2Target: line2,
+                line3Target: line3,
                 charIndex: 0,
                 charTimer: 0,
-                totalLen: line1.length + line2.length
+                totalLen: line1.length + line2.length + line3.length
             };
             narrativeParticles = [];
         }
@@ -4163,9 +4239,13 @@ const MEDITATION_DATA = [
                     tw.charIndex++;
                     // Spawn gold particles at text position when a new char appears
                     const textX = VIEW_W / 2;
-                    const textY = tw.charIndex <= (tw.line1Target || '').length
-                        ? VIEW_H / 2 - 30
-                        : VIEW_H / 2 + 20;
+                    const l1Len = (tw.line1Target || '').length;
+                    const l2Len = (tw.line2Target || '').length;
+                    const textY = tw.charIndex <= l1Len
+                        ? VIEW_H / 2 - 50
+                        : tw.charIndex <= l1Len + l2Len
+                            ? VIEW_H / 2 - 5
+                            : VIEW_H / 2 + 60;
                     for (let i = 0; i < 5; i++) {
                         const angle = Math.random() * Math.PI * 2;
                         const spd = 1 + Math.random() * 2;
@@ -4183,11 +4263,13 @@ const MEDITATION_DATA = [
                 }
             }
 
-            // Split typewriter progress into line1 / line2
+            // Split typewriter progress into line1 / line2 / line3
             const l1 = tw.line1Target || '';
             const l2 = tw.line2Target || '';
+            const l3 = tw.line3Target || '';
             const l1Shown = l1.slice(0, Math.min(tw.charIndex, l1.length));
             const l2Shown = l2.slice(0, Math.max(0, tw.charIndex - l1.length));
+            const l3Shown = l3.slice(0, Math.max(0, tw.charIndex - l1.length - l2.length));
             const typing = tw.charIndex < totalLen;
             const cursorChar = (typing && Math.floor(Date.now() / 300) % 2 === 0) ? '|' : '';
 
@@ -4212,19 +4294,30 @@ const MEDITATION_DATA = [
             ctx.font = 'bold 22px monospace';
             ctx.textAlign = 'center';
             const displayL1 = l1Shown + (tw.charIndex <= l1.length ? cursorChar : '');
-            ctx.fillText(displayL1, VIEW_W / 2, VIEW_H / 2 - 30);
+            ctx.fillText(displayL1, VIEW_W / 2, VIEW_H / 2 - 50);
 
             // 哲学的テキスト (line 2)
             ctx.fillStyle = '#AADDFF';
             ctx.font = '17px monospace';
-            const displayL2 = l2Shown + (tw.charIndex > l1.length ? cursorChar : '');
-            ctx.fillText(displayL2, VIEW_W / 2, VIEW_H / 2 + 20);
+            const displayL2 = l2Shown + (tw.charIndex > l1.length && tw.charIndex <= l1.length + l2.length ? cursorChar : '');
+            ctx.fillText(displayL2, VIEW_W / 2, VIEW_H / 2 - 5);
+
+            // ストーリーテキスト (line 3) — 改行対応
+            if (l3Shown.length > 0 || tw.charIndex > l1.length + l2.length) {
+                ctx.fillStyle = `rgba(200,220,180,${alpha * 0.85})`;
+                ctx.font = '13px monospace';
+                const displayL3 = l3Shown + (tw.charIndex > l1.length + l2.length ? cursorChar : '');
+                const l3Lines = displayL3.split('\n');
+                l3Lines.forEach((ln, idx) => {
+                    ctx.fillText(ln, VIEW_W / 2, VIEW_H / 2 + 50 + idx * 20);
+                });
+            }
 
             // フェードアウト指示
             if (narrativeTimer < 60) {
                 ctx.fillStyle = `rgba(150,150,150,${alpha * 0.7})`;
                 ctx.font = '13px monospace';
-                ctx.fillText('— Press any key to skip —', VIEW_W / 2, VIEW_H / 2 + 60);
+                ctx.fillText('— Press any key to skip —', VIEW_W / 2, VIEW_H / 2 + 130);
             }
             ctx.restore();
         }
@@ -4775,7 +4868,7 @@ const MEDITATION_DATA = [
                 drawShape(SHIELD_SPRITE, sx, sy, pRot, PIXEL_SCALE);
             }
 
-            // 剣アーク (攻撃中)
+            // 魔法サークル (攻撃中)
             if (player.isAttacking && currentWeapon === 'sword') {
                 const maxTimer = comboStep === 3 ? 20 : 15;
                 const progress = 1 - player.attackTimer / maxTimer;
@@ -4791,10 +4884,10 @@ const MEDITATION_DATA = [
                 const sweepStart = comboStep === 3 ? 0 : centerAngle - arcSpan / 2 + progress * arcSpan;
                 const sweepEnd = comboStep === 3 ? Math.PI * 2 : centerAngle + arcSpan / 2;
                 const alpha = 0.85 * (1 - progress);
-                // コンボ段階で色変化
-                const arcColor = comboStep === 3 ? `rgba(255,200,50,${alpha})` :
-                                 comboStep === 2 ? `rgba(150,200,255,${alpha})` :
-                                                  `rgba(200,230,255,${alpha})`;
+                // 魔法コンボ段階で色変化 (青/紫系)
+                const arcColor = comboStep === 3 ? `rgba(180,100,255,${alpha})` :
+                                 comboStep === 2 ? `rgba(68,136,255,${alpha})` :
+                                                  `rgba(136,68,255,${alpha})`;
                 ctx.save();
                 ctx.strokeStyle = arcColor;
                 ctx.lineWidth = comboStep === 3 ? 10 : comboStep === 2 ? 8 : 7;
@@ -4802,11 +4895,21 @@ const MEDITATION_DATA = [
                 ctx.beginPath();
                 ctx.arc(cx, cy, arcRadius, sweepStart, sweepEnd);
                 ctx.stroke();
-                ctx.strokeStyle = comboStep === 3 ? `rgba(255,255,100,${alpha * 0.5})` : `rgba(255,255,255,${alpha * 0.6})`;
+                ctx.strokeStyle = comboStep === 3 ? `rgba(220,180,255,${alpha * 0.5})` : `rgba(150,180,255,${alpha * 0.6})`;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(cx, cy, arcRadius * 0.85, sweepStart, sweepEnd);
                 ctx.stroke();
+                // 魔法オーブ: 中心に光の点
+                if (comboStep === 3) {
+                    const orbGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, arcRadius * 0.3);
+                    orbGlow.addColorStop(0, `rgba(200,150,255,${alpha * 0.8})`);
+                    orbGlow.addColorStop(1, `rgba(68,68,255,0)`);
+                    ctx.fillStyle = orbGlow;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, arcRadius * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
             }
 
