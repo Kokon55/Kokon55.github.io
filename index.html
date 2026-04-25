@@ -548,6 +548,30 @@
     // 20: 終焉の地 — 真っ黒、右風、暗い、虚無
     { bg:'#060000', tint:'rgba(120,0,0,0.55)',   speedMult:1.10, windX:0.5,  windY:0,   dark:true,  darkR:95,  ambient:'void'      },
 ];
+
+// ===== 哲学の道 パスコンフィグ =====
+const PATH_CONFIG_BU = [
+    { bg:'#3D1010', tint:'rgba(100,20,20,0.45)', speedMult:1.25, windX:0.4, windY:0, dark:false, darkR:0, ambient:'embers', bossHpMult:1.35, bossSpeedMult:1.3, bossLabel:'戦鬼' },
+    { bg:'#502000', tint:'rgba(120,50,0,0.4)', speedMult:1.2, windX:0.6, windY:0, dark:false, darkR:0, ambient:'sandstorm', bossHpMult:1.4, bossSpeedMult:1.35, bossLabel:'炎将' },
+    { bg:'#401020', tint:'rgba(90,10,30,0.4)', speedMult:1.3, windX:0, windY:0, dark:false, darkR:0, ambient:'embers', bossHpMult:1.45, bossSpeedMult:1.4, bossLabel:'鬼将' },
+    { bg:'#2A1A00', tint:'rgba(80,40,0,0.45)', speedMult:1.15, windX:0.8, windY:0, dark:false, darkR:0, ambient:'dust', bossHpMult:1.3, bossSpeedMult:1.25, bossLabel:'砂鬼' },
+    { bg:'#1A0A00', tint:'rgba(60,20,0,0.5)', speedMult:1.35, windX:0, windY:0, dark:true, darkR:90, ambient:'embers', bossHpMult:1.5, bossSpeedMult:1.45, bossLabel:'暗将' },
+];
+const PATH_CONFIG_CHI = [
+    { bg:'#0A1A3D', tint:'rgba(10,30,100,0.4)', speedMult:0.9, windX:0, windY:0, dark:false, darkR:0, ambient:'sparks', bossHpMult:1.1, bossSpeedMult:1.2, bossLabel:'智魔' },
+    { bg:'#001A40', tint:'rgba(0,40,120,0.4)', speedMult:0.85, windX:0, windY:0.3, dark:false, darkR:0, ambient:'bubbles', bossHpMult:1.15, bossSpeedMult:1.25, bossLabel:'深智' },
+    { bg:'#102040', tint:'rgba(20,40,90,0.45)', speedMult:0.88, windX:0, windY:0, dark:true, darkR:140, ambient:'drips', bossHpMult:1.2, bossSpeedMult:1.15, bossLabel:'闇賢' },
+    { bg:'#0A0A30', tint:'rgba(10,10,80,0.45)', speedMult:0.92, windX:0, windY:0, dark:false, darkR:0, ambient:'sparks', bossHpMult:1.1, bossSpeedMult:1.3, bossLabel:'呪賢' },
+    { bg:'#001030', tint:'rgba(0,20,80,0.5)', speedMult:0.8, windX:0, windY:0, dark:true, darkR:110, ambient:'drips', bossHpMult:1.25, bossSpeedMult:1.1, bossLabel:'深淵賢者' },
+];
+const PATH_CONFIG_TETSU = [
+    { bg:'#1A1A3D', tint:'rgba(60,60,120,0.35)', speedMult:1.0, windX:0, windY:-0.5, dark:false, darkR:0, ambient:'leaves', bossHpMult:1.2, bossSpeedMult:1.1, bossLabel:'哲霊' },
+    { bg:'#2A1A4A', tint:'rgba(80,40,140,0.35)', speedMult:1.05, windX:0, windY:-0.3, dark:false, darkR:0, ambient:'sparks', bossHpMult:1.25, bossSpeedMult:1.15, bossLabel:'幻霊' },
+    { bg:'#101A3A', tint:'rgba(30,50,110,0.4)', speedMult:0.95, windX:0, windY:0, dark:false, darkR:0, ambient:'snow', bossHpMult:1.15, bossSpeedMult:1.0, bossLabel:'氷霊' },
+    { bg:'#1E0A3D', tint:'rgba(60,10,120,0.4)', speedMult:1.1, windX:0, windY:-0.4, dark:false, darkR:0, ambient:'sparks', bossHpMult:1.3, bossSpeedMult:1.2, bossLabel:'紫霊' },
+    { bg:'#0A0A20', tint:'rgba(20,20,80,0.45)', speedMult:1.0, windX:0, windY:-0.8, dark:true, darkR:130, ambient:'sparks', bossHpMult:1.35, bossSpeedMult:1.05, bossLabel:'星霊' },
+];
+
 const MEDITATION_DATA = [
     [{ text:'我思う、ゆえに我あり', philosopher:'Descartes', effect:'atk', val:0.10, label:'攻撃力 +10%' },
      { text:'存在は本質に先立つ', philosopher:'Sartre', effect:'hp', val:1, label:'最大HP +1' },
@@ -1034,7 +1058,48 @@ const MEDITATION_DATA = [
               speed: 0.08, type: 'square', gain: 0.055 },
         ];
 
+        // ==== ステージ別BGMプロファイル ====
+        const STAGE_BGM_PROFILES = [
+            // idx: tempo(ms/step), baseVol, melody scale, bass pattern, intensity(0-3), label
+            { tempo:480, vol:0.55, scale:[0,2,4,7,9],    bass:[0,7,5,7],     intensity:0, label:'草原の目覚め' },    // 0 peaceful
+            { tempo:560, vol:0.45, scale:[0,3,5,7,10],   bass:[0,5,3,5],     intensity:1, label:'森の囁き' },        // 1 mysterious
+            { tempo:520, vol:0.50, scale:[0,2,5,7,9],    bass:[0,7,5,4],     intensity:0, label:'川の流れ' },        // 2 gentle
+            { tempo:440, vol:0.60, scale:[0,2,4,6,9],    bass:[0,4,7,4],     intensity:2, label:'岩山の試練' },      // 3 dramatic
+            { tempo:600, vol:0.35, scale:[0,2,5,8,10],   bass:[0,8,5,8],     intensity:0, label:'氷原の静寂' },      // 4 sparse/cold
+            { tempo:400, vol:0.65, scale:[0,2,4,7,11],   bass:[0,4,7,9],     intensity:2, label:'砂漠の灼熱' },      // 5 exotic/driving
+            { tempo:580, vol:0.40, scale:[0,3,5,6,10],   bass:[0,6,3,6],     intensity:1, label:'廃墟の亡霊' },      // 6 eerie
+            { tempo:320, vol:0.75, scale:[0,2,3,7,8],    bass:[0,3,7,5],     intensity:3, label:'嵐の橋' },          // 7 INTENSE
+            { tempo:640, vol:0.30, scale:[0,3,6,9,10],   bass:[0,9,6,9],     intensity:0, label:'洞窟の深淵' },      // 8 dark/minimal
+            { tempo:460, vol:0.60, scale:[0,2,4,5,9],    bass:[0,5,9,7],     intensity:2, label:'遺跡の謎' },        // 9 epic
+            { tempo:380, vol:0.70, scale:[0,2,4,7,9],    bass:[0,7,4,7],     intensity:2, label:'高山の覇者' },      // 10 majestic
+            { tempo:300, vol:0.80, scale:[0,1,4,6,8],    bass:[0,4,6,8],     intensity:3, label:'炎の大地' },        // 11 MOST INTENSE
+            { tempo:550, vol:0.42, scale:[0,2,3,7,9],    bass:[0,7,3,5],     intensity:1, label:'毒沼の呪い' },      // 12 creepy
+            { tempo:620, vol:0.35, scale:[0,2,5,7,10],   bass:[0,5,7,5],     intensity:0, label:'深海の静寂' },      // 13 underwater
+            { tempo:660, vol:0.30, scale:[0,4,7,9,11],   bass:[0,9,7,9],     intensity:0, label:'雪原の孤独' },      // 14 lonely/sparse
+            { tempo:500, vol:0.55, scale:[0,2,4,7,9],    bass:[0,4,7,4],     intensity:1, label:'雲上の城' },        // 15 ethereal
+            { tempo:420, vol:0.65, scale:[0,1,3,6,8],    bass:[0,6,3,6],     intensity:2, label:'影の世界' },        // 16 dark/unsettling
+            { tempo:280, vol:0.82, scale:[0,2,3,7,8],    bass:[0,3,5,7],     intensity:3, label:'崩壊する世界' },    // 17 CHAOS
+            { tempo:490, vol:0.68, scale:[0,2,4,5,9],    bass:[0,5,4,7],     intensity:2, label:'神殿の審判' },      // 18 sacred/grand
+            { tempo:360, vol:0.88, scale:[0,2,4,6,9],    bass:[0,4,6,9],     intensity:3, label:'終焉の地' },        // 19 EPIC FINAL
+        ];
 
+        const BGM_MELODIES = [
+            // intensity 0: slow, sparse, 8 notes
+            [0, 4, 2, 4,  0, -1, 2, 4],
+            // intensity 1: moderate, 8 notes
+            [0, 2, 4, 2,  7, 4, 2, 0],
+            // intensity 2: faster, more notes
+            [0, 2, 4, 7,  4, 2, 4, 7,  9, 7, 4, 2],
+            // intensity 3: driving, complex
+            [0, 4, 7, 4,  0, 4, 7, 9,  7, 4, 0, 4,  7, 9, 7, 4],
+        ];
+
+        const STAGE_ROOT_FREQS = [
+            261.63, 246.94, 277.18, 220.00, 293.66,  // C4, B3, C#4, A3, D4
+            311.13, 233.08, 196.00, 207.65, 261.63,  // D#4, Bb3, G3, Ab3, C4
+            220.00, 185.00, 246.94, 261.63, 207.65,  // A3, F#3, B3, C4, Ab3
+            233.08, 196.00, 174.61, 261.63, 184.99,  // Bb3, G3, F3, C4, F#3
+        ];
 
         function initAudio() {
             if (audioStarted) return;
@@ -1254,7 +1319,7 @@ const MEDITATION_DATA = [
 
             // --- ステージ別EQフィルター (ambient タイプに応じて) ---
             if (!bgmFilter) return;
-            const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            const sc = getActiveStageConfig(currentStageIndex);
             const ambient = sc.ambient;
             if (ambient === bgmLastAmbient) return; // 変化なければスキップ
             bgmLastAmbient = ambient;
@@ -1912,6 +1977,41 @@ const MEDITATION_DATA = [
         let dailyChallengeAtkUp = false;    // atk_up チャレンジフラグ
         const DAILY_CHALLENGE_KEY = 'daily_challenge_v1';
 
+        // ===== 哲学の道 ヘルパー関数 =====
+        function getDominantPath() {
+            const counts = { bu: 0, chi: 0, tetsu: 0 };
+            for (const c of meditationChoices) {
+                if (c.choiceIndex === 0) counts.bu++;
+                else if (c.choiceIndex === 1) counts.chi++;
+                else counts.tetsu++;
+            }
+            if (counts.bu >= counts.chi && counts.bu >= counts.tetsu) return 'bu';
+            if (counts.chi >= counts.tetsu) return 'chi';
+            return 'tetsu';
+        }
+
+        function getActiveStageConfig(si) {
+            const base = STAGE_CONFIG[si] || STAGE_CONFIG[0];
+            if (meditationChoices.length === 0) return base;
+            const path = getDominantPath();
+            const pathCfgs = path === 'bu' ? PATH_CONFIG_BU : path === 'chi' ? PATH_CONFIG_CHI : PATH_CONFIG_TETSU;
+            const override = pathCfgs[si % pathCfgs.length];
+            return {
+                ...base,
+                bg: override.bg,
+                tint: override.tint,
+                speedMult: (base.speedMult + override.speedMult) / 2,
+                windX: override.windX,
+                windY: override.windY,
+                dark: override.dark || base.dark,
+                darkR: override.dark ? override.darkR : base.darkR,
+                ambient: override.ambient,
+                bossHpMult: override.bossHpMult,
+                bossSpeedMult: override.bossSpeedMult,
+                bossLabel: override.bossLabel,
+            };
+        }
+
         function getDailyChallengeRecord() {
             try {
                 return JSON.parse(localStorage.getItem(DAILY_CHALLENGE_KEY) || 'null');
@@ -2111,7 +2211,7 @@ const MEDITATION_DATA = [
         }
 
         function applyMeditation(choice) {
-            meditationChoices.push({ stage: meditationPendingStage, text: choice.text, label: choice.label });
+            meditationChoices.push({ stage: meditationPendingStage, text: choice.text, label: choice.label, choiceIndex: meditationCursor });
             achievementStats.meditationCount = meditationChoices.length;
             if (choice.effect === 'atk') {
                 meditationAtkBonus += choice.val;
@@ -2195,6 +2295,15 @@ const MEDITATION_DATA = [
                 isStageAdvancing = true;
                 setTimeout(advanceStage, 1200);
             }
+            // 哲学の道変化通知
+            if (meditationPendingStage < 19) {
+                const newPath = getDominantPath();
+                const pathNotifNames = { bu: '武の道', chi: '知の道', tetsu: '哲の道' };
+                setTimeout(() => {
+                    centerMessage = `${pathNotifNames[newPath]}へ踏み込む...\n次のステージが変わった`;
+                    msgTimer = 120;
+                }, 1500);
+            }
         }
 
         function gainXP(amt) {
@@ -2214,7 +2323,7 @@ const MEDITATION_DATA = [
         }
 
         function spawnAmbient() {
-            const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            const sc = getActiveStageConfig(currentStageIndex);
             const type = sc.ambient;
             const MAX = 120;
             if (ambientParticles.length >= MAX) return;
@@ -2348,7 +2457,7 @@ const MEDITATION_DATA = [
         }
 
         function drawDarknessOverlay(camX, camY) {
-            const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            const sc = getActiveStageConfig(currentStageIndex);
             const isAllDark = dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'all_dark';
             if (!sc.dark && !isAllDark) return;
             const px = player.x - camX + SPRITE_SIZE / 2;
@@ -2780,13 +2889,22 @@ const MEDITATION_DATA = [
             const hpTable    = [35, 55, 80, 110, 150];
             const speedTable = [1.2, 1.4, 1.6, 1.8, 2.0];
             const spriteTable = [BOSS_SPRITE, DRAGON_WHELP_SPRITE, TROLL_SPRITE, BOSS_SPRITE, BOSS_SPRITE];
-            const hp = Math.ceil(hpTable[Math.min(tier, 4)] * NG_MULT[ngPlusLevel]);
+            let hp = Math.ceil(hpTable[Math.min(tier, 4)] * NG_MULT[ngPlusLevel]);
+            let speed = speedTable[Math.min(tier, 4)];
+            const stageCfg = getActiveStageConfig(stageIdx);
+            if (stageCfg.bossHpMult) {
+                hp = Math.ceil(hp * stageCfg.bossHpMult);
+            }
+            if (stageCfg.bossSpeedMult) {
+                speed = speed * stageCfg.bossSpeedMult;
+            }
             return {
                 x: WORLD_W * 0.75, y: WORLD_H * 0.25,
                 hp, maxHp: hp,
-                speed: speedTable[Math.min(tier, 4)],
+                speed,
                 sprite: spriteTable[Math.min(tier, 4)],
-                type: 'boss', fireInterval: 45, fireTimer: 0, hitTimer: 0, isBoss: true
+                type: 'boss', fireInterval: 45, fireTimer: 0, hitTimer: 0, isBoss: true,
+                bossLabel: stageCfg.bossLabel || null
             };
         }
 
@@ -3189,7 +3307,7 @@ const MEDITATION_DATA = [
                 dx /= len;
                 dy /= len;
 
-                const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+                const sc = getActiveStageConfig(currentStageIndex);
                 const effSpeed = player.speed * sc.speedMult;
                 const nextX = player.x + dx * effSpeed;
                 const nextY = player.y + dy * effSpeed;
@@ -3229,7 +3347,7 @@ const MEDITATION_DATA = [
                 player.walkFrame = 0;
                 player.walkTimer = 0;
                 // 風の効果（立ち止まっている時も適用）
-                const _scWind = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+                const _scWind = getActiveStageConfig(currentStageIndex);
                 const _allWindStr2 = (dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'all_wind') ? currentDailyChallenge.param : 0;
                 const _effWindX2 = _scWind.windX !== 0 ? _scWind.windX : _allWindStr2;
                 const _effWindY2 = _scWind.windY !== 0 ? _scWind.windY : 0;
@@ -3795,7 +3913,7 @@ const MEDITATION_DATA = [
             spawnAmbient();
             updateAmbient();
             // 火山ステージの地震
-            if ((STAGE_CONFIG[currentStageIndex] || {}).ambient === 'embers' && Math.random() < 0.004) {
+            if (getActiveStageConfig(currentStageIndex).ambient === 'embers' && Math.random() < 0.004) {
                 screenShake = Math.max(screenShake, 5 + Math.random() * 8);
             }
             if (bossDebuffTimer > 0) bossDebuffTimer--;
@@ -4449,6 +4567,17 @@ const MEDITATION_DATA = [
                 ctx.fillText(ngPlusLevel === 1 ? 'NG+' : 'NG++', 10, 35);
             }
 
+            // 哲学の道インジケータ
+            if (meditationChoices.length > 0) {
+                const path = getDominantPath();
+                const pathColors = { bu: '#FF4400', chi: '#4488FF', tetsu: '#AA44FF' };
+                const pathNames = { bu: '武の道', chi: '知の道', tetsu: '哲の道' };
+                ctx.fillStyle = pathColors[path];
+                ctx.font = 'bold 11px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`◆ ${pathNames[path]}`, px + STATS_W / 2, stageNameY + 28);
+            }
+
             // HP — グラジエントバー
             ctx.save();
             ctx.shadowBlur = 4;
@@ -4832,7 +4961,7 @@ const MEDITATION_DATA = [
 
             if (!isBgCached) {
                 // 背景テーマ設定
-                const sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+                const sc = getActiveStageConfig(currentStageIndex);
                 bgCtx.fillStyle = sc.bg;
                 bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
@@ -4898,7 +5027,7 @@ const MEDITATION_DATA = [
             ctx.drawImage(bgCanvas, camX, camY, VIEW_W, VIEW_H, 0, 0, VIEW_W, VIEW_H);
 
             // ステージ大気オーバーレイ
-            const _sc = STAGE_CONFIG[currentStageIndex] || STAGE_CONFIG[0];
+            const _sc = getActiveStageConfig(currentStageIndex);
             if (_sc.tint) {
                 ctx.save();
                 ctx.fillStyle = _sc.tint;
