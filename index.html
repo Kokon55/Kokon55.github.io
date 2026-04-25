@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Retro Fantasy &#8212; A Philosophical Journey</title>
     <style>
         body {
@@ -22,6 +23,9 @@
         canvas {
             box-shadow: 0 0 20px rgba(0,200,255,0.2);
             image-rendering: pixelated;
+            max-width: 100vw;
+            max-height: 100vh;
+            touch-action: none;
         }
 
         #ui {
@@ -1541,16 +1545,18 @@ const MEDITATION_DATA = [
         let jpTimer = 0;
 
         // タッチ操作
-        const touch = { up: false, down: false, left: false, right: false, attack: false, shield: false, weapon: false };
+        const touch = { up: false, down: false, left: false, right: false, attack: false, shield: false, weapon: false, skillJ: false, skillK: false, skillL: false };
         let isTouchDevice = false;
 
+        // Virtual pad layout (PS-diamond style, sized for thumb reach)
         const VPAD = {
-            // Dパッド中心座標
-            cx: 80, cy: 510, radius: 60,
-            // アクションボタン
-            atkX: 680, atkY: 530, atkR: 32,
-            shieldX: 620, shieldY: 490, shieldR: 24,
-            weaponX: 680, weaponY: 470, weaponR: 18,
+            cx: 85, cy: 505, radius: 72,           // D-pad (larger)
+            atkX: 718, atkY: 552, atkR: 42,        // ATK - big red (bottom)
+            shieldX: 672, shieldY: 512, shieldR: 31, // DEF - blue (left)
+            weaponX: 718, weaponY: 472, weaponR: 26, // WPN - green (top, only w/ bow)
+            skillJX: 635, skillJY: 554, skillJR: 24, // 連撃 J (orange)
+            skillKX: 635, skillKY: 516, skillKR: 23, // 魔法壁 K (cyan)
+            skillLX: 635, skillLY: 479, skillLR: 23, // 時停止 L (purple)
         };
 
         window.addEventListener('keydown', e => {
@@ -2056,32 +2062,48 @@ const MEDITATION_DATA = [
 
             for (const pos of positions) {
                 const { x, y } = pos;
-                // Dパッド判定
+                // Dパッド判定 (8方向対応)
                 const dx = x - VPAD.cx, dy = y - VPAD.cy;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < VPAD.radius && dist > 8) {
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        if (dx > 0) touch.right = true; else touch.left = true;
-                    } else {
-                        if (dy > 0) touch.down = true; else touch.up = true;
-                    }
+                if (dist < VPAD.radius && dist > 10) {
+                    const thresh = dist * 0.38; // 対角入力を許容
+                    if (dx >  thresh) touch.right = true;
+                    if (dx < -thresh) touch.left  = true;
+                    if (dy >  thresh) touch.down  = true;
+                    if (dy < -thresh) touch.up    = true;
                 }
                 // 攻撃ボタン
                 if (Math.hypot(x - VPAD.atkX, y - VPAD.atkY) < VPAD.atkR) touch.attack = true;
                 // 盾ボタン
                 if (Math.hypot(x - VPAD.shieldX, y - VPAD.shieldY) < VPAD.shieldR) touch.shield = true;
-                // 武器切り替え
-                if (Math.hypot(x - VPAD.weaponX, y - VPAD.weaponY) < VPAD.weaponR) touch.weapon = true;
+                // 武器切り替え (hasBow時のみ有効)
+                if (hasBow && Math.hypot(x - VPAD.weaponX, y - VPAD.weaponY) < VPAD.weaponR) touch.weapon = true;
+                // スキルボタン
+                if (Math.hypot(x - VPAD.skillJX, y - VPAD.skillJY) < VPAD.skillJR) touch.skillJ = true;
+                if (Math.hypot(x - VPAD.skillKX, y - VPAD.skillKY) < VPAD.skillKR) touch.skillK = true;
+                if (Math.hypot(x - VPAD.skillLX, y - VPAD.skillLY) < VPAD.skillLR) touch.skillL = true;
             }
 
             // 攻撃タップ
             if (touch.attack) playerAttack();
+            // 武器切り替えタップ
+            if (touch.weapon && e.type === 'touchstart' && jpTimer === 0) {
+                currentWeapon = currentWeapon === 'sword' ? 'bow' : 'sword';
+                jpTimer = 20;
+            }
+            // スキルタップ (touchstart のみ)
+            if (e.type === 'touchstart') {
+                if (touch.skillJ) activateSkill('rengeki');
+                if (touch.skillK) activateSkill('barrier');
+                if (touch.skillL) activateSkill('timeslow');
+            }
         }
 
         function handleTouchEnd(e) {
             e.preventDefault();
             touch.up = false; touch.down = false; touch.left = false; touch.right = false;
             touch.attack = false; touch.shield = false; touch.weapon = false;
+            touch.skillJ = false; touch.skillK = false; touch.skillL = false;
             if (e.touches.length > 0) handleTouch(e);
         }
 
@@ -4380,74 +4402,133 @@ const MEDITATION_DATA = [
         function drawVirtualPad() {
             if (!isTouchDevice) return;
             ctx.save();
-            ctx.globalAlpha = 0.45;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-            // Dパッド外円
+            // ── D-PAD ──────────────────────────────────────────
+            ctx.globalAlpha = 0.5;
+            // 外周リング
+            const dpGrad = ctx.createRadialGradient(VPAD.cx, VPAD.cy, 20, VPAD.cx, VPAD.cy, VPAD.radius);
+            dpGrad.addColorStop(0, 'rgba(40,80,120,0.8)');
+            dpGrad.addColorStop(1, 'rgba(10,30,60,0.6)');
             ctx.beginPath();
             ctx.arc(VPAD.cx, VPAD.cy, VPAD.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#223344';
+            ctx.fillStyle = dpGrad;
             ctx.fill();
-            ctx.strokeStyle = '#4488aa';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = touch.up||touch.down||touch.left||touch.right ? '#66ccff' : '#336688';
+            ctx.lineWidth = 2.5;
             ctx.stroke();
-
-            // Dパッド十字
-            const arms = [
-                [0, -1, '▲'], [0, 1, '▼'], [-1, 0, '◀'], [1, 0, '▶']
-            ];
-            arms.forEach(([ax, ay, label]) => {
-                const bx = VPAD.cx + ax * VPAD.radius * 0.6;
-                const by = VPAD.cy + ay * VPAD.radius * 0.6;
-                const active = (ax === -1 && touch.left) || (ax === 1 && touch.right) ||
-                               (ay === -1 && touch.up)   || (ay === 1  && touch.down);
-                ctx.fillStyle = active ? '#88ddff' : '#4488aa';
-                ctx.font = 'bold 18px monospace';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(label, bx, by);
+            // 中央インジケーター
+            ctx.beginPath();
+            ctx.arc(VPAD.cx, VPAD.cy, 14, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(80,140,200,0.4)';
+            ctx.fill();
+            // 方向矢印 (4方向)
+            const dArms = [[0,-1,'▲',touch.up],[0,1,'▼',touch.down],[-1,0,'◀',touch.left],[1,0,'▶',touch.right]];
+            dArms.forEach(([ax,ay,lbl,active]) => {
+                const bx = VPAD.cx + ax * VPAD.radius * 0.62;
+                const by = VPAD.cy + ay * VPAD.radius * 0.62;
+                ctx.shadowBlur = active ? 12 : 0;
+                ctx.shadowColor = '#88ddff';
+                ctx.fillStyle = active ? '#ffffff' : '#5599bb';
+                ctx.font = `bold ${active ? 22 : 18}px monospace`;
+                ctx.fillText(lbl, bx, by);
             });
+            ctx.shadowBlur = 0;
 
-            // 攻撃ボタン
-            ctx.beginPath();
-            ctx.arc(VPAD.atkX, VPAD.atkY, VPAD.atkR, 0, Math.PI * 2);
-            ctx.fillStyle = touch.attack ? '#ff6644' : '#882200';
-            ctx.fill();
-            ctx.strokeStyle = '#ffaa88';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 14px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('ATK', VPAD.atkX, VPAD.atkY);
+            // ── アクションボタン ───────────────────────────────
+            function drawBtn(bx, by, br, colorOn, colorOff, borderCol, isActive, label, subLabel, fontSize) {
+                ctx.globalAlpha = isActive ? 0.85 : 0.55;
+                const g = ctx.createRadialGradient(bx - br*0.2, by - br*0.2, 2, bx, by, br);
+                g.addColorStop(0, isActive ? colorOn : colorOff);
+                g.addColorStop(1, 'rgba(0,0,0,0.6)');
+                ctx.beginPath();
+                ctx.arc(bx, by, br, 0, Math.PI * 2);
+                ctx.fillStyle = g;
+                ctx.fill();
+                ctx.shadowBlur = isActive ? 16 : 4;
+                ctx.shadowColor = borderCol;
+                ctx.strokeStyle = borderCol;
+                ctx.lineWidth = isActive ? 2.5 : 1.5;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${fontSize}px monospace`;
+                ctx.fillText(label, bx, subLabel ? by - 4 : by);
+                if (subLabel) {
+                    ctx.font = `9px monospace`;
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.fillText(subLabel, bx, by + 9);
+                }
+                ctx.globalAlpha = 0.55;
+            }
 
-            // 盾ボタン
-            ctx.beginPath();
-            ctx.arc(VPAD.shieldX, VPAD.shieldY, VPAD.shieldR, 0, Math.PI * 2);
-            ctx.fillStyle = touch.shield ? '#4488ff' : '#112266';
-            ctx.fill();
-            ctx.strokeStyle = '#6699ff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 11px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('DEF', VPAD.shieldX, VPAD.shieldY);
+            // ATK ボタン (大型・赤)
+            drawBtn(VPAD.atkX, VPAD.atkY, VPAD.atkR,
+                'rgba(255,90,40,0.9)', 'rgba(140,30,0,0.8)', '#FF6644',
+                touch.attack, '⚔', 'ATK', 20);
 
-            // 武器切替ボタン
-            ctx.beginPath();
-            ctx.arc(VPAD.weaponX, VPAD.weaponY, VPAD.weaponR, 0, Math.PI * 2);
-            ctx.fillStyle = '#224422';
-            ctx.fill();
-            ctx.strokeStyle = '#44aa44';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            ctx.fillStyle = '#aaffaa';
-            ctx.font = 'bold 9px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('WPN', VPAD.weaponX, VPAD.weaponY);
+            // DEF ボタン (青、盾所持時のみ強調)
+            if (hasShield) {
+                drawBtn(VPAD.shieldX, VPAD.shieldY, VPAD.shieldR,
+                    'rgba(40,120,255,0.9)', 'rgba(10,30,140,0.8)', '#4488FF',
+                    touch.shield, '🛡', 'DEF', 16);
+            } else {
+                ctx.globalAlpha = 0.25;
+                ctx.beginPath();
+                ctx.arc(VPAD.shieldX, VPAD.shieldY, VPAD.shieldR, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(30,50,100,0.5)';
+                ctx.fill();
+                ctx.strokeStyle = '#334466';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.fillStyle = '#556688';
+                ctx.font = '11px monospace';
+                ctx.fillText('DEF', VPAD.shieldX, VPAD.shieldY);
+                ctx.globalAlpha = 0.55;
+            }
+
+            // WPN ボタン (緑、弓所持時のみ表示)
+            if (hasBow) {
+                const wpnLabel = currentWeapon === 'bow' ? '🏹' : '⚔';
+                drawBtn(VPAD.weaponX, VPAD.weaponY, VPAD.weaponR,
+                    'rgba(40,200,80,0.9)', 'rgba(10,80,20,0.8)', '#44CC55',
+                    touch.weapon, wpnLabel, 'WPN', 15);
+            }
+
+            // ── スキルボタン (アンロック時のみ) ────────────────
+            const skillDefs2 = [
+                { id:'rengeki',  key:'J', vx:VPAD.skillJX, vy:VPAD.skillJY, vr:VPAD.skillJR, lbl:'連', sub:'J', colorOn:'rgba(255,130,40,0.9)', colorOff:'rgba(120,50,0,0.8)', border:'#FF8822', active:touch.skillJ },
+                { id:'barrier',  key:'K', vx:VPAD.skillKX, vy:VPAD.skillKY, vr:VPAD.skillKR, lbl:'壁', sub:'K', colorOn:'rgba(40,200,255,0.9)', colorOff:'rgba(0,60,130,0.8)',  border:'#44CCFF', active:touch.skillK },
+                { id:'timeslow', key:'L', vx:VPAD.skillLX, vy:VPAD.skillLY, vr:VPAD.skillLR, lbl:'時', sub:'L', colorOn:'rgba(180,80,255,0.9)', colorOff:'rgba(70,10,130,0.8)', border:'#BB55FF', active:touch.skillL },
+            ];
+            for (const sd of skillDefs2) {
+                const sk = skills[sd.id];
+                if (!sk || !sk.unlocked) continue;
+                const isOnCd = sk.cooldown > 0;
+                const isActive = sk.active;
+                // クールダウン時は半透明グレー
+                if (isOnCd) {
+                    ctx.globalAlpha = 0.3;
+                    ctx.beginPath();
+                    ctx.arc(sd.vx, sd.vy, sd.vr, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(50,50,50,0.7)';
+                    ctx.fill();
+                    ctx.strokeStyle = '#555555';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.fillStyle = '#888888';
+                    ctx.font = `bold 12px monospace`;
+                    ctx.fillText(sd.lbl, sd.vx, sd.vy);
+                    // CD残時間
+                    ctx.font = '8px monospace';
+                    ctx.fillText(Math.ceil(sk.cooldown/60)+'s', sd.vx, sd.vy + 10);
+                    ctx.globalAlpha = 0.55;
+                } else {
+                    drawBtn(sd.vx, sd.vy, sd.vr, sd.colorOn, sd.colorOff, sd.border,
+                        isActive || sd.active, sd.lbl, sd.sub, 14);
+                }
+            }
 
             ctx.restore();
         }
