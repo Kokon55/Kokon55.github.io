@@ -2104,6 +2104,37 @@ const MEDITATION_DATA = [
         let hasStarted = _hadRestart;
         let gameState = _hadRestart ? 'playing' : 'title'; // 'title', 'stageSelect', 'playing'
         let titleSelectedOption = 0; // 0=START, 1=CONTINUE
+
+        // ==== タイトル画面アニメーション ====
+        let titleFrame = 0;
+        // 3層の視差星フィールド (x, y, size, speed, brightness)
+        const TITLE_STARS = (() => {
+            const s = []; const rng = (n) => { let x = n; return () => { x = (x * 1664525 + 1013904223) & 0xFFFFFFFF; return (x >>> 0) / 0xFFFFFFFF; }; };
+            const r = rng(42);
+            for (let i = 0; i < 180; i++) {
+                const layer = i < 80 ? 0 : i < 140 ? 1 : 2;
+                s.push({ x: r() * 800, y: r() * 600, size: layer === 2 ? 2 : 1, speed: [0.05, 0.15, 0.35][layer], br: 0.3 + r() * 0.7, layer });
+            }
+            return s;
+        })();
+        // タイトル用浮遊パーティクル
+        const TITLE_PARTICLES = (() => {
+            const p = []; for (let i = 0; i < 30; i++) {
+                p.push({ x: Math.random() * 800, y: Math.random() * 600, vy: -(0.2 + Math.random() * 0.5), vx: (Math.random() - 0.5) * 0.3, life: Math.random(), color: Math.random() < 0.5 ? '#FFD700' : '#AADDFF' });
+            }
+            return p;
+        })();
+        // タイトル歩行キャラクター
+        let titleWalkerX = -60;
+        const TITLE_QUOTES = [
+            '「我思う、ゆえに我あり」— Descartes',
+            '「汝自身を知れ」— Socrates',
+            '「万物は流転する」— Heraclitus',
+            '「力への意志」— Nietzsche',
+            '「存在は本質に先立つ」— Sartre',
+            '「不動心こそ最高の善」— Marcus Aurelius',
+        ];
+        let titleQuoteIdx = 0;
         let meditationPending = false;
         let karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
         // 武の道(bu): 正面撃破, 知の道(chi): 背後撃破, 守の道(mamori): 盾反射撃破, 哲の道(tetsu): ボス対話成功
@@ -5068,99 +5099,225 @@ const MEDITATION_DATA = [
 
             // タイトル画面
             if (gameState === 'title') {
-                ctx.fillStyle = '#000011';
-                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-                // 右パネル背景
-                ctx.fillStyle = '#080818';
-                ctx.fillRect(VIEW_W, 0, STATS_W, VIEW_H);
-                // 星を描画
-                ctx.fillStyle = '#fff';
-                for (let i = 0; i < 80; i++) {
-                    const sx = ((i * 137 + 11) % VIEW_W);
-                    const sy = ((i * 97 + 31) % VIEW_H);
-                    ctx.fillRect(sx, sy, i % 3 === 0 ? 2 : 1, i % 3 === 0 ? 2 : 1);
-                }
-                // タイトルロゴ
+                titleFrame++;
+                // タイトルクォートを200フレームごとに切り替え
+                if (titleFrame % 200 === 0) titleQuoteIdx = (titleQuoteIdx + 1) % TITLE_QUOTES.length;
+
+                const T = titleFrame;
+                const TT = Date.now() / 1000;
+
+                // ---- 背景: 深宇宙グラジエント ----
+                const bgGrad = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+                bgGrad.addColorStop(0, '#000008');
+                bgGrad.addColorStop(0.5, '#000818');
+                bgGrad.addColorStop(1, '#030010');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, VIEW_W + STATS_W, VIEW_H);
+
+                // ---- ネビュラ光 (ふんわりした星雲) ----
+                const nebColors = ['rgba(40,20,80,', 'rgba(20,40,80,', 'rgba(60,10,40,'];
+                [[VIEW_W*0.2, 150, 220, 0], [VIEW_W*0.75, 380, 180, 1], [VIEW_W*0.5, 520, 260, 2]].forEach(([nx, ny, nr, ci]) => {
+                    const pulse = 0.06 + 0.02 * Math.sin(TT * 0.4 + ci);
+                    const nGrad = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr);
+                    nGrad.addColorStop(0, nebColors[ci] + pulse + ')');
+                    nGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = nGrad;
+                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                });
+
+                // ---- 視差3層星フィールド ----
+                TITLE_STARS.forEach(s => {
+                    s.x -= s.speed;
+                    if (s.x < -2) s.x = VIEW_W + 2;
+                    const twinkle = s.br * (0.6 + 0.4 * Math.sin(TT * 3.1 + s.x * 0.05));
+                    const alpha = Math.min(1, twinkle);
+                    if (s.layer === 2) {
+                        ctx.save(); ctx.shadowBlur = 4; ctx.shadowColor = `rgba(180,200,255,${alpha})`;
+                        ctx.fillStyle = `rgba(200,220,255,${alpha})`;
+                        ctx.fillRect(s.x, s.y, s.size, s.size);
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = `rgba(180,200,255,${alpha * 0.75})`;
+                        ctx.fillRect(s.x, s.y, s.size, s.size);
+                    }
+                });
+
+                // ---- 浮遊パーティクル ----
+                TITLE_PARTICLES.forEach(p => {
+                    p.x += p.vx; p.y += p.vy; p.life -= 0.003;
+                    if (p.life <= 0 || p.y < 0) { p.x = Math.random() * VIEW_W; p.y = VIEW_H + 5; p.life = 0.4 + Math.random() * 0.6; }
+                    ctx.save(); ctx.globalAlpha = p.life * 0.7;
+                    ctx.shadowBlur = 5; ctx.shadowColor = p.color;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+                });
+
+                // ---- 歩くプレイヤーキャラクター ----
+                titleWalkerX += 0.8;
+                if (titleWalkerX > VIEW_W + 80) titleWalkerX = -70;
+                const walkerWF = Math.floor(T / 12) % 2;
+                const walkerSprite = walkerWF ? PLAYER_RIGHT_SPRITE_W2 : PLAYER_RIGHT_SPRITE;
+                ctx.save(); ctx.globalAlpha = 0.45;
+                drawShape(walkerSprite, titleWalkerX, VIEW_H - 90, 0, PIXEL_SCALE * 1.1, false, false, ctx);
+                ctx.restore();
+
+                // ---- ロゴ ----
+                ctx.save();
                 ctx.textAlign = 'center';
+                // 影グロー
+                const glowStr = 25 + 10 * Math.sin(TT * 1.5);
+                ctx.shadowBlur = glowStr; ctx.shadowColor = '#B8860B';
                 ctx.fillStyle = '#EFD02E';
-                ctx.font = 'bold 52px monospace';
-                ctx.fillText('Retro Fantasy', VIEW_W / 2, 140);
-                ctx.fillStyle = '#D0D0D0';
-                ctx.font = 'bold 20px monospace';
-                ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 185);
+                ctx.font = 'bold 56px monospace';
+                const logoScale = 1 + 0.008 * Math.sin(TT * 0.8);
+                ctx.save();
+                ctx.translate(VIEW_W / 2, 128);
+                ctx.scale(logoScale, logoScale);
+                ctx.fillText('Retro Fantasy', 0, 0);
+                ctx.restore();
+                // 装飾線
+                ctx.shadowBlur = 8; ctx.shadowColor = '#FFD700';
+                ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 1.5;
+                const lineAlpha = 0.5 + 0.3 * Math.sin(TT * 1.2);
+                ctx.globalAlpha = lineAlpha;
+                ctx.beginPath(); ctx.moveTo(VIEW_W/2 - 240, 142); ctx.lineTo(VIEW_W/2 + 240, 142); ctx.stroke();
+                ctx.globalAlpha = 1;
+                ctx.restore();
 
-                // 操作説明（タイトル画面）
-                ctx.fillStyle = '#88aacc';
-                ctx.font = '14px monospace';
-                ctx.fillText('Move: WASD / Arrow Keys', VIEW_W / 2, 230);
-                ctx.fillText('Attack: Space  |  Shield: Shift', VIEW_W / 2, 250);
-                ctx.fillText('Switch Weapon: Q/E  |  Pause: P', VIEW_W / 2, 270);
+                // サブタイトル
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.shadowBlur = 8; ctx.shadowColor = '#4488AA';
+                ctx.fillStyle = '#C0D8E8';
+                ctx.font = 'bold 19px monospace';
+                ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 178);
+                ctx.restore();
 
-                // メニュー
-                const opts = ['START', 'CONTINUE', '今日のチャレンジ'];
+                // ---- フィロソフィカルクォート (フェードイン/アウト) ----
+                const quotePhase = (T % 200) / 200;
+                const quoteAlpha = quotePhase < 0.1 ? quotePhase / 0.1 : quotePhase > 0.85 ? (1 - quotePhase) / 0.15 : 1;
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.globalAlpha = quoteAlpha * 0.7;
+                ctx.fillStyle = '#AACCEE'; ctx.font = 'italic 13px monospace';
+                ctx.fillText(TITLE_QUOTES[titleQuoteIdx], VIEW_W / 2, 215);
+                ctx.restore();
+
+                // ---- メニュー ----
+                const opts = ['NEW GAME', 'CONTINUE', '今日のチャレンジ'];
+                const menuBaseY = 268;
                 for (let i = 0; i < opts.length; i++) {
                     const sel = (titleSelectedOption === i);
-                    if (i === 2) {
-                        // デイリーチャレンジオプション
-                        ctx.fillStyle = sel ? '#FF8C00' : '#996622';
-                        ctx.font = sel ? 'bold 26px monospace' : '22px monospace';
-                        ctx.fillText((sel ? '► ' : '  ') + opts[i], VIEW_W / 2, 330 + i * 55);
-                        if (isTodayChallengeCompleted()) {
-                            ctx.fillStyle = '#44ff88';
-                            ctx.font = '14px monospace';
-                            ctx.fillText('本日クリア済み ✓', VIEW_W / 2, 330 + i * 55 + 20);
-                        }
+                    const bounce = sel ? Math.sin(TT * 4) * 2 : 0;
+                    const y = menuBaseY + i * 62 + bounce;
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    if (sel) {
+                        // 選択中: グロー背景
+                        const menuGrad = ctx.createLinearGradient(VIEW_W/2 - 180, y - 24, VIEW_W/2 + 180, y);
+                        const selColor = i === 2 ? '#FF8C00' : '#EFD02E';
+                        menuGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                        menuGrad.addColorStop(0.5, `rgba(${i===2?'100,60,0':'80,60,0'},0.45)`);
+                        menuGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = menuGrad;
+                        ctx.fillRect(VIEW_W/2 - 180, y - 28, 360, 38);
+                        ctx.shadowBlur = 18; ctx.shadowColor = selColor;
+                        ctx.fillStyle = selColor;
+                        ctx.font = `bold ${i===2?28:36}px monospace`;
+                        ctx.fillText('► ' + opts[i], VIEW_W / 2, y);
                     } else {
-                        ctx.fillStyle = sel ? '#EFD02E' : '#aaaaaa';
-                        ctx.font = sel ? 'bold 34px monospace' : '28px monospace';
-                        ctx.fillText((sel ? '► ' : '  ') + opts[i], VIEW_W / 2, 330 + i * 55);
+                        ctx.fillStyle = i === 2 ? '#7A5218' : '#888888';
+                        ctx.font = `${i===2?22:28}px monospace`;
+                        ctx.fillText(opts[i], VIEW_W / 2, y);
                     }
+                    if (i === 2 && isTodayChallengeCompleted()) {
+                        ctx.fillStyle = '#44ff88'; ctx.font = '12px monospace';
+                        ctx.fillText('✓ 本日クリア済み', VIEW_W / 2, y + 18);
+                    }
+                    ctx.restore();
                 }
 
-                // デイリーチャレンジ選択時: 詳細表示
+                // デイリーチャレンジ詳細 / 難易度選択
                 if (titleSelectedOption === 2) {
                     const todayChallenge = getTodayChallenge();
-                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillRect(VIEW_W / 2 - 200, 498, 400, 62);
-                    ctx.strokeStyle = '#FF8C00';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(VIEW_W / 2 - 200, 498, 400, 62);
-                    ctx.fillStyle = '#FF8C00';
-                    ctx.font = 'bold 15px monospace';
-                    ctx.fillText(todayChallenge.name, VIEW_W / 2, 516);
-                    ctx.fillStyle = '#dddddd';
-                    ctx.font = '13px monospace';
-                    ctx.fillText(todayChallenge.desc, VIEW_W / 2, 534);
-                    ctx.fillStyle = '#aaaaaa';
-                    ctx.font = '11px monospace';
-                    ctx.fillText('Enterで開始', VIEW_W / 2, 552);
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                    ctx.fillRect(VIEW_W/2 - 200, 462, 400, 62);
+                    ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.shadowBlur = 6; ctx.shadowColor = '#FF8C00';
+                    ctx.strokeRect(VIEW_W/2 - 200, 462, 400, 62);
+                    ctx.fillStyle = '#FF8C00'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+                    ctx.fillText(todayChallenge.name, VIEW_W / 2, 480);
+                    ctx.fillStyle = '#ddd'; ctx.font = '12px monospace';
+                    ctx.fillText(todayChallenge.desc, VIEW_W / 2, 498);
+                    ctx.fillStyle = '#888'; ctx.font = '11px monospace';
+                    ctx.fillText('Enter で開始', VIEW_W / 2, 516);
+                    ctx.restore();
                 } else {
-                    // 難易度選択
-                    ctx.fillStyle = '#888888';
-                    ctx.font = '14px monospace';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('DIFFICULTY', VIEW_W / 2, 510);
-                    const diffY = 532;
+                    ctx.save(); ctx.textAlign = 'center';
+                    ctx.fillStyle = '#556677'; ctx.font = '13px monospace';
+                    ctx.fillText('DIFFICULTY', VIEW_W / 2, 476);
                     for (let d = 0; d < 3; d++) {
                         const sel = (difficultyLevel === d);
-                        ctx.fillStyle = sel ? (d === 0 ? '#44ff44' : d === 1 ? '#EFD02E' : '#ff4444') : '#555555';
-                        ctx.font = sel ? 'bold 20px monospace' : '16px monospace';
-                        ctx.textAlign = 'center';
-                        ctx.fillText(DIFF_NAMES[d], VIEW_W / 2 - 120 + d * 120, diffY);
+                        ctx.fillStyle = sel ? (d===0?'#44ff44':d===1?'#EFD02E':'#ff4444') : '#445';
+                        ctx.font = sel ? 'bold 19px monospace' : '15px monospace';
+                        if (sel) { ctx.shadowBlur = 8; ctx.shadowColor = ctx.fillStyle; }
+                        ctx.fillText(DIFF_NAMES[d], VIEW_W/2 - 110 + d*110, 498);
+                        ctx.shadowBlur = 0;
                     }
-                    ctx.fillStyle = '#666666';
-                    ctx.font = '12px monospace';
-                    ctx.fillText('← → to change', VIEW_W / 2, 556);
+                    ctx.fillStyle = '#445'; ctx.font = '11px monospace';
+                    ctx.fillText('← → で変更', VIEW_W/2, 516);
+                    ctx.restore();
                 }
 
-                ctx.fillStyle = '#555555';
-                ctx.font = '14px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('[ C ] CREDITS', VIEW_W / 2, 475);
+                // クレジットリンク + ナビ説明
+                ctx.save(); ctx.textAlign = 'center';
+                ctx.fillStyle = '#445'; ctx.font = '13px monospace';
+                ctx.fillText('[ C ] CREDITS', VIEW_W / 2, 540);
+                ctx.fillStyle = '#334'; ctx.font = '12px monospace';
+                ctx.fillText('[↑↓] 選択   [Enter/Space] 決定', VIEW_W / 2, VIEW_H - 18);
+                ctx.restore();
 
-                ctx.fillStyle = '#666';
-                ctx.font = '13px monospace';
-                ctx.fillText('[↑↓]/[WS]: select  [Enter]/[Space]: confirm', VIEW_W / 2, VIEW_H - 20);
+                // ---- 右パネル (タイトル用) ----
+                const rpGrad = ctx.createLinearGradient(VIEW_W, 0, VIEW_W + STATS_W, 0);
+                rpGrad.addColorStop(0, '#050510'); rpGrad.addColorStop(1, '#0A0A20');
+                ctx.fillStyle = rpGrad;
+                ctx.fillRect(VIEW_W, 0, STATS_W, VIEW_H);
+                ctx.save(); ctx.shadowBlur = 6; ctx.shadowColor = '#FFD700';
+                ctx.strokeStyle = '#3A2800'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(VIEW_W, 0); ctx.lineTo(VIEW_W, VIEW_H); ctx.stroke();
+                ctx.restore();
+                ctx.save(); ctx.textAlign = 'center';
+                const infoItems = [
+                    ['STAGE',  '20ステージ',    '#88AACC'],
+                    ['ENEMY',  '14種の敵',       '#FF9944'],
+                    ['SKILL',  '3つのスキル',    '#CC88FF'],
+                    ['PATH',   '3つの哲学の道',  '#88FF88'],
+                    ['HIDDEN', '隠しステージ',   '#EFD02E'],
+                    ['BOSS',   '哲学的対話',     '#FF6644'],
+                ];
+                ctx.fillStyle = '#EFD02E'; ctx.font = 'bold 14px monospace'; ctx.shadowBlur = 6; ctx.shadowColor = '#FFD700';
+                ctx.fillText('FEATURES', VIEW_W + STATS_W/2, 60);
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(255,215,0,0.25)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(VIEW_W+15, 66); ctx.lineTo(VIEW_W+STATS_W-15, 66); ctx.stroke();
+                infoItems.forEach(([label, val, col], fi) => {
+                    const fy = 90 + fi * 52;
+                    const pulse = 0.7 + 0.3 * Math.sin(TT * 1.2 + fi * 0.9);
+                    ctx.globalAlpha = pulse;
+                    ctx.fillStyle = col; ctx.font = 'bold 11px monospace'; ctx.shadowBlur = 4; ctx.shadowColor = col;
+                    ctx.fillText(label, VIEW_W + STATS_W/2, fy);
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#DDDDDD'; ctx.font = '12px monospace';
+                    ctx.fillText(val, VIEW_W + STATS_W/2, fy + 18);
+                    ctx.globalAlpha = 1;
+                });
+                // 下部ヒント
+                ctx.globalAlpha = 0.5 + 0.3 * Math.sin(TT * 2);
+                ctx.fillStyle = '#556677'; ctx.font = '11px monospace';
+                ctx.fillText('Press any key', VIEW_W + STATS_W/2, VIEW_H - 30);
+                ctx.fillText('to start', VIEW_W + STATS_W/2, VIEW_H - 15);
+                ctx.globalAlpha = 1;
+                ctx.restore();
+
                 ctx.textAlign = 'left';
                 return;
             }
