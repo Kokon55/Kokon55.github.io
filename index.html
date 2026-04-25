@@ -2874,6 +2874,32 @@ const MEDITATION_DATA = [
         let ambientParticles = [];
         let lightningFlash = 0; // 稲光タイマー
         let screenShake = 0; // >0 の間は画面を揺らす
+
+        // ==== フローティングテキスト (ダメージ数字・スコアポップ) ====
+        let floatingTexts = [];
+        function spawnFloatingText(worldX, worldY, text, color, size) {
+            floatingTexts.push({ x: worldX, y: worldY, vy: -1.8 - Math.random(), text, color, size: size || 14, life: 50, maxLife: 50 });
+        }
+        function updateFloatingTexts() {
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const f = floatingTexts[i];
+                f.y += f.vy; f.vy *= 0.92; f.life--;
+                if (f.life <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+        function drawFloatingTexts(camX, camY) {
+            for (const f of floatingTexts) {
+                const alpha = f.life / f.maxLife;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.shadowBlur = 6; ctx.shadowColor = f.color;
+                ctx.fillStyle = f.color;
+                ctx.font = `bold ${f.size}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.fillText(f.text, f.x - camX, f.y - camY);
+                ctx.restore();
+            }
+        }
         let projectiles = [];
         let items = [];
         const MAGE_SPRITE = [
@@ -3779,13 +3805,15 @@ const MEDITATION_DATA = [
                         if (Math.hypot(ecx - (p.x + 12), ecy - (p.y + 12)) < er + 10) {
                             // Hit enemy!
                             const bossBoostP = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
-                            enemy.hp -= playerATK * 0.66 * bossBoostP * synthesisBonuses.arrowPower * (skills.rengeki.active ? 2.0 : 1.0);
+                            const dmgArrow = playerATK * 0.66 * bossBoostP * synthesisBonuses.arrowPower * (skills.rengeki.active ? 2.0 : 1.0);
+                            enemy.hp -= dmgArrow;
                             enemy.hitTimer = 10;
-                            enemy.x += p.dx * 15; // Knockback
+                            enemy.x += p.dx * 15;
                             enemy.y += p.dy * 15;
                             spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#8844FF', 6, 3);
                             screenShake = Math.max(screenShake, 4);
                             playSoundEffect('hit');
+                            spawnFloatingText(enemy.x + SPRITE_SIZE/2, enemy.y, `-${Math.ceil(dmgArrow)}`, '#AADDFF', 13);
                             // ボス50%で哲学対話発動
                             if (enemy.isBoss && !bossDialogueTriggered && enemy.hp <= enemy.maxHp * 0.5 && enemy.hp > 0) {
                                 bossDialogueTriggered = true;
@@ -4127,11 +4155,15 @@ const MEDITATION_DATA = [
                     if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er) && comboStep >= comboMinRequired) {
                         const bossBoost = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
                         const rengekiBoost = skills.rengeki.active ? 2.0 : 1.0;
-                        enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost * rengekiBoost;
+                        const dmgSword = playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost * rengekiBoost;
+                        enemy.hp -= dmgSword;
                         if (comboStep === 3) achievementStats.combo3Count++;
                         enemy.hitTimer = 10;
                         spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#8844FF', 6, 3);
                         screenShake = Math.max(screenShake, 4);
+                        // フローティングダメージ数字
+                        const dmgColor = rengekiBoost > 1 ? '#FF6644' : enemy.isBoss ? '#FFD700' : '#FFFFFF';
+                        spawnFloatingText(enemy.x + SPRITE_SIZE/2, enemy.y, `-${Math.ceil(dmgSword)}`, dmgColor, comboStep === 3 ? 18 : 14);
 
                         // AOE攻撃 (弁証法の杖)
                         if (philSynthBonuses.aoeChance > 0 && Math.random() < philSynthBonuses.aoeChance) {
@@ -4294,6 +4326,7 @@ const MEDITATION_DATA = [
             updateSkills();
             checkSkillUnlocks();
             updateParticles();
+            updateFloatingTexts();
         }
 
         function drawShape(sprite, fx, fy, rot, scale, isHitFlash = false, flipX = false, targetCtx = ctx) {
@@ -5862,43 +5895,109 @@ const MEDITATION_DATA = [
             // パーティクル描画
             drawParticles(camX, camY);
 
+            // フローティングダメージ数字
+            drawFloatingTexts(camX, camY);
+
             // 暗闇オーバーレイ
             drawDarknessOverlay(camX, camY);
 
-            // UI (ゲームエリア 0-800)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, VIEW_W, 40);
+            // ==== トップバー HUD ====
+            // 半透明グラジエントバー背景
+            const hudBg = ctx.createLinearGradient(0, 0, 0, 44);
+            hudBg.addColorStop(0, 'rgba(0,0,0,0.75)');
+            hudBg.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = hudBg;
+            ctx.fillRect(0, 0, VIEW_W, 44);
 
-            ctx.fillStyle = '#fff';
-            ctx.font = '20px monospace';
-            ctx.fillText(`STAGE: ${currentStageIndex + 1} | SCORE: ${pScore}`, 10, 26);
+            // ステージ番号
+            ctx.save();
+            ctx.shadowBlur = 6; ctx.shadowColor = '#AADDFF';
+            ctx.fillStyle = '#AADDFF'; ctx.font = 'bold 13px monospace';
+            ctx.fillText(`ST.${currentStageIndex + 1}`, 8, 18);
+            ctx.shadowBlur = 0;
+            // スコア
+            ctx.fillStyle = '#EFD02E'; ctx.font = '12px monospace';
+            ctx.fillText(`${pScore.toLocaleString()}pt`, 8, 34);
+            ctx.restore();
 
-            ctx.fillStyle = bossActive ? '#ff4444' : '#fff';
-            ctx.font = '16px monospace';
-            const hudMsg = bossActive ? '⚔ BOSS ⚔' : (keyItemPos ? `倒せ: ${enemiesDefeatedInStage}` : '鍵を取れ!');
-            ctx.fillText(hudMsg, VIEW_W - 120, 26);
+            // ♥ ハート型HP表示
+            ctx.save();
+            const hpStartX = 64;
+            const hpY = 22;
+            const maxDisplayHearts = Math.min(player.maxHp, 14);
+            for (let i = 0; i < maxDisplayHearts; i++) {
+                const hx = hpStartX + i * 18;
+                const alive = i < player.hp;
+                // 危機的HP(1〜2)で点滅
+                const danger = player.hp <= 2 && alive && Math.floor(Date.now()/300) % 2 === 0;
+                ctx.shadowBlur = alive ? 6 : 0;
+                ctx.shadowColor = danger ? '#FF0000' : '#E84855';
+                ctx.fillStyle = danger ? '#FF4444' : alive ? '#E84855' : '#3A1A1A';
+                ctx.font = `bold 16px monospace`;
+                ctx.fillText('♥', hx, hpY);
+            }
+            if (player.maxHp > 14) {
+                ctx.fillStyle = '#AAAAAA'; ctx.font = '11px monospace';
+                ctx.fillText(`+${player.maxHp - 14}`, hpStartX + 14 * 18, hpY);
+            }
+            ctx.restore();
 
-            // コンボインジケーター
-            if (comboStep > 0 && comboTimer > 0) {
-                const dots = ['●', '●●', '●●●'];
-                const colors = ['#AAAAAA', '#88BBFF', '#FFD700'];
-                ctx.fillStyle = colors[comboStep - 1];
-                ctx.font = 'bold 16px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText(`COMBO ${dots[comboStep - 1]}`, VIEW_W / 2, 28);
-                if (comboStep === 3) {
-                    ctx.fillStyle = `rgba(255,200,0,${(comboTimer / COMBO_WINDOW) * 0.8})`;
-                    ctx.fillText('SPIN!', VIEW_W / 2 + 90, 28);
+            // ボスHP 大型バー (ボス戦中のみ)
+            if (bossActive) {
+                const boss = enemies.find(e => e.isBoss);
+                if (boss) {
+                    const bossRatio = Math.max(0, boss.hp / boss.maxHp);
+                    const bBarW = 360, bBarH = 14;
+                    const bBarX = (VIEW_W - bBarW) / 2, bBarY = 46;
+                    // 背景
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(bBarX - 2, bBarY - 2, bBarW + 4, bBarH + 4);
+                    // HPグラジエント
+                    const bHpGrad = ctx.createLinearGradient(bBarX, 0, bBarX + bBarW, 0);
+                    bHpGrad.addColorStop(0, '#E84855'); bHpGrad.addColorStop(0.5, '#FF6B35'); bHpGrad.addColorStop(1, '#FF4400');
+                    ctx.fillStyle = bHpGrad;
+                    ctx.fillRect(bBarX, bBarY, bBarW * bossRatio, bBarH);
+                    // フレーム
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#FF4400';
+                    ctx.strokeStyle = '#AA2200'; ctx.lineWidth = 1.5;
+                    ctx.strokeRect(bBarX, bBarY, bBarW, bBarH);
+                    ctx.shadowBlur = 0;
+                    // ボス名 + HP%
+                    const bossLabel = boss.bossLabel || 'BOSS';
+                    ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+                    ctx.fillText(`⚔ ${bossLabel}  ${Math.ceil(bossRatio * 100)}%`, VIEW_W / 2, bBarY + 11);
+                    ctx.textAlign = 'left';
+                    ctx.restore();
                 }
-                ctx.textAlign = 'left';
             }
 
-            ctx.fillStyle = '#fff';
-            ctx.fillText(`HP: `, 160, 26);
-            for (let i = 0; i < player.maxHp; i++) {
-                ctx.fillStyle = i < player.hp ? '#e02020' : '#444';
-                ctx.fillRect(200 + i * 20, 10, 14, 20);
+            // コンボインジケーター (改良版)
+            if (comboStep > 0 && comboTimer > 0) {
+                ctx.save();
+                ctx.textAlign = 'center';
+                const comboColors = ['#CCCCCC', '#88BBFF', '#FFD700'];
+                const comboNames = ['HIT', 'HIT HIT', '★ SPIN ★'];
+                const cAlpha = Math.min(1, comboTimer / 20);
+                ctx.globalAlpha = 0.8 + 0.2 * Math.sin(Date.now() / 80);
+                ctx.shadowBlur = comboStep === 3 ? 18 : 8;
+                ctx.shadowColor = comboColors[comboStep - 1];
+                ctx.fillStyle = comboColors[comboStep - 1];
+                ctx.font = `bold ${comboStep === 3 ? 22 : 17}px monospace`;
+                ctx.fillText(comboNames[comboStep - 1], VIEW_W / 2, 30);
+                ctx.restore();
             }
+
+            // 右上ステータス (敵数 / 鍵状態)
+            ctx.save();
+            if (!bossActive) {
+                const hudMsg = keyItemPos ? `討伐: ${enemiesDefeatedInStage}` : '✦ 鍵を取れ！';
+                const hudCol = keyItemPos ? '#FFFFFF' : '#EFD02E';
+                ctx.shadowBlur = keyItemPos ? 0 : 8; ctx.shadowColor = '#FFD700';
+                ctx.fillStyle = hudCol; ctx.font = '13px monospace'; ctx.textAlign = 'right';
+                ctx.fillText(hudMsg, VIEW_W - 6, 20);
+            }
+            ctx.restore();
 
             ctx.restore(); // end screen shake transform
 
