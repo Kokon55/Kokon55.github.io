@@ -6519,68 +6519,18 @@ const MEDITATION_DATA = [
                 ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 175);
                 ctx.restore();
 
-                // ---- UNIQUE HOOK: 哲学的対話キャッチコピー ----
-                {
-                    const hookY = 208;
-                    const hookAlpha = 0.88 + 0.12 * Math.sin(TT * 2.2);
-                    ctx.save();
-                    ctx.textAlign = 'center';
-                    // 背景バー
-                    const hookGrad = ctx.createLinearGradient(VIEW_W/2 - 260, hookY - 22, VIEW_W/2 + 260, hookY + 12);
-                    hookGrad.addColorStop(0,   'rgba(0,0,0,0)');
-                    hookGrad.addColorStop(0.3,  'rgba(80,20,120,0.55)');
-                    hookGrad.addColorStop(0.7,  'rgba(80,20,120,0.55)');
-                    hookGrad.addColorStop(1,   'rgba(0,0,0,0)');
-                    ctx.fillStyle = hookGrad;
-                    ctx.fillRect(VIEW_W/2 - 260, hookY - 24, 520, 38);
-                    // アイコン + テキスト
-                    ctx.globalAlpha = hookAlpha;
-                    ctx.fillStyle = '#CC88FF';
-                    ctx.shadowBlur = 14; ctx.shadowColor = '#AA44FF';
-                    ctx.font = 'bold 15px monospace';
-                    ctx.fillText('💬 ボスを哲学的対話で論破して倒す唯一のRPG', VIEW_W / 2, hookY + 2);
-                    ctx.shadowBlur = 0;
-                    ctx.restore();
-                }
-
-                // ---- 4つのエンディングティーザー ----
-                {
-                    const paths = [
-                        { label:'武の道', col:'#FF6644', icon:'⚔' },
-                        { label:'知の道', col:'#44AAFF', icon:'📖' },
-                        { label:'守の道', col:'#44FF88', icon:'🛡' },
-                        { label:'哲の道', col:'#CC88FF', icon:'💡' },
-                    ];
-                    const pathY = 235;
-                    ctx.save(); ctx.textAlign = 'center';
-                    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-                    ctx.fillRect(VIEW_W/2 - 240, pathY - 14, 480, 24);
-                    paths.forEach((p, pi) => {
-                        const px = VIEW_W/2 - 165 + pi * 110;
-                        const pulse = 0.6 + 0.4 * Math.sin(TT * 1.4 + pi * 1.1);
-                        ctx.globalAlpha = pulse;
-                        ctx.fillStyle = p.col;
-                        ctx.shadowBlur = 6; ctx.shadowColor = p.col;
-                        ctx.font = 'bold 11px monospace';
-                        ctx.fillText(`${p.icon} ${p.label}`, px, pathY + 3);
-                        ctx.shadowBlur = 0;
-                    });
-                    ctx.globalAlpha = 1;
-                    ctx.restore();
-                }
-
                 // ---- フィロソフィカルクォート (フェードイン/アウト) ----
                 const quotePhase = (T % 200) / 200;
                 const quoteAlpha = quotePhase < 0.1 ? quotePhase / 0.1 : quotePhase > 0.85 ? (1 - quotePhase) / 0.15 : 1;
                 ctx.save();
                 ctx.textAlign = 'center'; ctx.globalAlpha = quoteAlpha * 0.65;
                 ctx.fillStyle = '#AACCEE'; ctx.font = 'italic 12px monospace';
-                ctx.fillText(TITLE_QUOTES[titleQuoteIdx], VIEW_W / 2, 258);
+                ctx.fillText(TITLE_QUOTES[titleQuoteIdx], VIEW_W / 2, 210);
                 ctx.restore();
 
                 // ---- メニュー ----
                 const opts = ['NEW GAME', 'CONTINUE', '今日のチャレンジ'];
-                const menuBaseY = 280;
+                const menuBaseY = 240;
                 for (let i = 0; i < opts.length; i++) {
                     const sel = (titleSelectedOption === i);
                     const bounce = sel ? Math.sin(TT * 4) * 2 : 0;
