@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retro Fantasy &#8212; A Philosophical Journey</title>
+    <title>問え。考えよ。戦え。 — Retro Fantasy</title>
     <style>
         body {
             margin: 0;
@@ -90,124 +90,124 @@
         };
 
         const PLAYER_SPRITE = [
-            // 旅人スプライト (正面): 広帽子、クローク、スタッフ
+            // 勇者スプライト (正面): 銀髪・青衣装・赤スカーフ・スタッフ
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0, 19, 12, 12, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0],
-            [0,  0, 19, 12, 21, 12, 12, 12, 21, 12, 19,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0, 23,  4,  4,  4, 23,  0,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0,  4, 10,  4,  4, 10,  4,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0,  4, 10,  4,  4, 10,  4,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0, 18, 18, 18, 18, 18, 18,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0, 12, 18, 12, 20, 12, 18, 12,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0, 12, 12, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0, 19, 12,  0, 19, 12,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0, 19, 19,  0, 19, 19,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  9,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7, 22,  7,  7,  9,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7, 23, 23, 23,  7,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 23,  1, 23,  1, 23,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  4,  4, 20,  4,  4,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  8,  2, 11,  2,  8,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 11, 11, 11, 11,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0, 11, 25,  2, 11,  2, 25, 11,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 11, 11, 11, 19,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 19, 11, 19,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1, 19,  1,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 後ろ姿スプライト（上へ移動時）
         const PLAYER_BACK_SPRITE = [
-            // 旅人スプライト (後ろ姿): 広帽子の縁、クローク後ろ、スタッフ
+            // 勇者スプライト (後ろ姿): 銀髪後ろ・青衣装後ろ・スタッフ
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0, 19, 12, 12, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0],
-            [0,  0, 19, 12, 21, 12, 12, 12, 21, 12, 19,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0, 19, 19, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0, 12, 12, 12, 12, 12,  0,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0,  0, 18, 18, 18, 18, 18, 18,  0, 16,  0,  0,  0,  0],
-            [0,  0,  0, 12, 18, 12, 12, 12, 18, 12,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0, 12, 12, 12, 12, 12, 12, 12,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 12, 12, 21, 12, 12,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0, 19, 12, 12, 12, 19,  0,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0, 19, 12,  0, 19, 12,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0, 19, 19,  0, 19, 19,  0,  0,  0,  0,  0,  0],
-            [0,  0,  0,  0,  0,  1,  1,  0,  1,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  9,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7,  7,  7,  7,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7,  7,  7,  9,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  8,  2,  2,  2,  8,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 11, 11, 11, 11,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 25, 11, 25, 11,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0, 11, 25, 11, 11, 11, 25, 11,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 11, 11, 11, 19,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 19, 11, 19,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1, 19,  1,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0],
             [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 右横顔スプライト（右へ移動時 / 左は反転）
         const PLAYER_RIGHT_SPRITE = [
-            // 旅人スプライト (右横): 広帽子、横向きクローク、スタッフ前
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 19, 12, 21, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 10, 4, 0, 16, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 4, 0, 16, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 18, 18, 18, 18, 12, 16, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 18, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 12, 12, 20, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            // 勇者スプライト (右横): 銀髪横向き・プロフィール顔・青衣装
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  9,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  9,  7,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7, 23,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  7, 23,  1,  4,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  4,  4, 20,  0,  9, 16,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  8,  8,  2, 11,  0,  0, 16,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 11, 11, 11,  0,  0, 16,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25,  2, 11, 25,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 11, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0, 19,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 歩行フレーム2 — 足を開いたポーズ (正面・後ろ・横)
         const PLAYER_SPRITE_W2 = [
-            // 旅人 歩行フレーム2 (正面) — 足開き
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 19, 12, 12, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
-            [0, 0, 19, 12, 21, 12, 12, 12, 21, 12, 19, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 23, 4, 4, 4, 23, 0, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 4, 10, 4, 4, 10, 4, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 4, 10, 4, 4, 10, 4, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 12, 18, 12, 20, 12, 18, 12, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 19, 19, 0, 19, 12, 0, 0, 0, 19, 19, 0, 0, 0, 0],
-            [0, 0, 19, 19, 0, 19, 0, 0, 0, 0, 19, 19, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            // 勇者 歩行フレーム2 (正面) — 足開き
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  9,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7, 22,  7,  7,  9,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7, 23, 23, 23,  7,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 23,  1, 23,  1, 23,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  4,  4, 20,  4,  4,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  8,  2, 11,  2,  8,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 11, 11, 11, 11,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0, 11, 25,  2, 11,  2, 25, 11,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 11, 11, 11, 19,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 19,  0, 19, 11,  0,  0, 19,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  1,  0,  1, 19,  0,  0,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  1,  0,  0,  1,  0,  0,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
         const PLAYER_BACK_SPRITE_W2 = [
-            // 旅人 歩行フレーム2 (後ろ) — 足開き
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 19, 12, 12, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
-            [0, 0, 19, 12, 21, 12, 12, 12, 21, 12, 19, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 19, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 12, 12, 12, 12, 12, 0, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 0, 18, 18, 18, 18, 18, 18, 0, 16, 0, 0, 0, 0],
-            [0, 0, 0, 12, 18, 12, 12, 12, 18, 12, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 12, 12, 21, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 19, 19, 0, 19, 12, 0, 0, 0, 19, 19, 0, 0, 0, 0],
-            [0, 0, 19, 19, 0, 19, 0, 0, 0, 0, 19, 19, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            // 勇者 歩行フレーム2 (後ろ) — 足開き
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  9,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7,  7,  7,  7,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7,  7,  7,  9,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0,  8,  2,  2,  2,  8,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 11, 11, 11, 11,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 25, 11, 25, 11,  0,  0, 16,  0,  0,  0,  0],
+            [0,  0,  0, 11, 25, 11, 11, 11, 25, 11,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 11, 11, 25,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 19, 11, 11, 11, 19,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 19,  0, 19, 11,  0,  0, 19,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  1,  0,  1, 19,  0,  0,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  1,  0,  0,  1,  0,  0,  1,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
         const PLAYER_RIGHT_SPRITE_W2 = [
-            // 旅人 歩行フレーム2 (右横) — 足開き
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 19, 12, 21, 12, 12, 12, 19, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 19, 12, 12, 19, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 19, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 10, 4, 0, 16, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 4, 4, 4, 0, 16, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 18, 18, 18, 18, 12, 16, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 18, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 12, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 12, 12, 12, 20, 12, 12, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 12, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 19, 0, 0, 19, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 19, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            // 勇者 歩行フレーム2 (右横) — 片足前
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  9,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  9,  7,  7,  7,  7,  9,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  9,  7,  7, 23,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  7, 23,  1,  4,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  4,  4, 20,  0,  9, 16,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  8,  8,  2, 11,  0,  0, 16,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 11, 11, 11, 11,  0,  0, 16,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25,  2, 11, 25,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0, 25, 11, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0, 19, 11, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  1, 19, 19,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  1,  0,  1, 19,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
         ];
 
         // 敵の種類
@@ -2758,8 +2758,8 @@ const MEDITATION_DATA = [
             }
         }
 
-        const XP_TABLE = [0, 39, 104, 208, 364, 572, 845, 1196, 1638, 2184,
-                           2860, 3666, 4628, 5772, 7124, 8710, 10556, 12688, 15145, 17940];
+        const XP_TABLE = [0, 150, 380, 720, 1200, 1900, 2800, 4000, 5500, 7300,
+                           9500, 12200, 15500, 19500, 24500, 30500, 38000, 47000, 58000, 72000];
 
         const SYNTHESIS_RECIPES = [
             { needs: ['sword', 'sword'],   result: { name: '双剣の魂',   desc: 'ATK +30%',      effect: () => { synthesisBonuses.atkMult += 0.30; } } },
@@ -4070,13 +4070,58 @@ const MEDITATION_DATA = [
         let pauseInAchievements = false;
         let bgmVolume = parseFloat(localStorage.getItem('bgmVolume') ?? '0.7');
         let seVolume  = parseFloat(localStorage.getItem('seVolume')  ?? '0.7');
+
+        // ==== 音量スライダー (常時マウス操作対応) ====
+        const VOL_PANEL = {
+            x: () => VIEW_W + 8,
+            bgmY: 0, seY: 0, // drawStatsPanel内で毎フレーム更新
+            w: () => STATS_W - 16,
+            h: 18,
+        };
+        const volDrag = { active: false, type: null }; // type: 'bgm' | 'se'
+
+        // canvasのピクセル座標 → 論理座標 (CSSスケール対応)
+        function canvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function hitVolBar(cx, cy, barY) {
+            const x = VOL_PANEL.x(), w = VOL_PANEL.w();
+            return cx >= x && cx <= x + w && cy >= barY - 6 && cy <= barY + VOL_PANEL.h + 6;
+        }
+
+        function setVolFromX(cx, type) {
+            const x = VOL_PANEL.x(), w = VOL_PANEL.w();
+            const ratio = Math.max(0, Math.min(1, (cx - x) / w));
+            const val = Math.round(ratio * 100) / 100;
+            if (type === 'bgm') { bgmVolume = val; localStorage.setItem('bgmVolume', val); }
+            else                { seVolume  = val; localStorage.setItem('seVolume',  val); }
+        }
+
+        canvas.addEventListener('mousedown', e => {
+            const { x, y } = canvasPos(e);
+            if (hitVolBar(x, y, VOL_PANEL.bgmY)) { volDrag.active = true; volDrag.type = 'bgm'; setVolFromX(x, 'bgm'); initAudio(); }
+            else if (hitVolBar(x, y, VOL_PANEL.seY)) { volDrag.active = true; volDrag.type = 'se';  setVolFromX(x, 'se');  initAudio(); }
+        });
+        window.addEventListener('mousemove', e => {
+            if (!volDrag.active) return;
+            const { x } = canvasPos(e);
+            setVolFromX(x, volDrag.type);
+        });
+        window.addEventListener('mouseup', () => { volDrag.active = false; });
+
         let popupMessage = "";
         let isStageAdvancing = false;
         let keyItemPos = null;
         let keyItemCollected = false;
         let bossActive = false;
 
-        const MAX_ENEMIES_PER_STAGE = [2,3,3,4,4,4,5,5,5,5,5,5,5,5,6,6,6,6,6,1];
+        const MAX_ENEMIES_PER_STAGE = [4,5,6,6,7,7,8,8,9,9,9,10,10,10,11,11,12,12,12,1];
 
         function stageEnemyPool(si) {
             // ステージ番号に応じて出現する敵の種類プールを返す
@@ -4656,6 +4701,7 @@ const MEDITATION_DATA = [
                                 bossDialogueActive = true;
                                 bossDialogueCursor = 0;
                                 bossDialogueTimer = 600;
+                                centerMessage = '⚡ 哲学的問答！\n← → で選択　Enter / A で回答';
                             }
                             if (enemy.hp <= 0) {
                                 playSoundEffect('kill');
@@ -5044,6 +5090,7 @@ const MEDITATION_DATA = [
                             bossDialogueActive = true;
                             bossDialogueCursor = 0;
                             bossDialogueTimer = 600;
+                            centerMessage = '⚡ 哲学的問答！\n← → で選択　Enter / A で回答';
                         }
 
                         if (enemy.hp <= 0) {
@@ -5407,8 +5454,8 @@ const MEDITATION_DATA = [
 
             // タイトル
             ctx.textAlign = 'center';
-            ctx.fillStyle = '#778899';
-            ctx.font = 'bold 9px monospace';
+            ctx.fillStyle = '#99AABB';
+            ctx.font = 'bold 11px monospace';
             ctx.fillText('CONTROLS', px + STATS_W / 2, guideY + 8);
 
             // Xboxボタン描画ヘルパー
@@ -5436,13 +5483,13 @@ const MEDITATION_DATA = [
                 ctx.fillText(label, bx, by + 3);
             }
             function row(lx, ly, icon, desc, col) {
-                ctx.fillStyle = col || '#556677';
-                ctx.font = 'bold 8px monospace';
+                ctx.fillStyle = col || '#6677AA';
+                ctx.font = 'bold 10px monospace';
                 ctx.textAlign = 'left';
                 ctx.fillText(icon, lx, ly);
-                ctx.fillStyle = '#AABBCC';
-                ctx.font = '8px monospace';
-                ctx.fillText(desc, lx + 24, ly);
+                ctx.fillStyle = '#BBCCDD';
+                ctx.font = '10px monospace';
+                ctx.fillText(desc, lx + 28, ly);
             }
 
             const cx = px + STATS_W / 2;
@@ -5455,50 +5502,50 @@ const MEDITATION_DATA = [
 
             // ボタン行1: A=攻撃, B=武器切替
             xBtn(px + 20, y, 8, '#3CB371', 'A');
-            ctx.fillStyle = '#AABBCC'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('攻撃 (Space/Z)', px + 32, y + 3);
-            y += 18;
+            ctx.fillStyle = '#BBCCDD'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('攻撃 (Space)', px + 32, y + 4);
+            y += 19;
             xBtn(px + 20, y, 8, '#CC2222', 'B');
-            ctx.fillStyle = '#AABBCC'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('武器切替 (Q)', px + 32, y + 3);
-            y += 18;
+            ctx.fillStyle = '#BBCCDD'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('武器切替 (Q)', px + 32, y + 4);
+            y += 19;
 
             // RB=防御
             xBarBtn(px + 20, y, 22, 10, '#445566', 'RB');
-            ctx.fillStyle = '#AABBCC'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('防御 (Shift/R)', px + 34, y + 3);
-            y += 16;
+            ctx.fillStyle = '#BBCCDD'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('防御 (Shift)', px + 34, y + 4);
+            y += 17;
 
             // スキル区切り
             ctx.strokeStyle = 'rgba(100,150,255,0.2)';
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(px+8, y); ctx.lineTo(px+STATS_W-8, y); ctx.stroke();
-            ctx.fillStyle = '#446688';
-            ctx.font = 'bold 7px monospace'; ctx.textAlign = 'center';
-            ctx.fillText('SKILLS', cx, y + 8);
-            y += 14;
+            ctx.fillStyle = '#5588BB';
+            ctx.font = 'bold 9px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('SKILLS', cx, y + 10);
+            y += 16;
 
             // スキル X/Y/LB
             xBtn(px + 20, y, 8, '#1166BB', 'X');
-            ctx.fillStyle = '#FF6644'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('連撃 (J)', px + 32, y + 3);
-            y += 16;
+            ctx.fillStyle = '#FF8866'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('連撃 (J)', px + 32, y + 4);
+            y += 17;
             xBtn(px + 20, y, 8, '#AA8800', 'Y');
-            ctx.fillStyle = '#44AAFF'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('結界 (K)', px + 32, y + 3);
-            y += 16;
+            ctx.fillStyle = '#66BBFF'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('結界 (K)', px + 32, y + 4);
+            y += 17;
             xBarBtn(px + 20, y, 22, 10, '#553388', 'LB');
-            ctx.fillStyle = '#CC88FF'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('時停止 (L)', px + 34, y + 3);
-            y += 16;
+            ctx.fillStyle = '#CC88FF'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('時停止 (L)', px + 34, y + 4);
+            y += 17;
 
             // Start=ポーズ
             ctx.strokeStyle = 'rgba(100,150,255,0.2)'; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(px+8, y); ctx.lineTo(px+STATS_W-8, y); ctx.stroke();
             y += 10;
             xBarBtn(px + 20, y, 28, 10, '#334455', 'Start');
-            ctx.fillStyle = '#778899'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
-            ctx.fillText('ポーズ (P/Esc)', px + 37, y + 3);
+            ctx.fillStyle = '#99AABB'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('ポーズ (P)', px + 37, y + 4);
 
             ctx.restore();
         }
@@ -5643,11 +5690,16 @@ const MEDITATION_DATA = [
                 ctx.fillText(btnLabel, cx2, panelY + panelH - 8);
             });
 
-            // 操作説明
-            ctx.fillStyle = 'rgba(120,100,160,0.7)';
-            ctx.font = '11px monospace';
+            // 操作説明 (大きく目立つ)
+            const instrPulse = 0.75 + 0.25 * Math.sin(TT * 3);
+            ctx.save();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = 'rgba(180,140,255,0.8)';
+            ctx.fillStyle = `rgba(230,210,255,${instrPulse})`;
+            ctx.font = 'bold 14px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('← / → / Dpad  で選択    A / Enter  で回答', VIEW_W / 2, panelY + panelH + 22);
+            ctx.fillText('← / →  で選択　　Enter / A  で回答', VIEW_W / 2, panelY + panelH + 22);
+            ctx.restore();
 
             // 答えた結果の示唆 (下部)
             ctx.fillStyle = 'rgba(160,140,200,0.38)';
@@ -6324,6 +6376,10 @@ const MEDITATION_DATA = [
             ctx.font = 'bold 11px monospace';
             ctx.textAlign = 'center';
             ctx.fillText('— カルマ —', px + STATS_W / 2, karmaY);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#667788';
+            ctx.font = '9px monospace';
+            ctx.fillText('行動で変化する4属性', px + STATS_W / 2, karmaY + 10);
             // 下線
             ctx.strokeStyle = 'rgba(255,215,0,0.3)';
             ctx.lineWidth = 1;
@@ -6340,11 +6396,65 @@ const MEDITATION_DATA = [
                 ctx.fillStyle = k.color;
                 ctx.font = 'bold 11px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText(k.label, kx + 16, karmaY + 14);
+                ctx.fillText(k.label, kx + 16, karmaY + 24);
                 ctx.fillStyle = '#FFFFFF';
                 ctx.font = '11px monospace';
-                ctx.fillText(k.val, kx + 16, karmaY + 26);
+                ctx.fillText(k.val, kx + 16, karmaY + 36);
             });
+
+            // ==== 音量スライダー (YouTube風、マウスドラッグ可) ====
+            {
+                const vbX = px + 8;
+                const vbW = STATS_W - 16;
+                const vbH = 8;
+                const bgmBarY = 300;
+                const seBarY  = 330;
+                VOL_PANEL.bgmY = bgmBarY;
+                VOL_PANEL.seY  = seBarY;
+
+                ctx.save();
+                ctx.fillStyle = '#445566';
+                ctx.font = 'bold 9px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('— 音量 (ドラッグで変更) —', px + STATS_W / 2, 291);
+
+                const drawVolBar = (label, barY, vol, color) => {
+                    ctx.font = '9px monospace'; ctx.textAlign = 'left';
+                    ctx.fillStyle = '#6688AA';
+                    ctx.fillText(label, vbX, barY - 2);
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = '#99AABB';
+                    ctx.fillText(Math.round(vol * 100) + '%', px + STATS_W - 4, barY - 2);
+                    // track
+                    ctx.fillStyle = '#1a2535';
+                    ctx.beginPath();
+                    if (ctx.roundRect) ctx.roundRect(vbX, barY, vbW, vbH, 4);
+                    else ctx.rect(vbX, barY, vbW, vbH);
+                    ctx.fill();
+                    // fill bar
+                    const fw = vbW * vol;
+                    if (fw > 0) {
+                        const g = ctx.createLinearGradient(vbX, 0, vbX + fw, 0);
+                        g.addColorStop(0, color + '88');
+                        g.addColorStop(1, color);
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        if (ctx.roundRect) ctx.roundRect(vbX, barY, fw, vbH, 4);
+                        else ctx.rect(vbX, barY, fw, vbH);
+                        ctx.fill();
+                    }
+                    // thumb
+                    const tx = vbX + vbW * vol;
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath(); ctx.arc(tx, barY + vbH / 2, 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = color;
+                    ctx.beginPath(); ctx.arc(tx, barY + vbH / 2, 3, 0, Math.PI * 2); ctx.fill();
+                };
+
+                drawVolBar('♪ BGM', bgmBarY, bgmVolume, '#5B9BD5');
+                drawVolBar('♫ SE ', seBarY,  seVolume,  '#2ECC71');
+                ctx.restore();
+            }
 
             // ボス状態表示
             if (bossActive) {
@@ -6513,10 +6623,11 @@ const MEDITATION_DATA = [
 
                 // サブタイトル
                 ctx.save();
-                ctx.textAlign = 'center'; ctx.shadowBlur = 8; ctx.shadowColor = '#4488AA';
-                ctx.fillStyle = '#C0D8E8';
-                ctx.font = 'bold 19px monospace';
-                ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 175);
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 10; ctx.shadowColor = '#8844CC';
+                ctx.fillStyle = '#D8AAFF';
+                ctx.font = 'bold 22px serif';
+                ctx.fillText('問え。考えよ。戦え。', VIEW_W / 2, 175);
                 ctx.restore();
 
                 // ---- フィロソフィカルクォート (フェードイン/アウト) ----
