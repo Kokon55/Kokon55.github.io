@@ -1915,6 +1915,13 @@ const MEDITATION_DATA = [
                 return;
             }
 
+            // アクティブスキル発動 (J/K/L)
+            if (gameState === 'playing' && !isGameOver && !meditationPending && !synthesisMenuOpen && !philSynthMenuOpen) {
+                if (e.code === 'KeyJ') { activateSkill('rengeki');  e.preventDefault(); return; }
+                if (e.code === 'KeyK') { activateSkill('barrier');  e.preventDefault(); return; }
+                if (e.code === 'KeyL') { activateSkill('timeslow'); e.preventDefault(); return; }
+            }
+
             if (e.code === 'KeyP' || e.code === 'Escape') {
                 if (isPaused && pauseInAchievements) {
                     pauseInAchievements = false;
@@ -2155,6 +2162,49 @@ const MEDITATION_DATA = [
         let philSynthPhase = 0; // 0=select first, 1=select second, 2=result
         let philSynthSelected = [];
         let philSynthResult = null;
+
+        // ==== アクティブスキル ====
+        const SKILL_DEFS = {
+            rengeki:  { name:'連撃', desc:'攻撃力2倍 (5秒)', key:'J', maxCd:600,  maxDur:300,  unlockAt:3,  color:'#FF6644' },
+            barrier:  { name:'魔法壁', desc:'1撃無効化 (3秒)', key:'K', maxCd:900,  maxDur:180,  unlockAt:7,  color:'#44AAFF' },
+            timeslow: { name:'時停止', desc:'敵速0.25倍 (3秒)', key:'L', maxCd:1200, maxDur:180,  unlockAt:12, color:'#CC88FF' },
+        };
+        let skills = {
+            rengeki:  { unlocked:false, cooldown:0, duration:0, active:false },
+            barrier:  { unlocked:false, cooldown:0, duration:0, active:false, shieldHit:false },
+            timeslow: { unlocked:false, cooldown:0, duration:0, active:false },
+        };
+        function checkSkillUnlocks() {
+            const n = meditationChoices.length;
+            if (n >= SKILL_DEFS.rengeki.unlockAt)  skills.rengeki.unlocked  = true;
+            if (n >= SKILL_DEFS.barrier.unlockAt)  skills.barrier.unlocked  = true;
+            if (n >= SKILL_DEFS.timeslow.unlockAt) skills.timeslow.unlocked = true;
+        }
+        function activateSkill(id) {
+            const sk = skills[id];
+            if (!sk.unlocked || sk.cooldown > 0 || sk.active) return;
+            sk.active = true;
+            sk.duration = SKILL_DEFS[id].maxDur;
+            if (id === 'barrier') sk.shieldHit = false;
+            playSoundEffect('shield');
+            spawnGlowParticles(player.x + SPRITE_SIZE/2, player.y + SPRITE_SIZE/2, SKILL_DEFS[id].color, 20);
+            centerMessage = `◆ ${SKILL_DEFS[id].name} 発動! ◆`;
+            msgTimer = 60;
+        }
+        function updateSkills() {
+            for (const [id, sk] of Object.entries(skills)) {
+                if (sk.active) {
+                    sk.duration--;
+                    if (id === 'barrier' && sk.shieldHit) sk.duration = 0; // 1撃受けたら即終了
+                    if (sk.duration <= 0) {
+                        sk.active = false;
+                        sk.cooldown = SKILL_DEFS[id].maxCd;
+                    }
+                } else if (sk.cooldown > 0) {
+                    sk.cooldown--;
+                }
+            }
+        }
 
         // ==== デイリーチャレンジ状態変数 ====
         let dailyChallengeActive = false;
@@ -3690,7 +3740,7 @@ const MEDITATION_DATA = [
                         if (Math.hypot(ecx - (p.x + 12), ecy - (p.y + 12)) < er + 10) {
                             // Hit enemy!
                             const bossBoostP = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
-                            enemy.hp -= playerATK * 0.66 * bossBoostP * synthesisBonuses.arrowPower;
+                            enemy.hp -= playerATK * 0.66 * bossBoostP * synthesisBonuses.arrowPower * (skills.rengeki.active ? 2.0 : 1.0);
                             enemy.hitTimer = 10;
                             enemy.x += p.dx * 15; // Knockback
                             enemy.y += p.dy * 15;
@@ -3766,6 +3816,14 @@ const MEDITATION_DATA = [
 
                     const pr = SPRITE_SIZE * 0.4;
                     if (player.invincibleTimer === 0 && Math.hypot(pcx - (p.x + 12), pcy - (p.y + 12)) < pr + 10) {
+                        // 魔法壁バリア: 1撃無効化
+                        if (skills.barrier.active && !skills.barrier.shieldHit) {
+                            skills.barrier.shieldHit = true;
+                            playSoundEffect('shield');
+                            spawnGlowParticles(pcx, pcy, '#44AAFF', 14);
+                            projectiles.splice(i, 1);
+                            continue;
+                        }
                         const playerDebuffP = (bossDebuffTarget === 'player' && bossDebuffTimer > 0 && p.isBossProjectile) ? 2 : 1;
                         const dmgP = Math.max(1, Math.floor(playerDebuffP * (1.0 - philSynthBonuses.dmgReduce)));
                         player.hp -= dmgP;
@@ -3836,6 +3894,7 @@ const MEDITATION_DATA = [
 
                 // 敵の移動・攻撃処理（ノックバック中は動かない）
                 if (enemy.hitTimer === 0) {
+                    const tsMult = skills.timeslow.active ? 0.25 : 1.0; // 時停止スキル乗数
                     let edx = player.x - enemy.x;
                     let edy = player.y - enemy.y;
                     const dist = Math.sqrt(edx * edx + edy * edy);
@@ -3843,14 +3902,14 @@ const MEDITATION_DATA = [
                     // 隠しボスの移動AI
                     if (enemy.isHiddenBoss) {
                         const orbitRadius = enemy.phase === 2 ? 120 : 200;
-                        const orbitSpeed = enemy.phase === 2 ? 0.04 : 0.025;
+                        const orbitSpeed = (enemy.phase === 2 ? 0.04 : 0.025) * tsMult;
                         enemy.orbitAngle = (enemy.orbitAngle || 0) + orbitSpeed;
                         const targetX = player.x + Math.cos(enemy.orbitAngle) * orbitRadius - SPRITE_SIZE / 2;
                         const targetY = player.y + Math.sin(enemy.orbitAngle) * orbitRadius - SPRITE_SIZE / 2;
                         const tdx = targetX - enemy.x;
                         const tdy = targetY - enemy.y;
                         const tdist = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
-                        const spd = enemy.phase === 2 ? enemy.speed * 1.5 : enemy.speed;
+                        const spd = (enemy.phase === 2 ? enemy.speed * 1.5 : enemy.speed) * tsMult;
                         const moveX = enemy.x + (tdx / tdist) * spd;
                         const moveY = enemy.y + (tdy / tdist) * spd;
                         enemy.x = Math.max(SPRITE_SIZE, Math.min(WORLD_W - SPRITE_SIZE * 2, moveX));
@@ -3885,8 +3944,8 @@ const MEDITATION_DATA = [
                         enemy.fireTimer++;
                         if (dist > 250) {
                             if (dist > 0) { edx /= dist; edy /= dist; }
-                            const nextEx = enemy.x + edx * enemy.speed;
-                            const nextEy = enemy.y + edy * enemy.speed;
+                            const nextEx = enemy.x + edx * enemy.speed * tsMult;
+                            const nextEy = enemy.y + edy * enemy.speed * tsMult;
                             if (isWalkable(nextEx, enemy.y)) enemy.x = nextEx;
                             if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
                         }
@@ -3920,8 +3979,8 @@ const MEDITATION_DATA = [
                         if (dist > 0) {
                             edx /= dist;
                             edy /= dist;
-                            const nextEx = enemy.x + edx * enemy.speed;
-                            const nextEy = enemy.y + edy * enemy.speed;
+                            const nextEx = enemy.x + edx * enemy.speed * tsMult;
+                            const nextEy = enemy.y + edy * enemy.speed * tsMult;
                             if (isWalkable(nextEx, enemy.y)) enemy.x = nextEx;
                             if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
                         }
@@ -3948,9 +4007,10 @@ const MEDITATION_DATA = [
 
                     // combo_only チャレンジ: 必要コンボ数未満ではダメージなし
                     const comboMinRequired = (dailyChallengeActive && currentDailyChallenge && currentDailyChallenge.rule === 'combo_only') ? currentDailyChallenge.param : 1;
-                    if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er) && comboStep >= comboMinRequired) { // bossは当たり判定を大きくすべきだが簡略化
+                    if (!isAttackBlocked && Math.hypot(ax - ecx, ay - ecy) < (ar + er) && comboStep >= comboMinRequired) {
                         const bossBoost = (enemy.isBoss && bossDebuffTarget === 'boss' && bossDebuffTimer > 0) ? 2.0 : 1.0;
-                        enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost;
+                        const rengekiBoost = skills.rengeki.active ? 2.0 : 1.0;
+                        enemy.hp -= playerATK * (hasLongSword ? 1.5 : 1.0) * comboMult * bossBoost * rengekiBoost;
                         if (comboStep === 3) achievementStats.combo3Count++;
                         enemy.hitTimer = 10;
                         spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#8844FF', 6, 3);
@@ -4038,6 +4098,14 @@ const MEDITATION_DATA = [
                     const pcy = player.y + SPRITE_SIZE / 2;
                     let bossScale = enemy.type === 'boss' ? 1.5 : 1;
                     if (Math.hypot(pcx - ecx, pcy - ecy) < (pr + er * bossScale) * 0.8) {
+                        // 魔法壁バリア: 1撃無効化
+                        if (skills.barrier.active && !skills.barrier.shieldHit) {
+                            skills.barrier.shieldHit = true;
+                            playSoundEffect('shield');
+                            spawnGlowParticles(pcx, pcy, '#44AAFF', 14);
+                            player.invincibleTimer = 60;
+                            continue;
+                        }
                         const playerDebuff = (bossDebuffTarget === 'player' && bossDebuffTimer > 0 && enemy.isBoss) ? 2 : 1;
                         const dmgE = Math.max(1, Math.floor(playerDebuff * (1.0 - philSynthBonuses.dmgReduce)));
                         player.hp -= dmgE;
@@ -4106,6 +4174,8 @@ const MEDITATION_DATA = [
             }
             if (bossDebuffTimer > 0) bossDebuffTimer--;
             if (achievementPopup && achievementPopup.timer > 0) achievementPopup.timer--;
+            updateSkills();
+            checkSkillUnlocks();
             updateParticles();
         }
 
@@ -4934,11 +5004,60 @@ const MEDITATION_DATA = [
                 ctx.fillText('鍵を手に入れた!', px + STATS_W / 2, VIEW_H - 115);
             }
 
+            // ==== アクティブスキル表示 ====
+            const anySkillUnlocked = skills.rengeki.unlocked || skills.barrier.unlocked || skills.timeslow.unlocked;
+            if (anySkillUnlocked) {
+                ctx.save();
+                ctx.shadowBlur = 4; ctx.shadowColor = '#CC88FF';
+                ctx.fillStyle = '#CC88FF'; ctx.font = 'bold 11px monospace';
+                ctx.fillText('— スキル —', px + STATS_W / 2, VIEW_H - 148);
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(200,136,255,0.3)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(px + 15, VIEW_H - 146); ctx.lineTo(px + STATS_W - 15, VIEW_H - 146); ctx.stroke();
+                ctx.restore();
+                const skillOrder = ['rengeki', 'barrier', 'timeslow'];
+                let sy = VIEW_H - 137;
+                skillOrder.forEach(id => {
+                    const sk = skills[id];
+                    if (!sk.unlocked) return;
+                    const def = SKILL_DEFS[id];
+                    const barW = STATS_W - 30;
+                    ctx.fillStyle = sk.active ? def.color : '#334';
+                    ctx.fillRect(px + 15, sy, barW, 12);
+                    if (sk.active) {
+                        const prog = sk.duration / def.maxDur;
+                        ctx.fillStyle = def.color;
+                        ctx.globalAlpha = 0.35;
+                        ctx.fillRect(px + 15, sy, barW, 12);
+                        ctx.globalAlpha = 1;
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(px + 15, sy, barW * prog, 12);
+                    } else if (sk.cooldown > 0) {
+                        const cdProg = 1 - sk.cooldown / def.maxCd;
+                        ctx.fillStyle = '#556';
+                        ctx.fillRect(px + 15, sy, barW * cdProg, 12);
+                    }
+                    ctx.strokeStyle = sk.active ? def.color : '#445';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(px + 15, sy, barW, 12);
+                    ctx.fillStyle = sk.active ? '#fff' : (sk.cooldown > 0 ? '#888' : '#ddd');
+                    ctx.font = 'bold 9px monospace';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`[${def.key}] ${def.name}`, px + 18, sy + 9);
+                    if (sk.cooldown > 0 && !sk.active) {
+                        ctx.fillStyle = '#aaa'; ctx.textAlign = 'right';
+                        ctx.fillText(`${Math.ceil(sk.cooldown/60)}s`, px + STATS_W - 16, sy + 9);
+                    }
+                    sy += 16;
+                });
+                ctx.textAlign = 'center';
+            }
+
             // 操作説明
             ctx.fillStyle = '#445566';
             ctx.font = '11px monospace';
-            const hints = ['WASD/Arrow:Move', 'Space:Attack', 'Shift:Shield', 'Q/E:Weapon', 'C:合成 V:哲学合成', 'P:Pause'];
-            hints.forEach((h, i) => ctx.fillText(h, px + STATS_W / 2, VIEW_H - 95 + i * 18));
+            const hints = ['WASD/Arrow:Move', 'Space:Attack', 'Shift:Shield', 'Q/E:Weapon', 'J/K/L:スキル', 'C:合成 V:哲学合成', 'P:Pause'];
+            hints.forEach((h, i) => ctx.fillText(h, px + STATS_W / 2, VIEW_H - 95 + i * 15));
 
             ctx.textAlign = 'left';
         }
@@ -5332,6 +5451,32 @@ const MEDITATION_DATA = [
 
                 // プレイヤー: 温かい金色グロー
                 drawGlow(ctx, player.x - camX + SPRITE_SIZE/2, player.y - camY + SPRITE_SIZE/2, 24, '#FFD700', 8);
+                // アクティブスキル視覚エフェクト
+                const skCx = player.x - camX + SPRITE_SIZE/2;
+                const skCy = player.y - camY + SPRITE_SIZE/2;
+                if (skills.rengeki.active) {
+                    const t = Date.now() / 120;
+                    ctx.save(); ctx.globalAlpha = 0.55 + 0.25 * Math.sin(t);
+                    ctx.strokeStyle = '#FF6644'; ctx.lineWidth = 3; ctx.shadowBlur = 12; ctx.shadowColor = '#FF6644';
+                    ctx.beginPath(); ctx.arc(skCx, skCy, 30 + 4 * Math.sin(t * 2), 0, Math.PI * 2); ctx.stroke();
+                    ctx.restore();
+                }
+                if (skills.barrier.active) {
+                    const t = Date.now() / 200;
+                    ctx.save(); ctx.globalAlpha = 0.6 + 0.2 * Math.sin(t);
+                    ctx.strokeStyle = '#44AAFF'; ctx.lineWidth = 4; ctx.shadowBlur = 16; ctx.shadowColor = '#44AAFF';
+                    ctx.beginPath(); ctx.arc(skCx, skCy, 34, 0, Math.PI * 2); ctx.stroke();
+                    ctx.restore();
+                }
+                if (skills.timeslow.active) {
+                    const t = Date.now() / 300;
+                    ctx.save(); ctx.globalAlpha = 0.4;
+                    ctx.strokeStyle = '#CC88FF'; ctx.lineWidth = 2; ctx.shadowBlur = 10; ctx.shadowColor = '#CC88FF';
+                    for (let ri = 0; ri < 3; ri++) {
+                        ctx.beginPath(); ctx.arc(skCx, skCy, 26 + ri * 8 + 3 * Math.sin(t + ri), 0, Math.PI * 2); ctx.stroke();
+                    }
+                    ctx.restore();
+                }
                 drawShape(heroSprite, player.x - camX, player.y - camY, 0, PIXEL_SCALE, false, heroFlip);
             }
 
