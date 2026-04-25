@@ -4431,6 +4431,7 @@ const MEDITATION_DATA = [
                 narrativeWaiting = false;
                 narrativeTimer = 30;
                 jpTimer = 20;
+                return;
             }
 
             // ゲームオーバー中: A/Start でタイトルへ
@@ -4441,6 +4442,7 @@ const MEDITATION_DATA = [
                 gameOverTimer = 0;
                 gameState = 'title';
                 jpTimer = 30;
+                return;
             }
 
             if (padA || padStart) {
