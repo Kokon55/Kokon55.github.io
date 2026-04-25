@@ -1131,70 +1131,101 @@ const MEDITATION_DATA = [
         function playSoundEffect(type) {
             if (!audioStarted || !audioCtx) return;
             const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            const vol = seVolume;
+
+            function mkOsc(oscType, freq, gainVal, dur, freqEnd) {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = oscType;
+                o.frequency.setValueAtTime(freq, now);
+                if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, now + dur);
+                o.connect(g); g.connect(audioCtx.destination);
+                g.gain.setValueAtTime(gainVal * vol, now);
+                g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+                o.start(now); o.stop(now + dur + 0.01);
+                return o;
+            }
 
             if (type === 'attack') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(800, now);
-                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
-                gainNode.gain.setValueAtTime(0.1, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'hit') { // 敵へのダメージ
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(200, now);
-                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-                gainNode.gain.setValueAtTime(0.2, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'kill') { // 敵を倒した
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-
-                const osc2 = audioCtx.createOscillator();
-                osc2.type = 'square';
-                osc2.frequency.setValueAtTime(200, now);
-                osc2.frequency.exponentialRampToValueAtTime(30, now + 0.3);
-                osc2.connect(gainNode);
-
-                osc.start(now);
-                osc2.start(now);
-                osc.stop(now + 0.3);
-                osc2.stop(now + 0.3);
-            } else if (type === 'damage') { // プレイヤー被ダメージ
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.linearRampToValueAtTime(80, now + 0.2);
-                gainNode.gain.setValueAtTime(0.4, now);
-                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
+                // 魔法の一閃: sweep + 倍音
+                mkOsc('square', 600, 0.08, 0.05, 1400);
+                mkOsc('sine',   300, 0.06, 0.12, 800);
+                const sw = audioCtx.createOscillator();
+                const sg = audioCtx.createGain();
+                sw.type = 'sawtooth'; sw.frequency.setValueAtTime(1800, now);
+                sw.frequency.exponentialRampToValueAtTime(400, now + 0.08);
+                sw.connect(sg); sg.connect(audioCtx.destination);
+                sg.gain.setValueAtTime(0.04 * vol, now);
+                sg.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                sw.start(now); sw.stop(now + 0.09);
+            } else if (type === 'hit') {
+                // 命中音: 重低音パンチ + クリック
+                mkOsc('sawtooth', 300, 0.18, 0.07, 80);
+                mkOsc('square',   500, 0.07, 0.04, 200);
+            } else if (type === 'kill') {
+                // 撃破: 下降アルペジオ + 爆発低音
+                const freqs = [600, 480, 360, 240];
+                freqs.forEach((f, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    const t = now + i * 0.055;
+                    o.type = 'square'; o.frequency.setValueAtTime(f, t);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    g.gain.setValueAtTime(0.14 * vol, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+                    o.start(t); o.stop(t + 0.09);
+                });
+                mkOsc('sawtooth', 180, 0.22, 0.28, 30);
+            } else if (type === 'damage') {
+                // 被弾: ショック + 高域ノイズ感
+                mkOsc('triangle', 120, 0.35, 0.18, 55);
+                mkOsc('square',   2400, 0.06, 0.06, 800);
+                mkOsc('sawtooth', 300, 0.12, 0.12, 80);
             } else if (type === 'stageclear') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.setValueAtTime(400, now + 0.15);
-                osc.frequency.setValueAtTime(500, now + 0.3);
-                osc.frequency.setValueAtTime(600, now + 0.45);
-                gainNode.gain.setValueAtTime(0.2, now);
-                gainNode.gain.setValueAtTime(0, now + 0.6);
-                osc.start(now);
-                osc.stop(now + 0.6);
+                // ステージクリア: 上昇アルペジオ (C-E-G-C)
+                const clrFreqs = [262, 330, 392, 523, 660];
+                clrFreqs.forEach((f, i) => {
+                    const t = now + i * 0.10;
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = 'triangle'; o.frequency.setValueAtTime(f, t);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    if (reverbDelay) g.connect(reverbDelay);
+                    g.gain.setValueAtTime(0.18 * vol, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+                    o.start(t); o.stop(t + 0.23);
+                    // 倍音
+                    const o2 = audioCtx.createOscillator();
+                    o2.type = 'sine'; o2.frequency.setValueAtTime(f * 2, t);
+                    o2.connect(g); o2.start(t); o2.stop(t + 0.18);
+                });
             } else if (type === 'gameover') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(200, now);
-                osc.frequency.linearRampToValueAtTime(40, now + 1.5);
-                gainNode.gain.setValueAtTime(0.5, now);
-                gainNode.gain.linearRampToValueAtTime(0.01, now + 1.5);
-                osc.start(now);
-                osc.stop(now + 1.5);
+                // ゲームオーバー: 重い下降 + 不協和音
+                mkOsc('sawtooth', 220, 0.40, 1.5, 35);
+                mkOsc('sawtooth', 185, 0.25, 1.2, 30);
+                mkOsc('square',   160, 0.15, 0.8, 55);
+            } else if (type === 'levelup') {
+                // レベルアップ: 上昇ファンファーレ
+                const lvlFreqs = [330, 415, 494, 659];
+                lvlFreqs.forEach((f, i) => {
+                    const t = now + i * 0.09;
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = 'square'; o.frequency.setValueAtTime(f, t);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    if (reverbDelay) g.connect(reverbDelay);
+                    g.gain.setValueAtTime(0.14 * vol, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+                    o.start(t); o.stop(t + 0.19);
+                });
+            } else if (type === 'item') {
+                // アイテム取得: キラキラ
+                mkOsc('sine', 880, 0.12, 0.10, 1760);
+                mkOsc('triangle', 1320, 0.08, 0.14, 2640);
+            } else if (type === 'shield') {
+                // 盾構え: 重いブロック音
+                mkOsc('square', 200, 0.10, 0.06, 120);
+                mkOsc('sine', 80, 0.15, 0.08, 50);
             }
         }
 
@@ -1229,20 +1260,20 @@ const MEDITATION_DATA = [
             // BGMルーティング先: bgmFilter が存在すればそこへ、なければ直接 destination
             const bgmDest = bgmFilter || audioCtx.destination;
 
-            // oscillator type by intensity
-            const oscTypes = ['sine', 'triangle', 'square', 'sawtooth'];
-            const melOscType = oscTypes[profile.intensity];
+            // per-intensity instrument character
+            const melOscType = profile.intensity >= 3 ? 'sawtooth' :
+                               profile.intensity >= 2 ? 'square' :
+                               profile.intensity >= 1 ? 'triangle' : 'sine';
 
             while (nextNoteTime < audioCtx.currentTime + 0.25) {
                 const melStep = bgmIndex % melody.length;
-                const noteIdx = melody[melStep]; // could be -1 (rest)
+                const noteIdx = melody[melStep];
 
                 if (noteIdx >= 0) {
-                    // スケールからセミトーンを取得してメロディ周波数を計算
                     const semitone = profile.scale[noteIdx % profile.scale.length];
                     const freq = semitoneToFreq(rootHz, semitone);
 
-                    // --- メロディ ---
+                    // --- メロディ (ADSR付き) ---
                     const osc = audioCtx.createOscillator();
                     const gn = audioCtx.createGain();
                     osc.type = melOscType;
@@ -1251,75 +1282,183 @@ const MEDITATION_DATA = [
                     gn.connect(bgmDest);
                     if (reverbDelay) gn.connect(reverbDelay);
                     gn.gain.setValueAtTime(0.001, nextNoteTime);
-                    gn.gain.linearRampToValueAtTime(dynGain, nextNoteTime + dynStep * 0.08);
-                    gn.gain.setValueAtTime(dynGain, nextNoteTime + noteLen * 0.45);
+                    gn.gain.linearRampToValueAtTime(dynGain, nextNoteTime + dynStep * 0.06);
+                    gn.gain.setValueAtTime(dynGain * 0.75, nextNoteTime + noteLen * 0.5);
                     gn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc.start(nextNoteTime);
                     osc.stop(nextNoteTime + noteLen + 0.05);
 
-                    // --- ハーモニー (5度上、低音量) ---
+                    // --- ビブラート LFO (intensity 1以上) ---
+                    if (profile.intensity >= 1 && noteLen > 0.12) {
+                        const vOsc = audioCtx.createOscillator();
+                        const vGn = audioCtx.createGain();
+                        vOsc.type = 'sine';
+                        vOsc.frequency.setValueAtTime(5.5, nextNoteTime);
+                        vGn.gain.setValueAtTime(0, nextNoteTime);
+                        vGn.gain.linearRampToValueAtTime(freq * 0.007, nextNoteTime + noteLen * 0.35);
+                        vOsc.connect(vGn);
+                        vGn.connect(osc.frequency);
+                        vOsc.start(nextNoteTime);
+                        vOsc.stop(nextNoteTime + noteLen + 0.05);
+                    }
+
+                    // --- デチューン2nd オシレーター (厚みを出す) ---
+                    const osc1b = audioCtx.createOscillator();
+                    const gn1b = audioCtx.createGain();
+                    osc1b.type = melOscType;
+                    osc1b.frequency.setValueAtTime(freq, nextNoteTime);
+                    osc1b.detune.setValueAtTime(7, nextNoteTime); // わずかデチューン
+                    osc1b.connect(gn1b);
+                    gn1b.connect(bgmDest);
+                    gn1b.gain.setValueAtTime(dynGain * 0.32, nextNoteTime + dynStep * 0.06);
+                    gn1b.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen * 0.85);
+                    osc1b.start(nextNoteTime);
+                    osc1b.stop(nextNoteTime + noteLen);
+
+                    // --- ハーモニー (3度: major/minor状況による) ---
+                    const harmRatio = profile.intensity >= 2 ? 1.1892 : 1.2599;
                     const osc2 = audioCtx.createOscillator();
                     const gn2 = audioCtx.createGain();
                     osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(freq * 1.5, nextNoteTime);
+                    osc2.frequency.setValueAtTime(freq * harmRatio, nextNoteTime);
                     osc2.connect(gn2);
                     gn2.connect(bgmDest);
-                    gn2.gain.setValueAtTime(dynGain * 0.18, nextNoteTime);
-                    gn2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
+                    gn2.gain.setValueAtTime(0.001, nextNoteTime);
+                    gn2.gain.linearRampToValueAtTime(dynGain * 0.24, nextNoteTime + dynStep * 0.1);
+                    gn2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen * 0.9);
                     osc2.start(nextNoteTime);
                     osc2.stop(nextNoteTime + noteLen);
 
-                    // --- コードパッド (8拍ごと) ---
+                    // --- コードパッド (8拍ごと: 音楽的なコードボイシング) ---
                     if (bgmIndex % 8 === 0) {
-                        [1.0, 1.26, 1.5].forEach(ratio => {
+                        const chordRatios = profile.intensity >= 2 ?
+                            [1.0, 1.1892, 1.4983] :   // minor chord
+                            [1.0, 1.2599, 1.4983];    // major chord
+                        chordRatios.forEach((ratio, ci) => {
                             const cOsc = audioCtx.createOscillator();
                             const cGn = audioCtx.createGain();
                             cOsc.type = 'sine';
                             cOsc.frequency.setValueAtTime(freq * ratio * 0.5, nextNoteTime);
+                            cOsc.detune.setValueAtTime(ci * 4 - 4, nextNoteTime); // 温かみのデチューン
                             cOsc.connect(cGn);
                             cGn.connect(bgmDest);
                             if (reverbDelay) cGn.connect(reverbDelay);
                             cGn.gain.setValueAtTime(0.001, nextNoteTime);
-                            cGn.gain.linearRampToValueAtTime(dynGain * 0.22, nextNoteTime + dynStep * 0.5);
-                            cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 7.5);
+                            cGn.gain.linearRampToValueAtTime(dynGain * 0.30, nextNoteTime + dynStep * 1.2);
+                            cGn.gain.setValueAtTime(dynGain * 0.25, nextNoteTime + dynStep * 5.0);
+                            cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 7.8);
                             cOsc.start(nextNoteTime);
                             cOsc.stop(nextNoteTime + dynStep * 8);
                         });
                     }
                 }
 
-                // --- ベースライン (4拍ごと、profile.bass パターン使用) ---
+                // --- ベースライン (intensity別波形) ---
                 if (bgmIndex % 4 === 0) {
-                    const bassStep = (bgmIndex / 4) % 4;
+                    const bassStep = (bgmIndex / 4) % profile.bass.length;
                     const bassSemitone = profile.bass[bassStep];
                     const bassFreq = semitoneToFreq(rootHz * 0.25, bassSemitone);
                     if (bassFreq > 0) {
                         const bOsc = audioCtx.createOscillator();
                         const bGn = audioCtx.createGain();
-                        bOsc.type = 'sine';
+                        bOsc.type = profile.intensity >= 2 ? 'sawtooth' : 'sine';
                         bOsc.frequency.setValueAtTime(bassFreq, nextNoteTime);
                         bOsc.connect(bGn);
                         bGn.connect(bgmDest);
-                        bGn.gain.setValueAtTime(dynGain * 1.2, nextNoteTime);
-                        bGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 3.8);
+                        bGn.gain.setValueAtTime(dynGain * 1.7, nextNoteTime);
+                        bGn.gain.exponentialRampToValueAtTime(dynGain * 0.5, nextNoteTime + dynStep * 0.4);
+                        bGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 3.6);
                         bOsc.start(nextNoteTime);
                         bOsc.stop(nextNoteTime + dynStep * 4);
+
+                        // サブベース (intensity 2+)
+                        if (profile.intensity >= 2) {
+                            const sbOsc = audioCtx.createOscillator();
+                            const sbGn = audioCtx.createGain();
+                            sbOsc.type = 'sine';
+                            sbOsc.frequency.setValueAtTime(bassFreq * 0.5, nextNoteTime);
+                            sbOsc.connect(sbGn);
+                            sbGn.connect(bgmDest);
+                            sbGn.gain.setValueAtTime(dynGain * 0.9, nextNoteTime);
+                            sbGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 2.0);
+                            sbOsc.start(nextNoteTime);
+                            sbOsc.stop(nextNoteTime + dynStep * 2.1);
+                        }
                     }
                 }
 
-                // --- intensity 3: パーカッション (2拍ごとに低周波ドラムヒット) ---
-                if (profile.intensity === 3 && bgmIndex % 2 === 0) {
-                    const dOsc = audioCtx.createOscillator();
-                    const dGn = audioCtx.createGain();
-                    dOsc.type = 'sawtooth';
-                    dOsc.frequency.setValueAtTime(80, nextNoteTime);
-                    dOsc.frequency.exponentialRampToValueAtTime(30, nextNoteTime + 0.08);
-                    dOsc.connect(dGn);
-                    dGn.connect(bgmDest);
-                    dGn.gain.setValueAtTime(0.3 * bgmVolume, nextNoteTime);
-                    dGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.08);
-                    dOsc.start(nextNoteTime);
-                    dOsc.stop(nextNoteTime + 0.09);
+                // --- パーカッション (intensity 2以上で本格的なドラムパターン) ---
+                if (profile.intensity >= 2) {
+                    // キックドラム: 4拍ごと
+                    if (bgmIndex % 4 === 0) {
+                        const kOsc = audioCtx.createOscillator();
+                        const kGn = audioCtx.createGain();
+                        kOsc.type = 'sine';
+                        kOsc.frequency.setValueAtTime(160, nextNoteTime);
+                        kOsc.frequency.exponentialRampToValueAtTime(38, nextNoteTime + 0.13);
+                        kOsc.connect(kGn);
+                        kGn.connect(bgmDest);
+                        kGn.gain.setValueAtTime(0.55 * bgmVolume, nextNoteTime);
+                        kGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.16);
+                        kOsc.start(nextNoteTime);
+                        kOsc.stop(nextNoteTime + 0.17);
+                    }
+                    // スネア: 2拍目・4拍目 (intensity 3+)
+                    if (profile.intensity >= 3 && bgmIndex % 4 === 2) {
+                        for (let s = 0; s < 4; s++) {
+                            const sOsc = audioCtx.createOscillator();
+                            const sGn = audioCtx.createGain();
+                            sOsc.type = 'triangle';
+                            sOsc.frequency.setValueAtTime(150 + s * 110, nextNoteTime);
+                            sOsc.connect(sGn);
+                            sGn.connect(bgmDest);
+                            sGn.gain.setValueAtTime(0.09 * bgmVolume, nextNoteTime);
+                            sGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.07);
+                            sOsc.start(nextNoteTime);
+                            sOsc.stop(nextNoteTime + 0.08);
+                        }
+                    }
+                    // ハイハット: 全ビート (intensity 3)
+                    if (profile.intensity >= 3) {
+                        const hOsc = audioCtx.createOscillator();
+                        const hGn = audioCtx.createGain();
+                        hOsc.type = 'square';
+                        hOsc.frequency.setValueAtTime(9000 + (bgmIndex % 3) * 500, nextNoteTime);
+                        hOsc.connect(hGn);
+                        hGn.connect(bgmDest);
+                        hGn.gain.setValueAtTime(0.028 * bgmVolume, nextNoteTime);
+                        hGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.025);
+                        hOsc.start(nextNoteTime);
+                        hOsc.stop(nextNoteTime + 0.03);
+                    }
+                    // 8分音符タム (intensity 2のみ: 控えめな打楽器)
+                    if (profile.intensity === 2 && bgmIndex % 2 === 0) {
+                        const tOsc = audioCtx.createOscillator();
+                        const tGn = audioCtx.createGain();
+                        tOsc.type = 'sine';
+                        tOsc.frequency.setValueAtTime(220, nextNoteTime);
+                        tOsc.frequency.exponentialRampToValueAtTime(60, nextNoteTime + 0.06);
+                        tOsc.connect(tGn);
+                        tGn.connect(bgmDest);
+                        tGn.gain.setValueAtTime(0.22 * bgmVolume, nextNoteTime);
+                        tGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.07);
+                        tOsc.start(nextNoteTime);
+                        tOsc.stop(nextNoteTime + 0.08);
+                    }
+                } else {
+                    // intensity 0-1: 控えめなアンビエントティック
+                    if (bgmIndex % 8 === 0) {
+                        const tOsc = audioCtx.createOscillator();
+                        const tGn = audioCtx.createGain();
+                        tOsc.type = 'sine';
+                        tOsc.frequency.setValueAtTime(2800, nextNoteTime);
+                        tOsc.connect(tGn);
+                        tGn.connect(bgmDest);
+                        tGn.gain.setValueAtTime(0.010 * bgmVolume, nextNoteTime);
+                        tGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.04);
+                        tOsc.start(nextNoteTime);
+                        tOsc.stop(nextNoteTime + 0.05);
+                    }
                 }
 
                 nextNoteTime += dynStep;
@@ -2366,7 +2505,7 @@ const MEDITATION_DATA = [
                 playerATK = (1.0 + (playerLevel - 1) * 0.12) * synthesisBonuses.atkMult * (1.0 + philSynthBonuses.atkBonus);
                 centerMessage = `Lv.${playerLevel} UP!`;
                 msgTimer = 90;
-                playSoundEffect('stageclear');
+                playSoundEffect('levelup');
                 spawnGlowParticles(player.x + SPRITE_SIZE/2, player.y + SPRITE_SIZE/2, '#FFD700', 16);
             }
         }
@@ -3476,7 +3615,7 @@ const MEDITATION_DATA = [
                         continue;
                     }
                     if (item.isBox) {
-                        playSoundEffect('stageclear');
+                        playSoundEffect('item');
                         // ステージ1（index=0）から盾を入手可能。ステージ1または3では必ずシールドを付与
                         if ((currentStageIndex === 0 || currentStageIndex === 2) && !hasShield) {
                             hasShield = true;
@@ -3502,7 +3641,7 @@ const MEDITATION_DATA = [
                         }
                     } else {
                         if (!dailyChallengeAtkUp) player.hp = Math.min(player.maxHp, player.hp + 1);
-                        playSoundEffect('stageclear');
+                        playSoundEffect('item');
                     }
                     items.splice(i, 1);
                 }
