@@ -4452,14 +4452,49 @@ const MEDITATION_DATA = [
                 }
             }
 
+            // ポーズメニュー: ゲームパッド操作 (攻撃より先に処理して誤射防止)
+            if (isPaused) {
+                if (jpTimer === 0) {
+                    if (!pauseInSettings && !pauseInAchievements) {
+                        if (padUp) { pauseMenuCursor = Math.max(0, pauseMenuCursor - 1); jpTimer = 15; }
+                        else if (padDown) { pauseMenuCursor = Math.min(3, pauseMenuCursor + 1); jpTimer = 15; }
+                        else if (padA) {
+                            if (pauseMenuCursor === 0) { isPaused = false; popupMessage = ''; }
+                            else if (pauseMenuCursor === 1) { pauseInSettings = true; pauseMenuCursor = 0; }
+                            else if (pauseMenuCursor === 2) { pauseInAchievements = true; }
+                            else if (pauseMenuCursor === 3) { isPaused = false; gameState = 'title'; }
+                            jpTimer = 20;
+                        } else if (padStart || padB) { isPaused = false; popupMessage = ''; jpTimer = 20; }
+                    } else if (pauseInSettings) {
+                        const step = 0.05;
+                        if (padUp) { pauseMenuCursor = Math.max(0, pauseMenuCursor - 1); jpTimer = 15; }
+                        else if (padDown) { pauseMenuCursor = Math.min(2, pauseMenuCursor + 1); jpTimer = 15; }
+                        else if (padLeft) {
+                            if (pauseMenuCursor === 0) { bgmVolume = Math.max(0, Math.round((bgmVolume - step) * 100) / 100); localStorage.setItem('bgmVolume', bgmVolume); }
+                            else if (pauseMenuCursor === 1) { seVolume = Math.max(0, Math.round((seVolume - step) * 100) / 100); localStorage.setItem('seVolume', seVolume); }
+                            jpTimer = 8;
+                        } else if (padRight) {
+                            if (pauseMenuCursor === 0) { bgmVolume = Math.min(1, Math.round((bgmVolume + step) * 100) / 100); localStorage.setItem('bgmVolume', bgmVolume); }
+                            else if (pauseMenuCursor === 1) { seVolume = Math.min(1, Math.round((seVolume + step) * 100) / 100); localStorage.setItem('seVolume', seVolume); }
+                            jpTimer = 8;
+                        } else if ((padA && pauseMenuCursor === 2) || padB || padStart) { pauseInSettings = false; pauseMenuCursor = 0; jpTimer = 20; }
+                    } else if (pauseInAchievements) {
+                        if (padB || padA || padStart) { pauseInAchievements = false; pauseMenuCursor = 0; jpTimer = 20; }
+                    }
+                }
+                return;
+            }
+
             if (padA) {
                 playerAttack();
                 initAudio();
             }
 
-            if (padStart && jpTimer === 0) { // Start button
-                isPaused = !isPaused;
-                if (!isPaused) popupMessage = "";
+            if (padStart && jpTimer === 0) { // Start button: ポーズを開く
+                isPaused = true;
+                pauseMenuCursor = 0;
+                pauseInSettings = false;
+                pauseInAchievements = false;
                 jpTimer = 30;
             }
 
@@ -4498,7 +4533,7 @@ const MEDITATION_DATA = [
                 }
                 return;
             }
-            if (isPaused) return; // ポーズ中は処理を止める
+            if (isPaused && !isGameOver) return; // ポーズ中は処理を止める（ゲームオーバーは除く）
             achievementStats.maxScore = Math.max(achievementStats.maxScore, pScore);
             if (isGameOver) {
                 if (gameOverTimer > 0) {
@@ -4836,6 +4871,7 @@ const MEDITATION_DATA = [
                         projectiles.splice(i, 1);
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
+                            isPaused = false; // ポーズ中でもゲームオーバー演出を確実に開始
                             gameOverTimer = 300; // 5秒間の演出
                             deathScenePhase = 1;
                             deathSceneTimer = 300;
@@ -5238,6 +5274,7 @@ const MEDITATION_DATA = [
 
                         if (player.hp <= 0 && !isGameOver) {
                             isGameOver = true;
+                            isPaused = false; // ポーズ中でもゲームオーバー演出を確実に開始
                             gameOverTimer = 300; // 5秒間の演出
                             deathScenePhase = 1;
                             deathSceneTimer = 300;
