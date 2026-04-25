@@ -1228,8 +1228,10 @@ const MEDITATION_DATA = [
 
             saveGame();
             if (!dailyChallengeActive || currentStageIndex !== 0) {
-                centerMessage = `STAGE ${currentStageIndex + 1}  ${STAGE_MAP_CONFIGS[currentStageIndex]?.name || ''}`;
-                msgTimer = 120;
+                if (!stageTransition.active) {
+                    centerMessage = `STAGE ${currentStageIndex + 1}  ${STAGE_MAP_CONFIGS[currentStageIndex]?.name || ''}`;
+                    msgTimer = 120;
+                }
             }
             startNarrative(currentStageIndex);
             if (currentStageIndex === 0) tutorialStep = 1;
@@ -1817,6 +1819,18 @@ const MEDITATION_DATA = [
 
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
+
+            // エンディングシーン中のキー処理
+            if (endingScene.active) {
+                if (endingScene.phase === 2 && endingScene.typeIdx < 9999) {
+                    // タイプライター高速スキップ
+                    endingScene.typeIdx = 99999;
+                } else if (endingScene.phase === 5) {
+                    endingScene.active = false;
+                    if (endingScene.onComplete) endingScene.onComplete();
+                }
+                return;
+            }
 
             if (narrativeTimer > 30) {
                 narrativeTimer = 30;
@@ -2785,16 +2799,10 @@ const MEDITATION_DATA = [
                 isStageAdvancing = true;
                 setTimeout(() => {
                     const dominantKarma = Object.entries(karma).sort((a,b)=>b[1]-a[1])[0][0];
-                    const endings = {
-                        bu:    'ENDING A: 武の道\n力で全てを制した戦士よ\n汝の剣は真実を語る',
-                        chi:   'ENDING B: 知の道\n策略と洞察で道を切り開いた者よ\n知恵は永遠に輝く',
-                        mamori:'ENDING C: 守の道\n盾で世界を守り抜いた勇者よ\n真の強さは守ることにある',
-                        tetsu: 'ENDING D: 哲の道\n問いかけで全てのボスを論破した者よ\n汝こそ真の哲学者だ',
-                    };
-                    centerMessage = endings[dominantKarma] || endings.bu;
-                    msgTimer = 999;
                     if (hiddenStageUnlocked && !hiddenStageActive) {
                         // 隠しステージへ移行
+                        centerMessage = 'TRUE ENDING へ...';
+                        msgTimer = 120;
                         setTimeout(() => {
                             hiddenStageActive = true;
                             bossActive = false;
@@ -2809,9 +2817,10 @@ const MEDITATION_DATA = [
                             centerMessage = '「真理の間」— 無と存在の彼方へ';
                             msgTimer = 180;
                             spawnHiddenBoss();
-                        }, 6000);
+                        }, 4000);
                     } else {
-                        setTimeout(() => {
+                        // エンディングシーケンス開始
+                        startEndingScene(dominantKarma, pScore, () => {
                             ngPlusLevel = Math.min(2, ngPlusLevel + 1);
                             currentStageIndex = 0;
                             bossActive = false;
@@ -2831,19 +2840,12 @@ const MEDITATION_DATA = [
                             centerMessage = `${ngLabel} 開始！`;
                             msgTimer = 180;
                             startNarrative(0);
-                            // NG+でのヒント
-                            if (ngPlusLevel >= 1 && Math.random() < 0.1) {
-                                setTimeout(() => {
-                                    centerMessage = '「無の化身」の気配を感じる...';
-                                    msgTimer = 180;
-                                }, 5000);
-                            }
-                        }, 4000);
+                        });
                     }
                 }, 800);
             } else {
                 isStageAdvancing = true;
-                setTimeout(advanceStage, 1200);
+                setTimeout(startStageTransition, 900);
             }
             // 哲学の道変化通知
             if (meditationPendingStage < 19) {
@@ -3155,6 +3157,426 @@ const MEDITATION_DATA = [
         let ambientParticles = [];
         let lightningFlash = 0; // 稲光タイマー
         let screenShake = 0; // >0 の間は画面を揺らす
+        let bossKillFlash = 0; // ボス撃破白フラッシュ (0=なし, >0 カウントダウン)
+
+        // ==== 死亡エフェクト ====
+        let deathEffects = [];
+
+        function spawnDeathEffect(wx, wy, isBoss, enemyColor) {
+            const cx = wx, cy = wy;
+            const col = enemyColor || '#FFD700';
+            // ピクセルシャード: 16方向に飛び散る
+            for (let i = 0; i < (isBoss ? 28 : 14); i++) {
+                const angle = (Math.PI * 2 * i) / (isBoss ? 28 : 14) + Math.random() * 0.4;
+                const spd = (isBoss ? 4 : 2.5) + Math.random() * (isBoss ? 5 : 3);
+                deathEffects.push({
+                    type: 'shard', x: cx, y: cy,
+                    vx: Math.cos(angle) * spd, vy: Math.sin(angle) * spd - 1,
+                    life: isBoss ? 55 : 38, maxLife: isBoss ? 55 : 38,
+                    size: isBoss ? 4 + Math.random() * 4 : 2 + Math.random() * 3,
+                    color: col, rot: Math.random() * Math.PI,
+                    rotV: (Math.random() - 0.5) * 0.35,
+                    isBoss
+                });
+            }
+            // 白フラッシュリング
+            deathEffects.push({ type: 'ring', x: cx, y: cy, r: 0, maxR: isBoss ? 90 : 52, life: 18, maxLife: 18, isBoss });
+            // ボスは2重リング＋衝撃波
+            if (isBoss) {
+                deathEffects.push({ type: 'ring', x: cx, y: cy, r: 0, maxR: 140, life: 28, maxLife: 28, isBoss: true });
+                deathEffects.push({ type: 'shockwave', x: cx, y: cy, r: 0, maxR: 200, life: 24, maxLife: 24 });
+            }
+        }
+
+        function updateDeathEffects() {
+            for (let i = deathEffects.length - 1; i >= 0; i--) {
+                const d = deathEffects[i];
+                d.life--;
+                if (d.life <= 0) { deathEffects.splice(i, 1); continue; }
+                if (d.type === 'shard') {
+                    d.x += d.vx; d.y += d.vy;
+                    d.vx *= 0.87; d.vy = d.vy * 0.87 + 0.18;
+                    d.rot += d.rotV;
+                } else if (d.type === 'ring') {
+                    d.r = d.maxR * (1 - d.life / d.maxLife);
+                } else if (d.type === 'shockwave') {
+                    d.r = d.maxR * (1 - d.life / d.maxLife);
+                }
+            }
+        }
+
+        function drawDeathEffects(camX, camY) {
+            for (const d of deathEffects) {
+                const alpha = d.life / d.maxLife;
+                if (d.type === 'shard') {
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = d.color;
+                    ctx.shadowColor = d.color;
+                    ctx.shadowBlur = 6;
+                    ctx.translate(d.x - camX, d.y - camY);
+                    ctx.rotate(d.rot);
+                    ctx.fillRect(-d.size / 2, -d.size / 2, d.size, d.size);
+                    ctx.restore();
+                } else if (d.type === 'ring') {
+                    ctx.save();
+                    ctx.globalAlpha = alpha * 0.85;
+                    ctx.strokeStyle = d.isBoss ? '#FFD700' : '#FFFFFF';
+                    ctx.lineWidth = d.isBoss ? 3 : 2;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = d.isBoss ? '#FFD700' : '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(d.x - camX, d.y - camY, d.r, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (d.type === 'shockwave') {
+                    ctx.save();
+                    ctx.globalAlpha = alpha * 0.35;
+                    ctx.strokeStyle = '#FF8800';
+                    ctx.lineWidth = 6 * alpha;
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = '#FF4400';
+                    ctx.beginPath();
+                    ctx.arc(d.x - camX, d.y - camY, d.r, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // ==== ステージ遷移フェード ====
+        const stageTransition = { active: false, phase: 'idle', alpha: 0, timer: 0, stageName: '', stageNum: 0 };
+
+        function startStageTransition() {
+            stageTransition.active = true;
+            stageTransition.phase = 'fadeOut';
+            stageTransition.alpha = 0;
+            stageTransition.timer = 0;
+        }
+
+        function updateStageTransition() {
+            if (!stageTransition.active) return;
+            stageTransition.timer++;
+            if (stageTransition.phase === 'fadeOut') {
+                stageTransition.alpha = Math.min(1, stageTransition.timer / 30);
+                if (stageTransition.timer >= 30) {
+                    // フェード完了 → ステージ切替実行
+                    advanceStage();
+                    stageTransition.stageName = STAGE_MAP_CONFIGS[currentStageIndex]?.name || '';
+                    stageTransition.stageNum = currentStageIndex + 1;
+                    stageTransition.phase = 'hold';
+                    stageTransition.timer = 0;
+                }
+            } else if (stageTransition.phase === 'hold') {
+                if (stageTransition.timer >= 55) {
+                    stageTransition.phase = 'fadeIn';
+                    stageTransition.timer = 0;
+                }
+            } else if (stageTransition.phase === 'fadeIn') {
+                stageTransition.alpha = Math.max(0, 1 - stageTransition.timer / 35);
+                if (stageTransition.timer >= 35) {
+                    stageTransition.active = false;
+                    stageTransition.phase = 'idle';
+                    stageTransition.alpha = 0;
+                }
+            }
+        }
+
+        function drawStageTransition() {
+            if (!stageTransition.active) return;
+            ctx.save();
+            ctx.globalAlpha = stageTransition.alpha;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.restore();
+            if (stageTransition.phase === 'hold' || (stageTransition.phase === 'fadeIn' && stageTransition.timer < 20)) {
+                const textAlpha = stageTransition.phase === 'hold'
+                    ? Math.min(1, stageTransition.timer / 20)
+                    : Math.max(0, 1 - stageTransition.timer / 20);
+                ctx.save();
+                ctx.globalAlpha = textAlpha;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#888899';
+                ctx.font = 'italic 14px serif';
+                ctx.fillText('— STAGE —', VIEW_W / 2, VIEW_H / 2 - 52);
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 56px monospace';
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 22;
+                ctx.fillText(`${stageTransition.stageNum}`, VIEW_W / 2, VIEW_H / 2 + 8);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#CCDDFF';
+                ctx.font = '20px monospace';
+                ctx.fillText(stageTransition.stageName, VIEW_W / 2, VIEW_H / 2 + 48);
+                ctx.textAlign = 'left';
+                ctx.restore();
+            }
+        }
+
+        // ==== エンディングシーケンス ====
+        const endingScene = {
+            active: false, phase: 0, timer: 0, karma: 'bu',
+            typeIdx: 0, typeTimer: 0,
+            lines: [], displayLines: [],
+            credits: false, creditScroll: 0,
+            score: 0, onComplete: null
+        };
+
+        const ENDING_DATA = {
+            bu: {
+                title: 'ENDING A\n武の道',
+                color: '#FF6644',
+                lines: [
+                    '力で世界を制した者よ。',
+                    'あなたの剣は嘘をつかない。',
+                    '20の試練を越えた今、',
+                    'その強さは本物だと証明された。',
+                    '',
+                    '「真の武とは、守るために振るうものだ」',
+                    '— 旅の賢者の言葉 —',
+                ]
+            },
+            chi: {
+                title: 'ENDING B\n知の道',
+                color: '#44AAFF',
+                lines: [
+                    '策略と洞察で道を切り開いた者よ。',
+                    'あなたは力なき場所でも道を見つけた。',
+                    '知恵は剣よりも鋭く、',
+                    '時に世界の真理を映す鏡となる。',
+                    '',
+                    '「知ることへの渇望こそが、人を前へ進める」',
+                    '— 古代の哲学者の碑文より —',
+                ]
+            },
+            mamori: {
+                title: 'ENDING C\n守の道',
+                color: '#44FF88',
+                lines: [
+                    '盾で世界を守り抜いた勇者よ。',
+                    '傷つきながらも前に立ち続けた。',
+                    '真の強さとは倒すことでなく、',
+                    '守り続けることにあると知っている。',
+                    '',
+                    '「盾なき世界に剣は不要だ」',
+                    '— 最後の守護者の言葉 —',
+                ]
+            },
+            tetsu: {
+                title: 'ENDING D\n哲の道',
+                color: '#CC88FF',
+                lines: [
+                    '問いかけで全てのボスを論破した者よ。',
+                    'あなたは戦わずして多くを倒した。',
+                    '問いは剣より深く心に刺さり、',
+                    '答えを持たぬ者を沈黙させる。',
+                    '',
+                    '「無知を知ることが、真の知恵の始まりだ」',
+                    '— 哲学者ソクラテスの言葉 —',
+                ]
+            }
+        };
+
+        function startEndingScene(karma, score, onComplete) {
+            const k = ['bu','chi','mamori','tetsu'].includes(karma) ? karma : 'bu';
+            endingScene.active = true;
+            endingScene.phase = 0;
+            endingScene.timer = 0;
+            endingScene.karma = k;
+            endingScene.lines = ENDING_DATA[k].lines;
+            endingScene.displayLines = [];
+            endingScene.typeIdx = 0;
+            endingScene.typeTimer = 0;
+            endingScene.credits = false;
+            endingScene.creditScroll = VIEW_H;
+            endingScene.score = score;
+            endingScene.onComplete = onComplete;
+        }
+
+        function updateEndingScene() {
+            if (!endingScene.active) return;
+            endingScene.timer++;
+            // Phase 0: fade to black (60f)
+            if (endingScene.phase === 0 && endingScene.timer >= 60) {
+                endingScene.phase = 1; endingScene.timer = 0;
+            }
+            // Phase 1: title display (90f)
+            if (endingScene.phase === 1 && endingScene.timer >= 90) {
+                endingScene.phase = 2; endingScene.timer = 0;
+            }
+            // Phase 2: typewriter text
+            if (endingScene.phase === 2) {
+                endingScene.typeTimer++;
+                if (endingScene.typeTimer >= 4) {
+                    endingScene.typeTimer = 0;
+                    const src = endingScene.lines;
+                    let totalChars = 0;
+                    for (let li = 0; li < src.length; li++) {
+                        totalChars += src[li].length + 1;
+                    }
+                    if (endingScene.typeIdx < totalChars) {
+                        endingScene.typeIdx++;
+                    } else if (endingScene.timer >= 120) {
+                        endingScene.phase = 3; endingScene.timer = 0;
+                    }
+                }
+            }
+            // Phase 3: score display (120f)
+            if (endingScene.phase === 3 && endingScene.timer >= 120) {
+                endingScene.phase = 4; endingScene.timer = 0;
+                endingScene.credits = true;
+            }
+            // Phase 4: credit scroll
+            if (endingScene.phase === 4) {
+                endingScene.creditScroll -= 1.2;
+                if (endingScene.creditScroll < -600 && endingScene.timer >= 200) {
+                    endingScene.phase = 5; endingScene.timer = 0;
+                }
+            }
+            // Phase 5: "press any key" prompt → complete on key
+        }
+
+        function drawEndingScene() {
+            if (!endingScene.active) return;
+            const t = endingScene.timer;
+            const ed = ENDING_DATA[endingScene.karma];
+
+            // フェードブラック背景
+            const fadeAlpha = endingScene.phase === 0 ? Math.min(1, t / 60)
+                            : endingScene.phase >= 1 ? 1 : 0;
+            ctx.save();
+            ctx.globalAlpha = fadeAlpha;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+            ctx.restore();
+            if (endingScene.phase === 0) return;
+
+            // Phase 1: エンディングタイトル
+            if (endingScene.phase === 1) {
+                const ta = Math.min(1, t / 30);
+                ctx.save();
+                ctx.globalAlpha = ta;
+                ctx.textAlign = 'center';
+                const titleLines = ed.title.split('\n');
+                ctx.fillStyle = '#888899';
+                ctx.font = 'italic 16px serif';
+                ctx.fillText('— ENDING —', VIEW_W / 2, VIEW_H / 2 - 70);
+                ctx.fillStyle = ed.color;
+                ctx.font = 'bold 20px monospace';
+                ctx.shadowColor = ed.color;
+                ctx.shadowBlur = 18;
+                ctx.fillText(titleLines[0], VIEW_W / 2, VIEW_H / 2 - 30);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 34px monospace';
+                ctx.fillText(titleLines[1] || '', VIEW_W / 2, VIEW_H / 2 + 20);
+                ctx.textAlign = 'left';
+                ctx.restore();
+                return;
+            }
+
+            // Phase 2: タイプライターテキスト
+            if (endingScene.phase === 2 || endingScene.phase === 3) {
+                ctx.save();
+                ctx.textAlign = 'center';
+                const src = endingScene.lines;
+                let charCount = endingScene.typeIdx;
+                let yBase = VIEW_H / 2 - (src.length * 26) / 2 + 10;
+                for (let li = 0; li < src.length; li++) {
+                    const line = src[li];
+                    if (charCount <= 0) break;
+                    const shown = line.substring(0, charCount);
+                    charCount -= line.length + 1;
+                    const isQuote = line.startsWith('「');
+                    ctx.fillStyle = isQuote ? '#AABBCC' : '#EEEEFF';
+                    ctx.font = isQuote ? 'italic 14px serif' : '16px monospace';
+                    if (shown) ctx.fillText(shown, VIEW_W / 2, yBase + li * 28);
+                }
+                // カーソル点滅
+                if (endingScene.phase === 2 && Math.floor(Date.now() / 400) % 2 === 0) {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillText('█', VIEW_W / 2 + 4, yBase + (src.length - 1) * 28);
+                }
+                ctx.textAlign = 'left';
+                ctx.restore();
+                if (endingScene.phase === 3) {
+                    // スコア表示フェードイン
+                    const sa = Math.min(1, t / 40);
+                    ctx.save();
+                    ctx.globalAlpha = sa;
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#EFD02E';
+                    ctx.font = 'bold 18px monospace';
+                    ctx.fillText(`FINAL SCORE: ${endingScene.score}`, VIEW_W / 2, VIEW_H - 90);
+                    ctx.fillStyle = '#888899';
+                    ctx.font = '13px monospace';
+                    ctx.fillText('— Thank you for playing —', VIEW_W / 2, VIEW_H - 62);
+                    ctx.textAlign = 'left';
+                    ctx.restore();
+                }
+                return;
+            }
+
+            // Phase 4: クレジットスクロール
+            if (endingScene.phase === 4) {
+                const credits = [
+                    '',
+                    '— スタッフロール —',
+                    '',
+                    'Game Design & Programming',
+                    'Kokon55',
+                    '',
+                    'Art Direction',
+                    'Pixel Craft Studio',
+                    '',
+                    'Sound Design',
+                    'Web Audio API',
+                    '',
+                    'Special Thanks',
+                    'すべてのプレイヤーへ',
+                    '',
+                    '',
+                    `ENDING: ${ed.title.replace('\n', ' — ')}`,
+                    '',
+                    `FINAL SCORE: ${endingScene.score}`,
+                    '',
+                    '— Thank you for playing —',
+                    '',
+                    '',
+                ];
+                ctx.save();
+                ctx.textAlign = 'center';
+                let cy2 = endingScene.creditScroll;
+                for (let ci = 0; ci < credits.length; ci++) {
+                    const line = credits[ci];
+                    const isHeader = line.startsWith('—') || line.startsWith('ENDING') || line.startsWith('FINAL');
+                    const isName = ci > 0 && !credits[ci - 1].startsWith('—') && credits[ci - 1] !== '' && !isHeader;
+                    ctx.font = isHeader ? 'bold 16px monospace' : (isName ? '18px monospace' : '14px monospace');
+                    ctx.fillStyle = isHeader ? ed.color : (isName ? '#FFFFFF' : '#AABBCC');
+                    if (cy2 > -20 && cy2 < VIEW_H + 20) ctx.fillText(line, VIEW_W / 2, cy2);
+                    cy2 += 36;
+                }
+                ctx.textAlign = 'left';
+                ctx.restore();
+                return;
+            }
+
+            // Phase 5: プレス待ち
+            if (endingScene.phase === 5) {
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.fillStyle = ed.color;
+                ctx.font = 'bold 20px monospace';
+                ctx.fillText('— ENDING COMPLETE —', VIEW_W / 2, VIEW_H / 2 - 20);
+                if (Math.floor(Date.now() / 600) % 2 === 0) {
+                    ctx.fillStyle = '#AAAAAA';
+                    ctx.font = '14px monospace';
+                    ctx.fillText('Press any key to continue', VIEW_W / 2, VIEW_H / 2 + 30);
+                }
+                ctx.textAlign = 'left';
+                ctx.restore();
+            }
+        }
 
         // ==== フローティングテキスト (ダメージ数字・スコアポップ) ====
         let floatingTexts = [];
@@ -4119,9 +4541,12 @@ const MEDITATION_DATA = [
 
                                 karma.chi++;
                                 const wasBoss = enemy.isBoss;
-                                spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 12, 5);
-                                if (wasBoss) spawnGlowParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 18);
-                                screenShake = Math.max(screenShake, 8);
+                                const dex = enemy.x + SPRITE_SIZE/2, dey = enemy.y + SPRITE_SIZE/2;
+                                spawnParticles(dex, dey, '#FFD700', 12, 5);
+                                if (wasBoss) spawnGlowParticles(dex, dey, '#FFD700', 18);
+                                spawnDeathEffect(dex, dey, wasBoss, wasBoss ? '#FFD700' : '#FFFFFF');
+                                screenShake = Math.max(screenShake, wasBoss ? 14 : 8);
+                                if (wasBoss) bossKillFlash = 22;
                                 enemies.splice(j, 1);
 
                                 if (wasBoss && !isStageAdvancing) {
@@ -4492,9 +4917,12 @@ const MEDITATION_DATA = [
                                                 (player.dirY !== 0 && Math.sign(enemy.y - player.y) === player.dirY);
                             if (facingEnemy) karma.bu++;
                             const wasBoss2 = enemy.isBoss;
-                            spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 12, 5);
-                            if (wasBoss2) spawnGlowParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 18);
-                            screenShake = Math.max(screenShake, 8);
+                            const dex2 = enemy.x + SPRITE_SIZE/2, dey2 = enemy.y + SPRITE_SIZE/2;
+                            spawnParticles(dex2, dey2, '#FFD700', 12, 5);
+                            if (wasBoss2) spawnGlowParticles(dex2, dey2, '#FFD700', 18);
+                            spawnDeathEffect(dex2, dey2, wasBoss2, wasBoss2 ? '#FFD700' : '#FFFFFF');
+                            screenShake = Math.max(screenShake, wasBoss2 ? 14 : 8);
+                            if (wasBoss2) bossKillFlash = 22;
                             enemies.splice(i, 1);
 
                             if (wasBoss2 && enemy && enemy.isHiddenBoss) {
@@ -4609,7 +5037,10 @@ const MEDITATION_DATA = [
             updateSkills();
             checkSkillUnlocks();
             updateParticles();
+            updateDeathEffects();
             updateFloatingTexts();
+            updateStageTransition();
+            updateEndingScene();
         }
 
         function drawShape(sprite, fx, fy, rot, scale, isHitFlash = false, flipX = false, targetCtx = ctx) {
@@ -6279,11 +6710,24 @@ const MEDITATION_DATA = [
             // パーティクル描画
             drawParticles(camX, camY);
 
+            // 死亡エフェクト描画
+            drawDeathEffects(camX, camY);
+
             // フローティングダメージ数字
             drawFloatingTexts(camX, camY);
 
             // 暗闇オーバーレイ
             drawDarknessOverlay(camX, camY);
+
+            // ボス撃破白フラッシュ
+            if (bossKillFlash > 0) {
+                ctx.save();
+                ctx.globalAlpha = (bossKillFlash / 22) * 0.72;
+                ctx.fillStyle = '#FFFBE8';
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.restore();
+                bossKillFlash--;
+            }
 
             // ==== トップバー HUD ====
             // 半透明グラジエントバー背景
@@ -6700,6 +7144,8 @@ const MEDITATION_DATA = [
         function loop() {
             update();
             draw();
+            drawStageTransition();
+            drawEndingScene();
             requestAnimationFrame(loop);
         }
 
