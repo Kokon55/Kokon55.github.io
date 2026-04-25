@@ -1247,6 +1247,8 @@ const MEDITATION_DATA = [
         let nextNoteTime = 0;
         let bgmIndex = 0;
         let bgmCurrentStage = -1; // ステージ変化検出用
+        let bgmMode = 'stage'; // 'title' | 'stage' | 'boss'
+        let bgmModeChanged = false;
         let reverbDelay = null, reverbGain = null;
 
         // ==== 動的BGMシステム ====
@@ -1346,15 +1348,52 @@ const MEDITATION_DATA = [
             { tempo:360, vol:0.88, scale:[0,2,4,6,9],    bass:[0,4,6,9],     intensity:3, label:'終焉の地' },        // 19 EPIC FINAL
         ];
 
+        // BGM_MELODIES[intensity][variation] — 各intensityに3バリエーション
         const BGM_MELODIES = [
-            // intensity 0: slow, sparse, 8 notes
-            [0, 4, 2, 4,  0, -1, 2, 4],
-            // intensity 1: moderate, 8 notes
-            [0, 2, 4, 2,  7, 4, 2, 0],
-            // intensity 2: faster, more notes
-            [0, 2, 4, 7,  4, 2, 4, 7,  9, 7, 4, 2],
-            // intensity 3: driving, complex
-            [0, 4, 7, 4,  0, 4, 7, 9,  7, 4, 0, 4,  7, 9, 7, 4],
+            // intensity 0: calm/sparse
+            [
+                [0, 4, 2, 4,  0, -1, 2, 4],
+                [0, 2, 4, 2,  -1, 4, 0, 2],
+                [4, 0, 2, -1, 4, 2, 0, -1],
+            ],
+            // intensity 1: moderate/melodic
+            [
+                [0, 2, 4, 2,  7, 4, 2, 0],
+                [0, 4, 2, 7,  4, 2, 0, 4],
+                [2, 4, 7, 4,  2, 0, 4, 2],
+            ],
+            // intensity 2: active/dramatic
+            [
+                [0, 2, 4, 7,  4, 2, 4, 7,  9, 7, 4, 2],
+                [0, 4, 7, 4,  9, 7, 4, 0,  2, 4, 2, 0],
+                [7, 4, 2, 0,  4, 7, 9, 7,  4, 2, 4, 7],
+            ],
+            // intensity 3: driving/intense
+            [
+                [0, 4, 7, 4,  0, 4, 7, 9,  7, 4, 0, 4,  7, 9, 7, 4],
+                [0, 7, 4, 0,  9, 7, 4, 7,  0, 4, 7, 4,  9, 4, 0, 7],
+                [4, 0, 7, 4,  7, 9, 7, 4,  0, 7, 4, 0,  4, 7, 0, 4],
+            ],
+        ];
+
+        // タイトル画面BGM: 神秘的で哲学的なアルペジオ
+        const TITLE_BGM_PROFILE = {
+            tempo: 720, vol: 0.38, scale: [0, 3, 5, 7, 10], bass: [0, 7, 5, 3],
+            intensity: 0, label: 'タイトル'
+        };
+        const TITLE_BGM_MELODY = [
+            [0, 2, 4, 2, 0, -1, 4, 2, -1, 4, 2, 0],
+        ];
+        const TITLE_BGM_ROOT = 220.00; // A3
+
+        // ボス戦BGM: 激しく不吉なパターン (通常ボス用)
+        const BOSS_BGM_PROFILE = {
+            tempo: 260, vol: 0.78, scale: [0, 1, 3, 6, 8], bass: [0, 6, 3, 8],
+            intensity: 3, label: 'ボス戦'
+        };
+        const BOSS_BGM_MELODIES = [
+            [0, 3, 1, 3, 0, 3, 6, 3, 1, 3, 0, 3, 6, 8, 6, 3],
+            [3, 0, 6, 3, 8, 6, 3, 0, 3, 6, 8, 6, 3, 0, 3, 1],
         ];
 
         const STAGE_ROOT_FREQS = [
@@ -1488,6 +1527,21 @@ const MEDITATION_DATA = [
                 // 盾構え: 重いブロック音
                 mkOsc('square', 200, 0.10, 0.06, 120);
                 mkOsc('sine', 80, 0.15, 0.08, 50);
+            } else if (type === 'bossenrage') {
+                // ボス激昂: 重低音轟き + 不協和音の波
+                mkOsc('sawtooth', 55,  0.55, 1.8, 38);
+                mkOsc('sawtooth', 82,  0.35, 1.4, 55);
+                mkOsc('square',   110, 0.20, 0.9, 75);
+                // 高音の金属的きしみ
+                const hrOsc = audioCtx.createOscillator();
+                const hrGn  = audioCtx.createGain();
+                hrOsc.type = 'sawtooth';
+                hrOsc.frequency.setValueAtTime(1800, now);
+                hrOsc.frequency.exponentialRampToValueAtTime(600, now + 0.6);
+                hrOsc.connect(hrGn); hrGn.connect(audioCtx.destination);
+                hrGn.gain.setValueAtTime(0.10 * vol, now);
+                hrGn.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+                hrOsc.start(now); hrOsc.stop(now + 0.66);
             }
         }
 
@@ -1496,16 +1550,41 @@ const MEDITATION_DATA = [
             const bgmAudio = document.getElementById('bgm');
             if (bgmAudio && bgmAudio.src && !bgmAudio.paused) return;
 
+            // BGMモード決定
+            const newMode = gameState === 'title' ? 'title'
+                          : (gameState === 'playing' && bossActive) ? 'boss'
+                          : 'stage';
+            if (newMode !== bgmMode) {
+                bgmMode = newMode;
+                bgmIndex = 0;
+                nextNoteTime = audioCtx.currentTime + 0.05;
+                bgmCurrentStage = -1; // force stage reset too
+            }
+
             // ステージ変化検出: bgmIndex と nextNoteTime をリセット
-            if (bgmCurrentStage !== currentStageIndex) {
+            if (bgmMode === 'stage' && bgmCurrentStage !== currentStageIndex) {
                 bgmCurrentStage = currentStageIndex;
                 bgmIndex = 0;
                 nextNoteTime = audioCtx.currentTime + 0.05;
             }
 
-            const profile = STAGE_BGM_PROFILES[Math.min(currentStageIndex, STAGE_BGM_PROFILES.length - 1)];
-            const melody  = BGM_MELODIES[profile.intensity];
-            const rootHz  = STAGE_ROOT_FREQS[Math.min(currentStageIndex, STAGE_ROOT_FREQS.length - 1)];
+            let profile, melody, rootHz;
+            if (bgmMode === 'title') {
+                profile = TITLE_BGM_PROFILE;
+                melody  = TITLE_BGM_MELODY[0];
+                rootHz  = TITLE_BGM_ROOT;
+            } else if (bgmMode === 'boss') {
+                profile = BOSS_BGM_PROFILE;
+                const bossVar = Math.floor(bgmIndex / BOSS_BGM_MELODIES[0].length) % BOSS_BGM_MELODIES.length;
+                melody  = BOSS_BGM_MELODIES[bossVar];
+                rootHz  = STAGE_ROOT_FREQS[Math.min(currentStageIndex, STAGE_ROOT_FREQS.length - 1)];
+            } else {
+                profile = STAGE_BGM_PROFILES[Math.min(currentStageIndex, STAGE_BGM_PROFILES.length - 1)];
+                const melodyBank = BGM_MELODIES[profile.intensity];
+                const variation  = Math.floor(bgmIndex / melodyBank[0].length) % melodyBank.length;
+                melody  = melodyBank[variation];
+                rootHz  = STAGE_ROOT_FREQS[Math.min(currentStageIndex, STAGE_ROOT_FREQS.length - 1)];
+            }
 
             // semitone offset → frequency multiplier
             function semitoneToFreq(root, semitones) {
@@ -3903,6 +3982,7 @@ const MEDITATION_DATA = [
                 speed,
                 sprite: spriteTable[Math.min(tier, 4)],
                 type: 'boss', fireInterval: 45, fireTimer: 0, hitTimer: 0, isBoss: true,
+                phase: 1, phaseTriggered: false,
                 bossLabel: stageCfg.bossLabel || null
             };
         }
@@ -4753,18 +4833,35 @@ const MEDITATION_DATA = [
                             if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
                         }
 
+                        // 通常ボス フェーズ2トリガー (HP25%以下)
+                        if (enemy.type === 'boss' && !enemy.phaseTriggered && enemy.hp <= enemy.maxHp * 0.25) {
+                            enemy.phase = 2;
+                            enemy.phaseTriggered = true;
+                            enemy.speed *= 1.55;
+                            enemy.fireInterval = Math.max(20, Math.floor(enemy.fireInterval * 0.55));
+                            centerMessage = `${enemy.bossLabel || 'ボス'}が激昂した！\n第2形態 — 怒りの覚醒`;
+                            msgTimer = 140;
+                            screenShake = 18;
+                            spawnGlowParticles(ecx, ecy, '#FF2200', 24);
+                            playSoundEffect('bossenrage');
+                        }
+
                         if (enemy.fireTimer > enemy.fireInterval) {
                             enemy.fireTimer = 0;
                             let pdirX = edx / (dist || 1);
                             let pdirY = edy / (dist || 1);
                             if (enemy.type === 'boss') {
-                                // 扇状に3発撃つ
-                                for (let a = -1; a <= 1; a++) {
+                                // フェーズ2: 5発扇 + 高速; フェーズ1: 3発扇
+                                const shots = enemy.phase === 2 ? 5 : 3;
+                                const projSpeed = enemy.phase === 2 ? 4.2 : 3.0;
+                                const spread = enemy.phase === 2 ? 0.28 : 0.30;
+                                for (let a = 0; a < shots; a++) {
+                                    const offset = (a - Math.floor(shots / 2)) * spread;
                                     projectiles.push({
                                         x: ecx - 12, y: ecy - 12,
-                                        dx: Math.cos(Math.atan2(pdirY, pdirX) + a * 0.3),
-                                        dy: Math.sin(Math.atan2(pdirY, pdirX) + a * 0.3),
-                                        speed: 3, sprite: MAGIC_SPRITE, timer: 150,
+                                        dx: Math.cos(Math.atan2(pdirY, pdirX) + offset),
+                                        dy: Math.sin(Math.atan2(pdirY, pdirX) + offset),
+                                        speed: projSpeed, sprite: MAGIC_SPRITE, timer: 150,
                                         isBossProjectile: true
                                     });
                                 }
@@ -6100,25 +6197,75 @@ const MEDITATION_DATA = [
                 ctx.textAlign = 'center'; ctx.shadowBlur = 8; ctx.shadowColor = '#4488AA';
                 ctx.fillStyle = '#C0D8E8';
                 ctx.font = 'bold 19px monospace';
-                ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 178);
+                ctx.fillText('― A Philosophical Journey ―', VIEW_W / 2, 175);
                 ctx.restore();
+
+                // ---- UNIQUE HOOK: 哲学的対話キャッチコピー ----
+                {
+                    const hookY = 208;
+                    const hookAlpha = 0.88 + 0.12 * Math.sin(TT * 2.2);
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    // 背景バー
+                    const hookGrad = ctx.createLinearGradient(VIEW_W/2 - 260, hookY - 22, VIEW_W/2 + 260, hookY + 12);
+                    hookGrad.addColorStop(0,   'rgba(0,0,0,0)');
+                    hookGrad.addColorStop(0.3,  'rgba(80,20,120,0.55)');
+                    hookGrad.addColorStop(0.7,  'rgba(80,20,120,0.55)');
+                    hookGrad.addColorStop(1,   'rgba(0,0,0,0)');
+                    ctx.fillStyle = hookGrad;
+                    ctx.fillRect(VIEW_W/2 - 260, hookY - 24, 520, 38);
+                    // アイコン + テキスト
+                    ctx.globalAlpha = hookAlpha;
+                    ctx.fillStyle = '#CC88FF';
+                    ctx.shadowBlur = 14; ctx.shadowColor = '#AA44FF';
+                    ctx.font = 'bold 15px monospace';
+                    ctx.fillText('💬 ボスを哲学的対話で論破して倒す唯一のRPG', VIEW_W / 2, hookY + 2);
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
+                }
+
+                // ---- 4つのエンディングティーザー ----
+                {
+                    const paths = [
+                        { label:'武の道', col:'#FF6644', icon:'⚔' },
+                        { label:'知の道', col:'#44AAFF', icon:'📖' },
+                        { label:'守の道', col:'#44FF88', icon:'🛡' },
+                        { label:'哲の道', col:'#CC88FF', icon:'💡' },
+                    ];
+                    const pathY = 235;
+                    ctx.save(); ctx.textAlign = 'center';
+                    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                    ctx.fillRect(VIEW_W/2 - 240, pathY - 14, 480, 24);
+                    paths.forEach((p, pi) => {
+                        const px = VIEW_W/2 - 165 + pi * 110;
+                        const pulse = 0.6 + 0.4 * Math.sin(TT * 1.4 + pi * 1.1);
+                        ctx.globalAlpha = pulse;
+                        ctx.fillStyle = p.col;
+                        ctx.shadowBlur = 6; ctx.shadowColor = p.col;
+                        ctx.font = 'bold 11px monospace';
+                        ctx.fillText(`${p.icon} ${p.label}`, px, pathY + 3);
+                        ctx.shadowBlur = 0;
+                    });
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                }
 
                 // ---- フィロソフィカルクォート (フェードイン/アウト) ----
                 const quotePhase = (T % 200) / 200;
                 const quoteAlpha = quotePhase < 0.1 ? quotePhase / 0.1 : quotePhase > 0.85 ? (1 - quotePhase) / 0.15 : 1;
                 ctx.save();
-                ctx.textAlign = 'center'; ctx.globalAlpha = quoteAlpha * 0.7;
-                ctx.fillStyle = '#AACCEE'; ctx.font = 'italic 13px monospace';
-                ctx.fillText(TITLE_QUOTES[titleQuoteIdx], VIEW_W / 2, 215);
+                ctx.textAlign = 'center'; ctx.globalAlpha = quoteAlpha * 0.65;
+                ctx.fillStyle = '#AACCEE'; ctx.font = 'italic 12px monospace';
+                ctx.fillText(TITLE_QUOTES[titleQuoteIdx], VIEW_W / 2, 258);
                 ctx.restore();
 
                 // ---- メニュー ----
                 const opts = ['NEW GAME', 'CONTINUE', '今日のチャレンジ'];
-                const menuBaseY = 268;
+                const menuBaseY = 280;
                 for (let i = 0; i < opts.length; i++) {
                     const sel = (titleSelectedOption === i);
                     const bounce = sel ? Math.sin(TT * 4) * 2 : 0;
-                    const y = menuBaseY + i * 62 + bounce;
+                    const y = menuBaseY + i * 56 + bounce;
                     ctx.save();
                     ctx.textAlign = 'center';
                     if (sel) {
@@ -6151,30 +6298,30 @@ const MEDITATION_DATA = [
                     const todayChallenge = getTodayChallenge();
                     ctx.save();
                     ctx.fillStyle = 'rgba(0,0,0,0.75)';
-                    ctx.fillRect(VIEW_W/2 - 200, 462, 400, 62);
+                    ctx.fillRect(VIEW_W/2 - 200, 450, 400, 62);
                     ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5; ctx.shadowBlur = 6; ctx.shadowColor = '#FF8C00';
-                    ctx.strokeRect(VIEW_W/2 - 200, 462, 400, 62);
+                    ctx.strokeRect(VIEW_W/2 - 200, 450, 400, 62);
                     ctx.fillStyle = '#FF8C00'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
-                    ctx.fillText(todayChallenge.name, VIEW_W / 2, 480);
+                    ctx.fillText(todayChallenge.name, VIEW_W / 2, 468);
                     ctx.fillStyle = '#ddd'; ctx.font = '12px monospace';
-                    ctx.fillText(todayChallenge.desc, VIEW_W / 2, 498);
+                    ctx.fillText(todayChallenge.desc, VIEW_W / 2, 486);
                     ctx.fillStyle = '#888'; ctx.font = '11px monospace';
-                    ctx.fillText('Enter で開始', VIEW_W / 2, 516);
+                    ctx.fillText('Enter で開始', VIEW_W / 2, 502);
                     ctx.restore();
                 } else {
                     ctx.save(); ctx.textAlign = 'center';
                     ctx.fillStyle = '#556677'; ctx.font = '13px monospace';
-                    ctx.fillText('DIFFICULTY', VIEW_W / 2, 476);
+                    ctx.fillText('DIFFICULTY', VIEW_W / 2, 464);
                     for (let d = 0; d < 3; d++) {
                         const sel = (difficultyLevel === d);
                         ctx.fillStyle = sel ? (d===0?'#44ff44':d===1?'#EFD02E':'#ff4444') : '#445';
                         ctx.font = sel ? 'bold 19px monospace' : '15px monospace';
                         if (sel) { ctx.shadowBlur = 8; ctx.shadowColor = ctx.fillStyle; }
-                        ctx.fillText(DIFF_NAMES[d], VIEW_W/2 - 110 + d*110, 498);
+                        ctx.fillText(DIFF_NAMES[d], VIEW_W/2 - 110 + d*110, 486);
                         ctx.shadowBlur = 0;
                     }
                     ctx.fillStyle = '#445'; ctx.font = '11px monospace';
-                    ctx.fillText('← → で変更', VIEW_W/2, 516);
+                    ctx.fillText('← → で変更', VIEW_W/2, 504);
                     ctx.restore();
                 }
 
@@ -6196,28 +6343,45 @@ const MEDITATION_DATA = [
                 ctx.beginPath(); ctx.moveTo(VIEW_W, 0); ctx.lineTo(VIEW_W, VIEW_H); ctx.stroke();
                 ctx.restore();
                 ctx.save(); ctx.textAlign = 'center';
-                const infoItems = [
-                    ['STAGE',  '20ステージ',    '#88AACC'],
-                    ['ENEMY',  '14種の敵',       '#FF9944'],
-                    ['SKILL',  '3つのスキル',    '#CC88FF'],
-                    ['PATH',   '3つの哲学の道',  '#88FF88'],
-                    ['HIDDEN', '隠しステージ',   '#EFD02E'],
-                    ['BOSS',   '哲学的対話',     '#FF6644'],
-                ];
-                ctx.fillStyle = '#EFD02E'; ctx.font = 'bold 14px monospace'; ctx.shadowBlur = 6; ctx.shadowColor = '#FFD700';
-                ctx.fillText('FEATURES', VIEW_W + STATS_W/2, 60);
+                // パネルタイトル
+                ctx.fillStyle = '#CC88FF'; ctx.font = 'bold 13px monospace';
+                ctx.shadowBlur = 8; ctx.shadowColor = '#AA44FF';
+                ctx.fillText('このゲームの特徴', VIEW_W + STATS_W/2, 44);
                 ctx.shadowBlur = 0;
-                ctx.strokeStyle = 'rgba(255,215,0,0.25)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(VIEW_W+15, 66); ctx.lineTo(VIEW_W+STATS_W-15, 66); ctx.stroke();
+                ctx.strokeStyle = 'rgba(180,100,255,0.3)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(VIEW_W+8, 50); ctx.lineTo(VIEW_W+STATS_W-8, 50); ctx.stroke();
+
+                // 独自性ポイント: 哲学的対話
+                const philPulse = 0.75 + 0.25 * Math.sin(TT * 2.5);
+                ctx.globalAlpha = philPulse;
+                ctx.fillStyle = '#CC88FF'; ctx.font = 'bold 12px monospace';
+                ctx.shadowBlur = 6; ctx.shadowColor = '#AA44FF';
+                ctx.fillText('💬 哲学的対話', VIEW_W + STATS_W/2, 72);
+                ctx.shadowBlur = 0; ctx.fillStyle = '#CCBBEE';
+                ctx.font = '10px monospace';
+                ctx.fillText('ボスを言葉で論破', VIEW_W + STATS_W/2, 85);
+                ctx.globalAlpha = 1;
+
+                // 区切り
+                ctx.strokeStyle = 'rgba(255,215,0,0.15)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(VIEW_W+8, 94); ctx.lineTo(VIEW_W+STATS_W-8, 94); ctx.stroke();
+
+                const infoItems = [
+                    ['⚔ 20ステージ', '草原から終焉の地まで', '#88AACC'],
+                    ['☠ 14種の敵',   '独自スプライト設計',    '#FF9944'],
+                    ['✦ 4つの結末',  '武/知/守/哲 エンディング','#EFD02E'],
+                    ['🌙 隠しボス',  '哲学の到達者のみ解放',  '#FF6644'],
+                    ['⚡ 3スキル',   '連撃/結界/時停止',      '#44DDFF'],
+                ];
                 infoItems.forEach(([label, val, col], fi) => {
-                    const fy = 90 + fi * 52;
+                    const fy = 112 + fi * 46;
                     const pulse = 0.7 + 0.3 * Math.sin(TT * 1.2 + fi * 0.9);
                     ctx.globalAlpha = pulse;
-                    ctx.fillStyle = col; ctx.font = 'bold 11px monospace'; ctx.shadowBlur = 4; ctx.shadowColor = col;
+                    ctx.fillStyle = col; ctx.font = 'bold 10px monospace'; ctx.shadowBlur = 4; ctx.shadowColor = col;
                     ctx.fillText(label, VIEW_W + STATS_W/2, fy);
                     ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#DDDDDD'; ctx.font = '12px monospace';
-                    ctx.fillText(val, VIEW_W + STATS_W/2, fy + 18);
+                    ctx.fillStyle = '#BBBBBB'; ctx.font = '9px monospace';
+                    ctx.fillText(val, VIEW_W + STATS_W/2, fy + 14);
                     ctx.globalAlpha = 1;
                 });
                 // 下部ヒント
@@ -6505,9 +6669,33 @@ const MEDITATION_DATA = [
                 const isFloat = (enemy.name === 'Ghost' || enemy.name === 'Bat' || enemy.name === 'DragonWhelp');
                 const bobAmp = isFloat ? 3.5 : 1.2;
                 const bobY = Math.sin(Date.now() * 0.004 + (enemy.aiFrame || 0) * 0.7) * bobAmp;
-                // ボス: 赤/オレンジのグロー
+                // ボス: フェーズ別グロー
                 if (enemy.type === 'boss') {
-                    drawGlow(ctx, esx + SPRITE_SIZE * 0.75, esy + SPRITE_SIZE * 0.75, 28, '#FF4400', 12);
+                    if (enemy.phase === 2) {
+                        // フェーズ2: 赤白交互の激しいグロー + 脈動リング
+                        const p2pulse = Math.sin(Date.now() * 0.012) * 0.5 + 0.5;
+                        const p2col = `rgba(${Math.floor(255)},${Math.floor(p2pulse*80)},${Math.floor(p2pulse*20)},0.6)`;
+                        drawGlow(ctx, esx + SPRITE_SIZE * 0.75, esy + SPRITE_SIZE * 0.75, 38 + p2pulse * 14, '#FF0000', 20);
+                        ctx.save();
+                        ctx.globalAlpha = 0.22 + p2pulse * 0.18;
+                        ctx.strokeStyle = '#FF2200';
+                        ctx.lineWidth = 2;
+                        ctx.shadowBlur = 10; ctx.shadowColor = '#FF4400';
+                        ctx.beginPath();
+                        ctx.arc(esx + SPRITE_SIZE * 0.75, esy + SPRITE_SIZE * 0.75, 32 + p2pulse * 18, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                        // 「PHASE 2」バッジ
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = '#FF2200';
+                        ctx.shadowBlur = 6; ctx.shadowColor = '#FF4400';
+                        ctx.font = 'bold 9px monospace';
+                        ctx.fillText('◆ PHASE 2 ◆', esx + SPRITE_SIZE * 0.75, esy - 20);
+                        ctx.restore();
+                    } else {
+                        drawGlow(ctx, esx + SPRITE_SIZE * 0.75, esy + SPRITE_SIZE * 0.75, 28, '#FF4400', 12);
+                    }
                 }
                 // チャージ予備動作: 重量型がチャージ直前に赤く点滅
                 const isHeavyEnemy = (enemy.name === 'Orc' || enemy.name === 'Troll' || enemy.name === 'DarkKnight');
