@@ -566,26 +566,66 @@
         let achievementPopup = null; // { label, timer }
 
         const BOSS_DIALOGUES = [
-            { q:'汝は本当に存在しているのか？', answers:['我思う、ゆえに我あり','存在など幻に過ぎない'], correct:0 },
-            { q:'知識とは何か？それは善か？', answers:['徳は知識なり','無知の知こそ真の知'],  correct:1 },
-            { q:'変化を止めることはできるか？', answers:['全ては流れ変化する','意志で流れは止められる'], correct:0 },
-            { q:'真の強さとはどこから来るか？', answers:['力への意志から','苦しみを越えた先にある'], correct:1 },
-            { q:'孤独は弱さか、それとも力か？', answers:['孤独は魂を強くする','孤独は人を滅ぼす'], correct:0 },
-            { q:'欲望を断てば自由になれるか？', answers:['欲望こそが生命力だ','欲望を断つと自由になる'], correct:1 },
-            { q:'滅びた文明に意味はあるか？', answers:['意味は後世が決める','滅んだ全ては無意味だ'], correct:0 },
-            { q:'本当の自由とは何か？', answers:['選択の重みを引き受けること','全ての制約からの解放'], correct:0 },
-            { q:'闇を知らずして光を語れるか？', answers:['闇なくして光は存在しない','光は闇に依存しない'], correct:0 },
-            { q:'恐怖に勝つ方法は何か？', answers:['恐怖と向き合い続けること','恐怖を完全に無視すること'], correct:0 },
-            { q:'権力を持つ者は何を失うか？', answers:['権力は必ず魂を腐らせる','権力者こそ最も自由だ'], correct:0 },
-            { q:'過去は変えられないが意味はあるか？', answers:['過去は現在の礎だ','過去を忘れることが前進だ'], correct:0 },
-            { q:'人間を超えた存在になれるか？', answers:['超克は自己との戦いにある','神のみが超越できる'], correct:0 },
-            { q:'深淵に潜る者は何を得るか？', answers:['自己の真実を得る','深淵には何もない'], correct:0 },
-            { q:'炎は何を象徴するか？', answers:['破壊と再生の両方だ','炎は純粋な破壊だ'], correct:0 },
-            { q:'勇気と無謀の違いは何か？', answers:['恐怖を知った上での行動が勇気','恐怖を感じないことが勇気'], correct:0 },
-            { q:'悪は存在するのか？', answers:['悪は善の欠如に過ぎない','悪は独立した力として存在する'], correct:0 },
-            { q:'崩れゆくものを積み上げる意味は？', answers:['過程そのものに意味がある','意味などない、それでも積め'], correct:0 },
-            { q:'神が死んだ後、何が残るか？', answers:['人間自身が意味を創造する','何も残らない、虚無のみだ'], correct:0 },
-            { q:'死を前にして何が本質か？', answers:['生きた証と愛した記憶','死は全てを無意味にする'], correct:0 },
+            { q:'汝は本当に存在しているのか？',
+              source:'デカルト「方法序説」1637年',
+              answers:['我思う、ゆえに我あり','存在など幻に過ぎない'], correct:0 },
+            { q:'知識とは何か？それは善か？',
+              source:'ソクラテス（プラトン「メノン」）',
+              answers:['徳は知識なり','無知の知こそ真の知'],  correct:1 },
+            { q:'変化を止めることはできるか？',
+              source:'ヘラクレイトス「万物流転」BC500年頃',
+              answers:['全ては流れ変化する','意志で流れは止められる'], correct:0 },
+            { q:'真の強さとはどこから来るか？',
+              source:'ニーチェ「ツァラトゥストラはかく語りき」',
+              answers:['力への意志から','苦しみを越えた先にある'], correct:1 },
+            { q:'孤独は弱さか、それとも力か？',
+              source:'パスカル「パンセ」1670年',
+              answers:['孤独は魂を強くする','孤独は人を滅ぼす'], correct:0 },
+            { q:'欲望を断てば自由になれるか？',
+              source:'エピクテトス「語録」AD100年頃',
+              answers:['欲望こそが生命力だ','欲望を断つと自由になる'], correct:1 },
+            { q:'滅びた文明に意味はあるか？',
+              source:'ヘーゲル「歴史哲学講義」',
+              answers:['意味は後世が決める','滅んだ全ては無意味だ'], correct:0 },
+            { q:'本当の自由とは何か？',
+              source:'サルトル「実存主義とは何か」1945年',
+              answers:['選択の重みを引き受けること','全ての制約からの解放'], correct:0 },
+            { q:'闇を知らずして光を語れるか？',
+              source:'ユング「影と自己」',
+              answers:['闇なくして光は存在しない','光は闇に依存しない'], correct:0 },
+            { q:'恐怖に勝つ方法は何か？',
+              source:'キルケゴール「不安の概念」1844年',
+              answers:['恐怖と向き合い続けること','恐怖を完全に無視すること'], correct:0 },
+            { q:'権力を持つ者は何を失うか？',
+              source:'プラトン「国家」',
+              answers:['権力は必ず魂を腐らせる','権力者こそ最も自由だ'], correct:0 },
+            { q:'過去は変えられないが意味はあるか？',
+              source:'ハイデガー「存在と時間」1927年',
+              answers:['過去は現在の礎だ','過去を忘れることが前進だ'], correct:0 },
+            { q:'人間を超えた存在になれるか？',
+              source:'ニーチェ「超人」という概念より',
+              answers:['超克は自己との戦いにある','神のみが超越できる'], correct:0 },
+            { q:'深淵に潜る者は何を得るか？',
+              source:'ニーチェ「善悪の彼岸」1886年',
+              answers:['自己の真実を得る','深淵には何もない'], correct:0 },
+            { q:'炎は何を象徴するか？',
+              source:'ヘラクレイトス「火の哲学」',
+              answers:['破壊と再生の両方だ','炎は純粋な破壊だ'], correct:0 },
+            { q:'勇気と無謀の違いは何か？',
+              source:'アリストテレス「ニコマコス倫理学」',
+              answers:['恐怖を知った上での行動が勇気','恐怖を感じないことが勇気'], correct:0 },
+            { q:'悪は存在するのか？',
+              source:'アウグスティヌス「神の国」',
+              answers:['悪は善の欠如に過ぎない','悪は独立した力として存在する'], correct:0 },
+            { q:'崩れゆくものを積み上げる意味は？',
+              source:'カミュ「シーシュポスの神話」1942年',
+              answers:['過程そのものに意味がある','意味などない、それでも積め'], correct:0 },
+            { q:'神が死んだ後、何が残るか？',
+              source:'ニーチェ「悦ばしき知識」1882年',
+              answers:['人間自身が意味を創造する','何も残らない、虚無のみだ'], correct:0 },
+            { q:'死を前にして何が本質か？',
+              source:'マルクス・アウレリウス「自省録」',
+              answers:['生きた証と愛した記憶','死は全てを無意味にする'], correct:0 },
         ];
 
         // ==== デイリーチャレンジ定義 ====
@@ -4143,6 +4183,7 @@ const MEDITATION_DATA = [
 
             let padUp = false, padDown = false, padLeft = false, padRight = false;
             let padA = false, padB = false, padStart = false, padShield = false;
+            let padX = false, padY = false, padLB = false; // X=連撃, Y=結界, LB=時停止
 
             const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
             for (let gp of gamepads) {
@@ -4153,11 +4194,21 @@ const MEDITATION_DATA = [
                     padLeft = padLeft || gp.axes[0] < -threshold || gp.buttons[14]?.pressed;
                     padRight = padRight || gp.axes[0] > threshold || gp.buttons[15]?.pressed;
 
-                    padA = padA || gp.buttons[0]?.pressed || gp.buttons[2]?.pressed;
-                    padStart = padStart || gp.buttons[9]?.pressed;
+                    padA = padA || gp.buttons[0]?.pressed;
                     padB = padB || gp.buttons[1]?.pressed;
-                    padShield = padShield || gp.buttons[5]?.pressed;
+                    padX = padX || gp.buttons[2]?.pressed; // Xbox X ボタン → 連撃
+                    padY = padY || gp.buttons[3]?.pressed; // Xbox Y ボタン → 結界
+                    padLB = padLB || gp.buttons[4]?.pressed; // LB → 時停止
+                    padShield = padShield || gp.buttons[5]?.pressed; // RB → 防御
+                    padStart = padStart || gp.buttons[9]?.pressed;
                 }
+            }
+
+            // Xboxスキルボタン発動 (ゲームプレイ中のみ)
+            if (gameState === 'playing' && !isGameOver && !meditationPending) {
+                if (padX) activateSkill('rengeki');
+                if (padY) activateSkill('barrier');
+                if (padLB) activateSkill('timeslow');
             }
 
             updateBgm(); // タイトル/ステージ選択中もBGMを流す
@@ -5340,9 +5391,121 @@ const MEDITATION_DATA = [
             ctx.restore();
         }
 
+        // ==== コントロールガイド ====
+        function drawControlGuide(panelX) {
+            const px = panelX;
+            const guideY = VIEW_H - 185; // 下から185px
+            ctx.save();
+
+            // 区切り線
+            ctx.strokeStyle = 'rgba(255,215,0,0.15)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px + 8, guideY - 4);
+            ctx.lineTo(px + STATS_W - 8, guideY - 4);
+            ctx.stroke();
+
+            // タイトル
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#778899';
+            ctx.font = 'bold 9px monospace';
+            ctx.fillText('CONTROLS', px + STATS_W / 2, guideY + 8);
+
+            // Xboxボタン描画ヘルパー
+            function xBtn(bx, by, r, col, label) {
+                ctx.beginPath();
+                ctx.arc(bx, by, r, 0, Math.PI * 2);
+                ctx.fillStyle = col;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = `bold ${r > 7 ? 8 : 7}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.fillText(label, bx, by + 3);
+            }
+            function xBarBtn(bx, by, w, h, col, label) {
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(bx - w/2, by - h/2, w, h, 3) : ctx.rect(bx - w/2, by - h/2, w, h);
+                ctx.fill();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '7px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, bx, by + 3);
+            }
+            function row(lx, ly, icon, desc, col) {
+                ctx.fillStyle = col || '#556677';
+                ctx.font = 'bold 8px monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(icon, lx, ly);
+                ctx.fillStyle = '#AABBCC';
+                ctx.font = '8px monospace';
+                ctx.fillText(desc, lx + 24, ly);
+            }
+
+            const cx = px + STATS_W / 2;
+            let y = guideY + 18;
+
+            // 移動: Dパッド図
+            row(px + 6, y, '✛ Dpad', '移動');
+            row(px + 6, y + 10, 'WASD', '移動');
+            y += 24;
+
+            // ボタン行1: A=攻撃, B=武器切替
+            xBtn(px + 20, y, 8, '#3CB371', 'A');
+            ctx.fillStyle = '#AABBCC'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('攻撃 (Space/Z)', px + 32, y + 3);
+            y += 18;
+            xBtn(px + 20, y, 8, '#CC2222', 'B');
+            ctx.fillStyle = '#AABBCC'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('武器切替 (Q)', px + 32, y + 3);
+            y += 18;
+
+            // RB=防御
+            xBarBtn(px + 20, y, 22, 10, '#445566', 'RB');
+            ctx.fillStyle = '#AABBCC'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('防御 (Shift/R)', px + 34, y + 3);
+            y += 16;
+
+            // スキル区切り
+            ctx.strokeStyle = 'rgba(100,150,255,0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(px+8, y); ctx.lineTo(px+STATS_W-8, y); ctx.stroke();
+            ctx.fillStyle = '#446688';
+            ctx.font = 'bold 7px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('SKILLS', cx, y + 8);
+            y += 14;
+
+            // スキル X/Y/LB
+            xBtn(px + 20, y, 8, '#1166BB', 'X');
+            ctx.fillStyle = '#FF6644'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('連撃 (J)', px + 32, y + 3);
+            y += 16;
+            xBtn(px + 20, y, 8, '#AA8800', 'Y');
+            ctx.fillStyle = '#44AAFF'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('結界 (K)', px + 32, y + 3);
+            y += 16;
+            xBarBtn(px + 20, y, 22, 10, '#553388', 'LB');
+            ctx.fillStyle = '#CC88FF'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('時停止 (L)', px + 34, y + 3);
+            y += 16;
+
+            // Start=ポーズ
+            ctx.strokeStyle = 'rgba(100,150,255,0.2)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(px+8, y); ctx.lineTo(px+STATS_W-8, y); ctx.stroke();
+            y += 10;
+            xBarBtn(px + 20, y, 28, 10, '#334455', 'Start');
+            ctx.fillStyle = '#778899'; ctx.font = '8px monospace'; ctx.textAlign = 'left';
+            ctx.fillText('ポーズ (P/Esc)', px + 37, y + 3);
+
+            ctx.restore();
+        }
+
+        // ==== ボス哲学的対話 (完全刷新) ====
         function drawBossDialogue() {
             if (!bossDialogueActive) {
-                // debuff中のボスに視覚効果表示
                 if (bossDebuffTimer > 0 && bossDebuffTarget === 'boss') {
                     ctx.save();
                     ctx.fillStyle = `rgba(0,255,100,${(bossDebuffTimer % 20 < 10) ? 0.08 : 0})`;
@@ -5358,46 +5521,139 @@ const MEDITATION_DATA = [
             }
             const dlg = BOSS_DIALOGUES[currentStageIndex % BOSS_DIALOGUES.length];
             const timeRatio = bossDialogueTimer / 600;
+            const TT = Date.now() / 1000;
 
             ctx.save();
-            ctx.fillStyle = 'rgba(0,0,0,0.82)';
+
+            // 深い黒フェード — 戦場から哲学の空間へ
+            ctx.fillStyle = 'rgba(0,0,5,0.92)';
             ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+            // 微細な星空背景パーティクル
+            ctx.fillStyle = 'rgba(180,200,255,0.12)';
+            for (let s = 0; s < 40; s++) {
+                const sx = ((s * 137 + 13) % VIEW_W);
+                const sy = ((s * 97  + 29) % (VIEW_H - 100));
+                const twinkle = 0.5 + 0.5 * Math.sin(TT * 1.3 + s * 0.7);
+                ctx.globalAlpha = twinkle * 0.18;
+                ctx.fillRect(sx, sy, 1, 1);
+            }
+            ctx.globalAlpha = 1;
+
+            // 上部: 「哲学的瞬間」ヘッダー
+            const headerPulse = 0.75 + 0.25 * Math.sin(TT * 2);
             ctx.textAlign = 'center';
+            ctx.fillStyle = `rgba(180,140,255,${headerPulse})`;
+            ctx.font = 'italic 13px serif';
+            ctx.fillText('— 哲学的問答 —', VIEW_W / 2, 36);
 
-            // タイマーバー
-            ctx.fillStyle = timeRatio > 0.4 ? '#EFD02E' : '#FF4444';
-            ctx.fillRect(VIEW_W / 2 - 200, 28, 400 * timeRatio, 10);
-            ctx.strokeStyle = '#444';
+            // 水平線
+            const lineAlpha = 0.35 + 0.15 * Math.sin(TT * 1.5);
+            ctx.strokeStyle = `rgba(150,100,255,${lineAlpha})`;
             ctx.lineWidth = 1;
-            ctx.strokeRect(VIEW_W / 2 - 200, 28, 400, 10);
+            ctx.beginPath(); ctx.moveTo(VIEW_W/2 - 200, 44); ctx.lineTo(VIEW_W/2 + 200, 44); ctx.stroke();
 
-            ctx.fillStyle = '#FF6666';
-            ctx.font = 'bold 14px monospace';
-            ctx.fillText(`— ボスの問いかけ — (${Math.ceil(bossDialogueTimer/60)}秒)`, VIEW_W / 2, 60);
+            // 残り時間バー (細く、上部に)
+            const barW = 340, barX = VIEW_W/2 - barW/2;
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            ctx.fillRect(barX, 50, barW, 4);
+            const barColor = timeRatio > 0.5 ? '#9966FF' : timeRatio > 0.25 ? '#FF8844' : '#FF3333';
+            ctx.fillStyle = barColor;
+            ctx.fillRect(barX, 50, barW * timeRatio, 4);
+            ctx.fillStyle = 'rgba(200,160,255,0.6)';
+            ctx.font = '10px monospace';
+            ctx.fillText(`${Math.ceil(bossDialogueTimer/60)}秒`, VIEW_W/2 + barW/2 + 18, 55);
 
-            // 問い
+            // 問いの提示 — 大きく、重く
+            ctx.fillStyle = 'rgba(220,210,255,0.5)';
+            ctx.font = 'italic 11px serif';
+            ctx.fillText('ボスが問う', VIEW_W / 2, 80);
+
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 22px monospace';
-            ctx.fillText(`「${dlg.q}」`, VIEW_W / 2, 110);
+            ctx.font = 'bold 21px serif';
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = 'rgba(180,140,255,0.6)';
+            // 長い問いは2行に分割
+            const q = `「${dlg.q}」`;
+            if (q.length > 18) {
+                const mid = Math.ceil(q.length / 2);
+                const split = q.indexOf('、', mid - 4) > 0 ? q.indexOf('、', mid - 4) + 1
+                            : q.indexOf('は', mid - 4) > 0 ? q.indexOf('は', mid - 4) + 1 : mid;
+                ctx.fillText(q.slice(0, split), VIEW_W / 2, 112);
+                ctx.fillText(q.slice(split), VIEW_W / 2, 140);
+            } else {
+                ctx.fillText(q, VIEW_W / 2, 120);
+            }
+            ctx.shadowBlur = 0;
 
-            // 2択
+            // 哲学者出典 (dlg.sourceがあれば表示)
+            if (dlg.source) {
+                ctx.fillStyle = 'rgba(160,140,200,0.65)';
+                ctx.font = 'italic 11px serif';
+                ctx.fillText(`— ${dlg.source}`, VIEW_W / 2, 158);
+            }
+
+            // 2択パネル
+            const panelY = 174, panelH = 80, panelW = 310;
             dlg.answers.forEach((ans, i) => {
                 const sel = bossDialogueCursor === i;
-                const bx = VIEW_W / 2 - 240 + i * 260;
-                const by = 160;
-                ctx.fillStyle = sel ? 'rgba(239,208,46,0.2)' : 'rgba(255,255,255,0.05)';
-                ctx.fillRect(bx - 110, by, 220, 70);
-                ctx.strokeStyle = sel ? '#EFD02E' : '#444444';
-                ctx.lineWidth = sel ? 2 : 1;
-                ctx.strokeRect(bx - 110, by, 220, 70);
-                ctx.fillStyle = sel ? '#FFFFFF' : '#AAAAAA';
-                ctx.font = (sel ? 'bold ' : '') + '15px monospace';
-                ctx.fillText((sel ? '▶ ' : '  ') + ans, bx, by + 40);
+                const bx = VIEW_W / 2 - panelW - 10 + i * (panelW + 20);
+                const cx2 = bx + panelW / 2;
+
+                // パネル背景
+                ctx.fillStyle = sel ? 'rgba(150,100,255,0.18)' : 'rgba(255,255,255,0.04)';
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(bx, panelY, panelW, panelH, 6)
+                              : ctx.rect(bx, panelY, panelW, panelH);
+                ctx.fill();
+
+                // ボーダー
+                ctx.strokeStyle = sel ? '#9966FF' : 'rgba(255,255,255,0.12)';
+                ctx.lineWidth = sel ? 1.5 : 1;
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(bx, panelY, panelW, panelH, 6)
+                              : ctx.rect(bx, panelY, panelW, panelH);
+                ctx.stroke();
+
+                // グロー (選択中)
+                if (sel) {
+                    ctx.shadowBlur = 14;
+                    ctx.shadowColor = '#9966FF';
+                }
+
+                // 選択インジケータ
+                ctx.fillStyle = sel ? '#FFFFFF' : 'rgba(180,180,200,0.7)';
+                ctx.font = (sel ? 'bold ' : '') + '14px serif';
+                ctx.textAlign = 'center';
+                // 長いテキストは折り返し
+                if (ans.length > 12) {
+                    const mid2 = Math.ceil(ans.length / 2);
+                    const sp2 = ans.indexOf('、', mid2 - 3) > 0 ? ans.indexOf('、', mid2 - 3) + 1 : mid2;
+                    ctx.fillText((sel ? '▶ ' : '') + ans.slice(0, sp2), cx2, panelY + 32);
+                    ctx.fillText(ans.slice(sp2), cx2, panelY + 52);
+                } else {
+                    ctx.fillText((sel ? '▶ ' : '') + ans, cx2, panelY + 42);
+                }
+                ctx.shadowBlur = 0;
+
+                // Xbox ボタンヒント
+                const btnLabel = i === 0 ? '◄ 左' : '右 ►';
+                ctx.fillStyle = 'rgba(130,110,180,0.5)';
+                ctx.font = '9px monospace';
+                ctx.fillText(btnLabel, cx2, panelY + panelH - 8);
             });
 
-            ctx.fillStyle = '#555';
-            ctx.font = '13px monospace';
-            ctx.fillText('← → 選択   Enter 回答', VIEW_W / 2, 260);
+            // 操作説明
+            ctx.fillStyle = 'rgba(120,100,160,0.7)';
+            ctx.font = '11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('← / → / Dpad  で選択    A / Enter  で回答', VIEW_W / 2, panelY + panelH + 22);
+
+            // 答えた結果の示唆 (下部)
+            ctx.fillStyle = 'rgba(160,140,200,0.38)';
+            ctx.font = 'italic 10px serif';
+            ctx.fillText('正答はボスを動揺させ、誤答はボスが激昂する', VIEW_W / 2, panelY + panelH + 40);
+
             ctx.textAlign = 'left';
             ctx.restore();
         }
@@ -5406,53 +5662,113 @@ const MEDITATION_DATA = [
             if (!meditationPending) return;
             const opts = MEDITATION_DATA[meditationPendingStage] || MEDITATION_DATA[0];
             const stageName = STAGE_NAMES[meditationPendingStage] || '';
+            const TT = Date.now() / 1000;
             ctx.save();
-            ctx.fillStyle = 'rgba(0,0,0,0.90)';
+
+            // 深い背景 — 戦場の興奮が静まる瞬間
+            ctx.fillStyle = 'rgba(2,2,8,0.94)';
             ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+
+            // 微かな光の粒 (思索の空間演出)
+            for (let s = 0; s < 30; s++) {
+                const sx = (s * 173 + 7) % VIEW_W;
+                const sy = (s * 113 + 41) % (VIEW_H - 60);
+                ctx.globalAlpha = (0.3 + 0.2 * Math.sin(TT * 0.8 + s * 1.1)) * 0.25;
+                ctx.fillStyle = '#CCDDFF';
+                ctx.fillRect(sx, sy, 1, 1);
+            }
+            ctx.globalAlpha = 1;
+
+            // ヘッダー
             ctx.textAlign = 'center';
-            ctx.fillStyle = '#EFD02E';
-            ctx.font = 'bold 15px monospace';
-            ctx.fillText('— 思索の時 —', VIEW_W / 2, 52);
+            const hPulse = 0.7 + 0.3 * Math.sin(TT * 1.8);
+            ctx.fillStyle = `rgba(239,208,46,${hPulse})`;
+            ctx.font = 'italic 14px serif';
+            ctx.fillText('— 思索の時 —', VIEW_W / 2, 38);
+
+            // ステージ名 & 通算
             ctx.fillStyle = '#AADDFF';
-            ctx.font = '20px monospace';
-            ctx.fillText(stageName, VIEW_W / 2, 82);
-            ctx.fillStyle = '#666666';
-            ctx.font = '13px monospace';
-            ctx.fillText(`思索の記録: ${meditationChoices.length} / 20`, VIEW_W / 2, 108);
-            const boxW = 560, boxH = 78;
+            ctx.font = 'bold 17px serif';
+            ctx.fillText(stageName + ' を越えて', VIEW_W / 2, 64);
+
+            ctx.fillStyle = 'rgba(180,180,200,0.55)';
+            ctx.font = 'italic 11px monospace';
+            ctx.fillText('ボスを倒した今、あなたはひとつの哲学的言葉を刻む', VIEW_W / 2, 86);
+
+            // 思索カウント
+            ctx.fillStyle = 'rgba(100,100,130,0.6)';
+            ctx.font = '10px monospace';
+            ctx.fillText(`思索の記録: ${meditationChoices.length + 1} / 20`, VIEW_W / 2, 100);
+
+            // 水平線
+            ctx.strokeStyle = 'rgba(239,208,46,0.18)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(VIEW_W/2 - 280, 108); ctx.lineTo(VIEW_W/2 + 280, 108); ctx.stroke();
+
+            // 選択肢
+            const boxW = 580, boxH = 82;
+            const boxX = VIEW_W / 2 - boxW / 2;
             opts.forEach((opt, i) => {
                 const sel = meditationCursor === i;
-                const bx = VIEW_W / 2 - boxW / 2;
-                const by = 130 + i * (boxH + 12);
-                ctx.fillStyle = sel ? 'rgba(239,208,46,0.13)' : 'rgba(255,255,255,0.04)';
-                ctx.fillRect(bx, by, boxW, boxH);
-                ctx.strokeStyle = sel ? '#EFD02E' : '#333333';
-                ctx.lineWidth = sel ? 2 : 1;
-                ctx.strokeRect(bx, by, boxW, boxH);
+                const by = 118 + i * (boxH + 10);
+
+                // 背景
+                if (sel) {
+                    const selGrad = ctx.createLinearGradient(boxX, by, boxX + boxW, by);
+                    selGrad.addColorStop(0, 'rgba(239,208,46,0.0)');
+                    selGrad.addColorStop(0.5, 'rgba(239,208,46,0.12)');
+                    selGrad.addColorStop(1, 'rgba(239,208,46,0.0)');
+                    ctx.fillStyle = selGrad;
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+                }
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(boxX, by, boxW, boxH, 5) : ctx.rect(boxX, by, boxW, boxH);
+                ctx.fill();
+
+                // ボーダー
+                ctx.strokeStyle = sel ? 'rgba(239,208,46,0.7)' : 'rgba(255,255,255,0.08)';
+                ctx.lineWidth = sel ? 1.5 : 1;
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(boxX, by, boxW, boxH, 5) : ctx.rect(boxX, by, boxW, boxH);
+                ctx.stroke();
+
+                // 効果バッジ (右上)
                 const badgeColor = opt.effect === 'atk' ? '#FF6644' :
                                    opt.effect === 'hp'  ? '#44FF88' :
-                                   opt.effect === 'xp'  ? '#AADDFF' : '#FFDD44';
+                                   opt.effect === 'xp'  ? '#88CCFF' : '#FFDD44';
                 ctx.fillStyle = badgeColor;
-                ctx.font = 'bold 11px monospace';
+                ctx.font = 'bold 9px monospace';
                 ctx.textAlign = 'right';
-                ctx.fillText(`[ ${opt.label} ]`, bx + boxW - 12, by + 22);
-                ctx.fillStyle = sel ? '#FFFFFF' : '#CCCCCC';
-                ctx.font = (sel ? 'bold ' : '') + '16px monospace';
+                ctx.shadowBlur = sel ? 6 : 0;
+                ctx.shadowColor = badgeColor;
+                ctx.fillText(`▸ ${opt.label}`, boxX + boxW - 10, by + 16);
+                ctx.shadowBlur = 0;
+
+                // 哲学的言葉 (大きく)
+                ctx.fillStyle = sel ? '#FFFFFF' : 'rgba(200,200,220,0.75)';
+                ctx.font = (sel ? 'bold ' : '') + '16px serif';
                 ctx.textAlign = 'left';
-                ctx.fillText((sel ? '▶ ' : '  ') + opt.text, bx + 14, by + 30);
-                ctx.fillStyle = '#777777';
-                ctx.font = 'italic 12px monospace';
-                ctx.fillText(`— ${opt.philosopher}`, bx + 26, by + 56);
+                ctx.fillText((sel ? '▶ ' : '    ') + opt.text, boxX + 12, by + 34);
+
+                // 哲学者名 (斜体で小さく)
+                ctx.fillStyle = sel ? 'rgba(200,180,255,0.8)' : 'rgba(150,140,180,0.5)';
+                ctx.font = 'italic 11px serif';
+                ctx.fillText(`— ${opt.philosopher}`, boxX + 28, by + 58);
             });
+
+            // 操作ヒント
             ctx.textAlign = 'center';
-            ctx.fillStyle = '#444444';
-            ctx.font = '13px monospace';
-            ctx.fillText('↑↓ 選択   Enter / Space 決定', VIEW_W / 2, VIEW_H - 30);
+            ctx.fillStyle = 'rgba(100,100,140,0.7)';
+            ctx.font = '11px monospace';
+            ctx.fillText('↑ / ↓ / Dpad  で選択    A / Enter / Space  で決定', VIEW_W / 2, VIEW_H - 32);
+
+            // 累積ステータス (薄く)
             if (meditationChoices.length > 0) {
-                ctx.fillStyle = '#3a3a3a';
-                ctx.font = '11px monospace';
+                ctx.fillStyle = 'rgba(80,80,100,0.5)';
+                ctx.font = '9px monospace';
                 const s = `累積: ATK+${(meditationAtkBonus*100).toFixed(0)}%  HP+${meditationHpBonus}  XP+${(meditationXpBonus*100).toFixed(0)}%  SPD+${(meditationSpdBonus*100).toFixed(0)}%`;
-                ctx.fillText(s, VIEW_W / 2, VIEW_H - 12);
+                ctx.fillText(s, VIEW_W / 2, VIEW_H - 16);
             }
             ctx.restore();
         }
@@ -5866,11 +6182,14 @@ const MEDITATION_DATA = [
             // BGMラベル (現在ステージの音楽名)
             {
                 const bgmProfile = STAGE_BGM_PROFILES[Math.min(currentStageIndex, 19)];
-                ctx.fillStyle = '#888888';
+                ctx.fillStyle = '#555566';
                 ctx.font = '9px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText('♪ ' + bgmProfile.label, px + STATS_W / 2, VIEW_H - 18);
+                ctx.fillText('♪ ' + (bossActive ? 'BOSS BATTLE' : bgmProfile.label), px + STATS_W / 2, VIEW_H - 4);
             }
+
+            // ==== コントロールガイド (Xboxコントローラ / キーボード) ====
+            drawControlGuide(px);
 
             // 哲学の道インジケータ
             if (meditationChoices.length > 0) {
