@@ -57,32 +57,32 @@
         const SPRITE_SIZE = 16 * PIXEL_SCALE; // 48
         const PALETTE = {
             0: null,
-            1: '#000000',   // 黒の縁取り・影
-            2: '#EFD02E',   // 黄金・黄色
-            3: '#D0D0D0',   // 銀・グレー
-            4: '#FFC8B4',   // 肌色
-            5: '#3CD070',   // スライム緑
-            6: '#109040',   // 濃い緑
-            7: '#FFFFFF',   // 白
-            8: '#E02020',   // 赤
-            9: '#DDDDDD',   // 剣の刃
-            10: '#444444',  // 暗いグレー
-            11: '#2040C0',  // 青
-            12: '#804020',  // 茶色
-            13: '#A020F0',  // 紫
-            14: '#1848B8',  // 川の水色
-            15: '#3878F8',  // 川の明るい水色
-            16: '#808080',  // 山の岩肌
-            17: '#A0A0A0',  // 山の明るい部分
-            18: '#986830',  // 橋の板
-            19: '#502010',  // 濃い茶色
-            20: '#F08080',  // ピンク・薄い赤
-            21: '#C09030',  // 金の影
-            22: '#FFF0A0',  // 金のハイライト
-            23: '#E8906C',  // 肌の影
-            24: '#6080F0',  // 青のハイライト
-            25: '#102080',  // 青の深い影
-            26: '#60C860',  // 緑のハイライト
+            1: '#1A1A2E',   // near black / dark navy (縁取り・影)
+            2: '#FFD700',   // gold (黄金)
+            3: '#C0C0C0',   // silver (銀)
+            4: '#FFAA77',   // warm skin tone (肌色)
+            5: '#2ECC71',   // emerald green (スライム緑)
+            6: '#27AE60',   // forest green (濃い緑)
+            7: '#F0EAD6',   // warm white/cream (白)
+            8: '#E84855',   // vivid red (赤)
+            9: '#ECF0F1',   // light gray (剣の刃)
+            10: '#4A3728',  // dark brown shadow (暗いグレー)
+            11: '#5B9BD5',  // sky blue (青)
+            12: '#8B4513',  // saddle brown (茶色)
+            13: '#9B59B6',  // purple (紫)
+            14: '#2E86AB',  // deep blue (川の水色)
+            15: '#7EC8E3',  // light sky blue (川の明るい水色)
+            16: '#7F8C8D',  // gray (山の岩肌)
+            17: '#ECF0F1',  // light gray (山の明るい部分)
+            18: '#8B6914',  // dark gold/brown (橋の板)
+            19: '#4A3728',  // dark brown (濃い茶色)
+            20: '#FF6B35',  // orange (ピンク・薄い赤)
+            21: '#D4A574',  // tan/sand (金の影)
+            22: '#F5E642',  // yellow (金のハイライト)
+            23: '#FFC8A0',  // face/skin highlight (肌の影)
+            24: '#6B3A2A',  // deep brown shadow (青のハイライト)
+            25: '#16213E',  // very dark blue (青の深い影)
+            26: '#E94560',  // hot pink/magenta (緑のハイライト)
         };
 
         const PLAYER_SPRITE = [
@@ -2130,6 +2130,7 @@ const MEDITATION_DATA = [
             centerMessage = `思索: ${choice.text}`;
             msgTimer = 90;
             playSoundEffect('stageclear');
+            spawnGlowParticles(player.x + SPRITE_SIZE/2, player.y + SPRITE_SIZE/2, '#9B59B6', 12);
             if (meditationPendingStage >= 19) {
                 isStageAdvancing = true;
                 setTimeout(() => {
@@ -2208,6 +2209,7 @@ const MEDITATION_DATA = [
                 centerMessage = `Lv.${playerLevel} UP!`;
                 msgTimer = 90;
                 playSoundEffect('stageclear');
+                spawnGlowParticles(player.x + SPRITE_SIZE/2, player.y + SPRITE_SIZE/2, '#FFD700', 16);
             }
         }
 
@@ -2379,6 +2381,24 @@ const MEDITATION_DATA = [
                     maxLife: 40,
                     color,
                     size: 2 + Math.random() * 3,
+                    glow: false,
+                });
+            }
+        }
+
+        function spawnGlowParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+                const speed = 1.5 + Math.random() * 2.5;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 1,
+                    life: 40 + Math.floor(Math.random() * 30),
+                    maxLife: 70,
+                    color,
+                    size: 3 + Math.random() * 3,
+                    glow: true,
                 });
             }
         }
@@ -2400,9 +2420,13 @@ const MEDITATION_DATA = [
                 const alpha = p.life / p.maxLife;
                 ctx.save();
                 ctx.globalAlpha = alpha;
+                if (p.glow) {
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = p.color;
+                }
                 ctx.fillStyle = p.color;
                 ctx.beginPath();
-                ctx.arc(p.x - camX, p.y - camY, p.size * alpha, 0, Math.PI * 2);
+                ctx.arc(p.x - camX, p.y - camY, p.size * (p.life / p.maxLife), 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
@@ -3236,6 +3260,7 @@ const MEDITATION_DATA = [
                     keyItemCollected = true;
                     if (currentStageIndex === 0) tutorialStep = 5;
                     bossActive = true;
+                    spawnGlowParticles(player.x + SPRITE_SIZE/2, player.y + SPRITE_SIZE/2, '#FFD700', 14);
                     keyItemPos = null;
                     const boss = getStageBoss(currentStageIndex);
                     enemies.push(boss);
@@ -3389,6 +3414,7 @@ const MEDITATION_DATA = [
                                 karma.chi++;
                                 const wasBoss = enemy.isBoss;
                                 spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 12, 5);
+                                if (wasBoss) spawnGlowParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 18);
                                 screenShake = Math.max(screenShake, 8);
                                 enemies.splice(j, 1);
 
@@ -3669,6 +3695,7 @@ const MEDITATION_DATA = [
                             if (facingEnemy) karma.bu++;
                             const wasBoss2 = enemy.isBoss;
                             spawnParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 12, 5);
+                            if (wasBoss2) spawnGlowParticles(enemy.x + SPRITE_SIZE/2, enemy.y + SPRITE_SIZE/2, '#FFD700', 18);
                             screenShake = Math.max(screenShake, 8);
                             enemies.splice(i, 1);
 
@@ -3799,6 +3826,28 @@ const MEDITATION_DATA = [
                     }
                 }
             }
+            targetCtx.restore();
+        }
+
+        // ==== ビネットオーバーレイ ====
+        function drawVignette() {
+            const vg = ctx.createRadialGradient(VIEW_W/2, VIEW_H/2, VIEW_H*0.3, VIEW_W/2, VIEW_H/2, VIEW_H*0.75);
+            vg.addColorStop(0, 'rgba(0,0,0,0)');
+            vg.addColorStop(1, 'rgba(0,0,0,0.45)');
+            ctx.fillStyle = vg;
+            ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+        }
+
+        // ==== グロー効果ヘルパー ====
+        function drawGlow(targetCtx, x, y, r, color, strength = 15) {
+            targetCtx.save();
+            targetCtx.shadowBlur = strength;
+            targetCtx.shadowColor = color;
+            targetCtx.beginPath();
+            targetCtx.arc(x, y, r, 0, Math.PI * 2);
+            targetCtx.fillStyle = color;
+            targetCtx.globalAlpha = 0.18;
+            targetCtx.fill();
             targetCtx.restore();
         }
 
@@ -4357,11 +4406,20 @@ const MEDITATION_DATA = [
         // ==== 右側ステータスパネル ====
         function drawStatsPanel() {
             const px = VIEW_W;
-            ctx.fillStyle = '#111122';
+            // グラジエントパネル背景
+            const panelGrad = ctx.createLinearGradient(px, 0, px + STATS_W, VIEW_H);
+            panelGrad.addColorStop(0, '#0D1B2A');
+            panelGrad.addColorStop(1, '#162032');
+            ctx.fillStyle = panelGrad;
             ctx.fillRect(px, 0, STATS_W, VIEW_H);
-            ctx.strokeStyle = '#334466';
+            // 装飾ボーダー: 輝く金ライン
+            ctx.save();
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#FFD700';
+            ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 2;
-            ctx.strokeRect(px, 0, STATS_W, VIEW_H);
+            ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, VIEW_H); ctx.stroke();
+            ctx.restore();
             ctx.textAlign = 'center';
 
             // デイリーチャレンジ中インジケータ
@@ -4391,17 +4449,32 @@ const MEDITATION_DATA = [
                 ctx.fillText(ngPlusLevel === 1 ? 'NG+' : 'NG++', 10, 35);
             }
 
-            // HP
+            // HP — グラジエントバー
+            ctx.save();
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#ff4444';
             ctx.fillStyle = '#ff4444';
             ctx.font = 'bold 13px monospace';
             ctx.fillText('HP', px + STATS_W / 2, 58);
-            ctx.fillStyle = '#330000';
-            ctx.fillRect(px + 10, 64, STATS_W - 20, 16);
-            ctx.fillStyle = '#ee2222';
-            ctx.fillRect(px + 10, 64, (STATS_W - 20) * Math.max(0, player.hp / player.maxHp), 16);
-            ctx.strokeStyle = '#666';
+            ctx.restore();
+            const hpRatioPnl = Math.max(0, player.hp / player.maxHp);
+            const hpBarW = STATS_W - 20;
+            ctx.fillStyle = '#2d0000';
+            ctx.fillRect(px + 10, 64, hpBarW, 16);
+            // グラジエント: 高HP=緑→黄→低HP=赤
+            const hpGrad = ctx.createLinearGradient(px + 10, 64, px + 10 + hpBarW * hpRatioPnl, 64);
+            if (hpRatioPnl > 0.6) { hpGrad.addColorStop(0, '#2ECC71'); hpGrad.addColorStop(1, '#27AE60'); }
+            else if (hpRatioPnl > 0.3) { hpGrad.addColorStop(0, '#FFD700'); hpGrad.addColorStop(1, '#FF6B35'); }
+            else { hpGrad.addColorStop(0, '#E84855'); hpGrad.addColorStop(1, '#8B0000'); }
+            ctx.fillStyle = hpGrad;
+            ctx.fillRect(px + 10, 64, hpBarW * hpRatioPnl, 16);
+            ctx.save();
+            ctx.shadowBlur = hpRatioPnl < 0.3 ? 6 : 0;
+            ctx.shadowColor = '#E84855';
+            ctx.strokeStyle = hpRatioPnl > 0.6 ? '#2ECC71' : hpRatioPnl > 0.3 ? '#FFD700' : '#E84855';
             ctx.lineWidth = 1;
-            ctx.strokeRect(px + 10, 64, STATS_W - 20, 16);
+            ctx.strokeRect(px + 10, 64, hpBarW, 16);
+            ctx.restore();
             ctx.fillStyle = '#fff';
             ctx.font = '11px monospace';
             ctx.fillText(player.hp + ' / ' + player.maxHp, px + STATS_W / 2, 76);
@@ -4411,15 +4484,22 @@ const MEDITATION_DATA = [
             ctx.font = 'bold 13px monospace';
             ctx.fillText(`Lv.${playerLevel}  ATK:${playerATK.toFixed(1)}`, px + STATS_W / 2, 102);
 
-            // XPバー
-            ctx.fillStyle = '#223300';
-            ctx.fillRect(px + 10, 108, STATS_W - 20, 10);
+            // XPバー — グラジエント青
             const xpMax = XP_TABLE[Math.min(playerLevel, 19)] || XP_TABLE[19];
             const xpPrev = XP_TABLE[playerLevel - 1] || 0;
             const xpRatio = playerLevel >= 20 ? 1 : Math.max(0, (playerXP - xpPrev) / (xpMax - xpPrev));
-            ctx.fillStyle = '#44ee66';
+            ctx.fillStyle = '#0d1a2e';
+            ctx.fillRect(px + 10, 108, STATS_W - 20, 10);
+            const xpGrad = ctx.createLinearGradient(px + 10, 0, px + 10 + (STATS_W - 20) * xpRatio, 0);
+            xpGrad.addColorStop(0, '#5B9BD5');
+            xpGrad.addColorStop(1, '#7EC8E3');
+            ctx.save();
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#5B9BD5';
+            ctx.fillStyle = xpGrad;
             ctx.fillRect(px + 10, 108, (STATS_W - 20) * xpRatio, 10);
-            ctx.strokeStyle = '#446644';
+            ctx.restore();
+            ctx.strokeStyle = '#2E86AB';
             ctx.lineWidth = 1;
             ctx.strokeRect(px + 10, 108, STATS_W - 20, 10);
             ctx.fillStyle = '#aaaaaa';
@@ -4438,10 +4518,17 @@ const MEDITATION_DATA = [
             ctx.font = '12px monospace';
             ctx.fillText('SCORE: ' + pScore, px + STATS_W / 2, 132);
 
-            // アイテム
-            ctx.fillStyle = '#EFD02E';
+            // アイテム (セクションヘッダー: 金色＋下線)
+            ctx.save();
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#FFD700';
+            ctx.fillStyle = '#FFD700';
             ctx.font = 'bold 12px monospace';
-            ctx.fillText('ITEMS', px + STATS_W / 2, 152);
+            ctx.fillText('— アイテム —', px + STATS_W / 2, 152);
+            ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(px + 15, 154); ctx.lineTo(px + STATS_W - 15, 154); ctx.stroke();
+            ctx.restore();
             ctx.fillStyle = '#aaaaaa';
             ctx.font = '12px monospace';
             let iy = 168;
@@ -4453,9 +4540,17 @@ const MEDITATION_DATA = [
             // 哲学アイテム表示
             const philTotal = philItems.orb_reason + philItems.orb_emotion + philItems.key_freedom + philItems.chain_duty;
             if (philTotal > 0) {
-                ctx.fillStyle = '#A020F0';
+                ctx.save();
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = '#9B59B6';
+                ctx.fillStyle = '#C084FC';
                 ctx.font = 'bold 10px monospace';
-                ctx.fillText('— 哲学 —', px + STATS_W / 2, iy); iy += 14;
+                ctx.fillText('— 哲学 —', px + STATS_W / 2, iy);
+                ctx.strokeStyle = 'rgba(160,80,240,0.3)';
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(px + 15, iy + 2); ctx.lineTo(px + STATS_W - 15, iy + 2); ctx.stroke();
+                ctx.restore();
+                iy += 14;
                 ctx.font = '10px monospace';
                 const philLabel = [
                     philItems.orb_reason   > 0 ? `理×${philItems.orb_reason}`   : null,
@@ -4469,10 +4564,18 @@ const MEDITATION_DATA = [
 
             // カルマ表示
             const karmaY = 230;
-            ctx.fillStyle = '#666666';
-            ctx.font = '11px monospace';
+            ctx.save();
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = '#FFD700';
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 11px monospace';
             ctx.textAlign = 'center';
             ctx.fillText('— カルマ —', px + STATS_W / 2, karmaY);
+            // 下線
+            ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(px + 15, karmaY + 2); ctx.lineTo(px + STATS_W - 15, karmaY + 2); ctx.stroke();
+            ctx.restore();
             const karmaItems = [
                 { label: '武', val: karma.bu,    color: '#FF6644' },
                 { label: '知', val: karma.chi,   color: '#AADDFF' },
@@ -4747,12 +4850,39 @@ const MEDITATION_DATA = [
                                     tx + 10, ty + 10, 0, 2, false, false, bgCtx
                                 );
                             }
+                            // 床タイル: 微細グリッド
+                            bgCtx.strokeStyle = 'rgba(0,0,0,0.08)';
+                            bgCtx.lineWidth = 0.5;
+                            bgCtx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
+                            // ランダム明るいバリエーション
+                            if ((c * 7 + r * 13) % 11 === 0) {
+                                bgCtx.fillStyle = 'rgba(255,255,255,0.04)';
+                                bgCtx.fillRect(tx + 2, ty + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                            }
                         } else if (tile === 1) {
                             drawShape(TILE_MOUNTAIN, tx, ty, 0, 4, false, false, bgCtx);
+                            // 壁: 3Dシャドウエッジ
+                            bgCtx.fillStyle = 'rgba(0,0,0,0.3)';
+                            bgCtx.fillRect(tx + TILE_SIZE - 3, ty, 3, TILE_SIZE);
+                            bgCtx.fillRect(tx, ty + TILE_SIZE - 3, TILE_SIZE, 3);
+                            // 壁: ハイライト(左上)
+                            bgCtx.fillStyle = 'rgba(255,255,255,0.12)';
+                            bgCtx.fillRect(tx, ty, TILE_SIZE, 2);
+                            bgCtx.fillRect(tx, ty, 2, TILE_SIZE);
                         } else if (tile === 2) {
                             drawShape(TILE_WATER, tx, ty, 0, 4, false, false, bgCtx);
+                            // 水: 3Dシャドウエッジ
+                            bgCtx.fillStyle = 'rgba(0,0,0,0.2)';
+                            bgCtx.fillRect(tx + TILE_SIZE - 3, ty, 3, TILE_SIZE);
+                            bgCtx.fillRect(tx, ty + TILE_SIZE - 3, TILE_SIZE, 3);
                         } else if (tile === 3) {
                             drawShape(TILE_BRIDGE, tx, ty, 0, 4, false, false, bgCtx);
+                            // 橋: 3Dシャドウエッジ
+                            bgCtx.fillStyle = 'rgba(0,0,0,0.25)';
+                            bgCtx.fillRect(tx + TILE_SIZE - 3, ty, 3, TILE_SIZE);
+                            bgCtx.fillRect(tx, ty + TILE_SIZE - 3, TILE_SIZE, 3);
+                            bgCtx.fillStyle = 'rgba(255,255,255,0.1)';
+                            bgCtx.fillRect(tx, ty, TILE_SIZE, 2);
                         }
                     }
                 }
@@ -4787,6 +4917,9 @@ const MEDITATION_DATA = [
                 const kx = keyItemPos.x - camX;
                 const ky = keyItemPos.y - camY;
                 const pulse = Math.sin(Date.now() / 300) * 0.25;
+                // パルシング金色グロー
+                const keyGlowStrength = 15 + 10 * Math.abs(Math.sin(Date.now() / 400));
+                drawGlow(ctx, kx + SPRITE_SIZE/2, ky + SPRITE_SIZE/2, 28, '#FFD700', keyGlowStrength);
                 drawShape(KEY_ITEM_SPRITE, kx, ky, pulse, PIXEL_SCALE);
                 // 画面外なら矢印インジケーター
                 if (kx < 0 || kx > VIEW_W || ky < 0 || ky > VIEW_H) {
@@ -4807,20 +4940,29 @@ const MEDITATION_DATA = [
             // アイテム描画（カメラオフセット適用）
             for (let item of items) {
                 const wobble = Math.sin(Date.now() / 200) * 0.15;
+                const iix = item.x - camX + SPRITE_SIZE/2;
+                const iiy = item.y - camY + SPRITE_SIZE/2;
                 if (item.type === 'wisdom') {
-                    // 知恵の欠片: 青い光のグロー
-                    const wix = item.x - camX + SPRITE_SIZE/2;
-                    const wiy = item.y - camY + SPRITE_SIZE/2;
-                    const wGlow = ctx.createRadialGradient(wix, wiy, 2, wix, wiy, 28);
+                    // 知恵の欠片: 青い光のグロー (ラジアルグラデーション + drawGlow)
+                    const wGlow = ctx.createRadialGradient(iix, iiy, 2, iix, iiy, 28);
                     const wAlpha = 0.3 + 0.2 * Math.sin(Date.now() / 300);
                     wGlow.addColorStop(0, `rgba(100,200,255,${wAlpha + 0.2})`);
                     wGlow.addColorStop(1, 'rgba(100,200,255,0)');
                     ctx.save();
                     ctx.fillStyle = wGlow;
                     ctx.beginPath();
-                    ctx.arc(wix, wiy, 28, 0, Math.PI * 2);
+                    ctx.arc(iix, iiy, 28, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.restore();
+                    drawGlow(ctx, iix, iiy, 20, '#7EC8E3', 12);
+                } else if (item.type === 'orb_reason') {
+                    drawGlow(ctx, iix, iiy, 20, '#5B9BD5', 12);
+                } else if (item.type === 'orb_emotion') {
+                    drawGlow(ctx, iix, iiy, 20, '#E84855', 12);
+                } else if (item.type === 'key_freedom') {
+                    drawGlow(ctx, iix, iiy, 20, '#FFD700', 12);
+                } else if (item.type === 'chain_duty') {
+                    drawGlow(ctx, iix, iiy, 20, '#9B59B6', 12);
                 }
                 drawShape(item.sprite, item.x - camX, item.y - camY, wobble, PIXEL_SCALE);
             }
@@ -4839,6 +4981,10 @@ const MEDITATION_DATA = [
                 const eFlipX = (player.x < enemy.x);
                 const esx = enemy.x - camX, esy = enemy.y - camY;
                 if (esx < -SPRITE_SIZE * 2 || esx > VIEW_W + SPRITE_SIZE || esy < -SPRITE_SIZE * 2 || esy > VIEW_H + SPRITE_SIZE) continue;
+                // ボス: 赤/オレンジのグロー
+                if (enemy.type === 'boss') {
+                    drawGlow(ctx, esx + SPRITE_SIZE * 0.75, esy + SPRITE_SIZE * 0.75, 28, '#FF4400', 12);
+                }
                 drawShape(enemy.sprite, esx, esy, wobble, scale, enemy.hitTimer % 4 > 1, eFlipX);
                 // HPバー
                 ctx.fillStyle = '#f00';
@@ -4858,6 +5004,8 @@ const MEDITATION_DATA = [
                 else if (player.dirY === -1) { heroSprite = wf ? PLAYER_BACK_SPRITE_W2 : PLAYER_BACK_SPRITE; }
                 else { heroSprite = wf ? PLAYER_SPRITE_W2 : PLAYER_SPRITE; }
 
+                // プレイヤー: 温かい金色グロー
+                drawGlow(ctx, player.x - camX + SPRITE_SIZE/2, player.y - camY + SPRITE_SIZE/2, 24, '#FFD700', 8);
                 drawShape(heroSprite, player.x - camX, player.y - camY, 0, PIXEL_SCALE, false, heroFlip);
             }
 
@@ -4868,7 +5016,7 @@ const MEDITATION_DATA = [
                 drawShape(SHIELD_SPRITE, sx, sy, pRot, PIXEL_SCALE);
             }
 
-            // 魔法サークル (攻撃中)
+            // 魔法サークル (攻撃中) — 強化版
             if (player.isAttacking && currentWeapon === 'sword') {
                 const maxTimer = comboStep === 3 ? 20 : 15;
                 const progress = 1 - player.attackTimer / maxTimer;
@@ -4889,17 +5037,38 @@ const MEDITATION_DATA = [
                                  comboStep === 2 ? `rgba(68,136,255,${alpha})` :
                                                   `rgba(136,68,255,${alpha})`;
                 ctx.save();
+                // グロー効果を有効化
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = comboStep === 3 ? '#FF88FF' : '#8844FF';
+                // メイン弧
                 ctx.strokeStyle = arcColor;
                 ctx.lineWidth = comboStep === 3 ? 10 : comboStep === 2 ? 8 : 7;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
                 ctx.arc(cx, cy, arcRadius, sweepStart, sweepEnd);
                 ctx.stroke();
+                // 内側の弧（二重リング）
+                ctx.shadowBlur = 10;
                 ctx.strokeStyle = comboStep === 3 ? `rgba(220,180,255,${alpha * 0.5})` : `rgba(150,180,255,${alpha * 0.6})`;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(cx, cy, arcRadius * 0.85, sweepStart, sweepEnd);
                 ctx.stroke();
+                ctx.shadowBlur = 0;
+                // ルーン小円 (6個を弧の周囲に配置)
+                const runeCount = comboStep === 3 ? 12 : 6;
+                for (let ri = 0; ri < runeCount; ri++) {
+                    const runeAngle = sweepStart + (sweepEnd - sweepStart) * (ri / (runeCount - 1 || 1));
+                    const rx = cx + Math.cos(runeAngle) * arcRadius;
+                    const ry = cy + Math.sin(runeAngle) * arcRadius;
+                    ctx.beginPath();
+                    ctx.arc(rx, ry, comboStep === 3 ? 5 : 3, 0, Math.PI * 2);
+                    ctx.fillStyle = comboStep === 3 ? `rgba(255,180,255,${alpha})` : `rgba(160,120,255,${alpha})`;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = comboStep === 3 ? '#FF88FF' : '#8844FF';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
                 // 魔法オーブ: 中心に光の点
                 if (comboStep === 3) {
                     const orbGlow = ctx.createRadialGradient(cx, cy, 2, cx, cy, arcRadius * 0.3);
@@ -4909,6 +5078,18 @@ const MEDITATION_DATA = [
                     ctx.beginPath();
                     ctx.arc(cx, cy, arcRadius * 0.3, 0, Math.PI * 2);
                     ctx.fill();
+                    // コンボ3: バーストの12小円
+                    for (let bi = 0; bi < 12; bi++) {
+                        const ba = (Math.PI * 2 * bi / 12) + progress * Math.PI;
+                        const br = arcRadius * 0.5 * progress;
+                        ctx.beginPath();
+                        ctx.arc(cx + Math.cos(ba)*br, cy + Math.sin(ba)*br, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255,160,255,${alpha * 0.7})`;
+                        ctx.shadowBlur = 6;
+                        ctx.shadowColor = '#FF88FF';
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
                 }
                 ctx.restore();
             }
