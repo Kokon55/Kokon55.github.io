@@ -1066,6 +1066,7 @@ const MEDITATION_DATA = [
         let msgTimer = 100;
         let centerMessage = "STAGE 1";
         let narrativeTimer = 0;   // >0 の間はナラティブオーバーレイを表示
+        let narrativeWaiting = false; // タイプ完了後、ボタン待機中
         let narrativeStage = -1;  // 表示中のステージ番号
         let narrativeTypewriter = { text: '', target: '', charIndex: 0, charTimer: 0 };
         let narrativeParticles = []; // UI-space gold particles for typewriter effect
@@ -1951,11 +1952,28 @@ const MEDITATION_DATA = [
                 return;
             }
 
+            // ナラティブ中: タイプ待機中ならボタンで閉じる、タイプ中なら即完了
+            if (narrativeWaiting) {
+                narrativeWaiting = false;
+                narrativeTimer = 30; // フェードアウト開始
+                return;
+            }
             if (narrativeTimer > 30) {
                 narrativeTimer = 30;
                 // Complete typewriter instantly on skip
                 const tw = narrativeTypewriter;
                 tw.charIndex = tw.totalLen || 0;
+                narrativeWaiting = true; // 即完了 → ボタン待機へ
+                return;
+            }
+
+            // ゲームオーバー中: ボタンでタイトルへ
+            if (isGameOver) {
+                isGameOver = false;
+                deathScenePhase = 0;
+                deathSceneTimer = 0;
+                gameOverTimer = 0;
+                gameState = 'title';
                 return;
             }
 
@@ -1986,7 +2004,7 @@ const MEDITATION_DATA = [
                     const correct = bossDialogueCursor === dlg.correct;
                     bossDebuffTarget = correct ? 'boss' : 'player';
                     bossDebuffTimer = 480; // 8秒
-                    if (correct) { karma.tetsu++; achievementStats.dialogueWins++; }
+                    if (correct) { karma.tetsu++; achievementStats.dialogueWins++; showKarmaExplain(); }
                     centerMessage = correct ? '正解！ボスが動揺した！' : '不正解…ボスが激昂した！';
                     msgTimer = 120;
                     screenShake = correct ? 12 : 8;
@@ -2558,6 +2576,7 @@ const MEDITATION_DATA = [
         let bossDialogueTriggered = false; // このボス戦で既に発動したか
         let bossDebuffTarget = null;  // 'boss' or 'player'
         let bossDebuffTimer = 0;      // debuff持続フレーム数
+        let karmaFirstTimeShown = false; // カルマ初回説明済みフラグ
         let meditationCursor = 0;
         let meditationChoices = []; // 選択した思索の記録
         let meditationAtkBonus = 0.0;  // 累積ATK倍率加算
@@ -2975,6 +2994,13 @@ const MEDITATION_DATA = [
                     msgTimer = 120;
                 }, 1500);
             }
+        }
+
+        function showKarmaExplain() {
+            if (karmaFirstTimeShown) return;
+            karmaFirstTimeShown = true;
+            centerMessage = 'カルマ — 行動の刻印\n武:戦闘  知:アイテム  守:防御  哲:問答\n右パネルのスライダーで音量変更できます';
+            msgTimer = 160;
         }
 
         function gainXP(amt) {
@@ -4400,6 +4426,23 @@ const MEDITATION_DATA = [
                 return;
             }
 
+            // ナラティブ待機中: A/Start で閉じる
+            if ((padA || padStart) && narrativeWaiting && jpTimer === 0) {
+                narrativeWaiting = false;
+                narrativeTimer = 30;
+                jpTimer = 20;
+            }
+
+            // ゲームオーバー中: A/Start でタイトルへ
+            if ((padA || padStart) && isGameOver && jpTimer === 0) {
+                isGameOver = false;
+                deathScenePhase = 0;
+                deathSceneTimer = 0;
+                gameOverTimer = 0;
+                gameState = 'title';
+                jpTimer = 30;
+            }
+
             if (padA || padStart) {
                 if (!hasStarted) {
                     hasStarted = true;
@@ -4429,7 +4472,12 @@ const MEDITATION_DATA = [
             }
 
             if (!hasStarted) return;
-            if (narrativeTimer > 0) { narrativeTimer--; return; }
+            if (narrativeWaiting) return; // ボタン待機中はゲーム停止
+            if (narrativeTimer > 0) {
+                narrativeTimer--;
+                if (narrativeTimer <= 0) narrativeWaiting = false;
+                return;
+            }
             if (meditationPending) return;
             if (synthesisMenuOpen) return;
             if (philSynthMenuOpen) return;
@@ -4716,7 +4764,7 @@ const MEDITATION_DATA = [
                                     itemBoxSpawnedThisStage = true;
                                 }
 
-                                karma.chi++;
+                                karma.chi++; showKarmaExplain();
                                 const wasBoss = enemy.isBoss;
                                 const dex = enemy.x + SPRITE_SIZE/2, dey = enemy.y + SPRITE_SIZE/2;
                                 spawnParticles(dex, dey, '#FFD700', 12, 5);
@@ -4760,7 +4808,7 @@ const MEDITATION_DATA = [
                         const sy = pcy + player.dirY * 20;
                         if (Math.hypot(sx - (p.x + 12), sy - (p.y + 12)) < 30) {
                             playSoundEffect('attack'); // 弾いた音（剣の音を流用）
-                            karma.mamori++;
+                            karma.mamori++; showKarmaExplain();
                             projectiles.splice(i, 1);
                             continue;
                         }
@@ -5110,7 +5158,7 @@ const MEDITATION_DATA = [
                             // カルマ: 正面で倒した場合
                             const facingEnemy = (player.dirX !== 0 && Math.sign(enemy.x - player.x) === player.dirX) ||
                                                 (player.dirY !== 0 && Math.sign(enemy.y - player.y) === player.dirY);
-                            if (facingEnemy) karma.bu++;
+                            if (facingEnemy) { karma.bu++; showKarmaExplain(); }
                             const wasBoss2 = enemy.isBoss;
                             const dex2 = enemy.x + SPRITE_SIZE/2, dey2 = enemy.y + SPRITE_SIZE/2;
                             spawnParticles(dex2, dey2, '#FFD700', 12, 5);
@@ -6019,7 +6067,8 @@ const MEDITATION_DATA = [
         }
 
         function startNarrative(si) {
-            narrativeTimer = 240;
+            narrativeTimer = 9999; // タイプ完了後はボタン待機するので長めに設定
+            narrativeWaiting = false;
             narrativeStage = si;
             const name = STAGE_NAMES[si] || '';
             const quote = STAGE_QUOTES[si] || '';
@@ -6052,9 +6101,10 @@ const MEDITATION_DATA = [
         }
 
         function drawNarrativeOverlay() {
-            if (narrativeTimer <= 0) return;
-            const alpha = narrativeTimer > 150 ? 1.0 :
-                          narrativeTimer > 30  ? (narrativeTimer - 30) / 120 : narrativeTimer / 30;
+            if (narrativeTimer <= 0 && !narrativeWaiting) return;
+            // フェードイン/アウト: 待機中は常に1.0、フェードアウト中はtimerで減衰
+            const alpha = narrativeWaiting ? 1.0 :
+                          narrativeTimer > 30 ? 1.0 : narrativeTimer / 30;
             ctx.save();
             ctx.globalAlpha = Math.min(alpha, 0.88);
             ctx.fillStyle = '#000000';
@@ -6144,11 +6194,30 @@ const MEDITATION_DATA = [
                 });
             }
 
-            // フェードアウト指示
-            if (narrativeTimer < 60) {
-                ctx.fillStyle = `rgba(150,150,150,${alpha * 0.7})`;
-                ctx.font = '13px monospace';
-                ctx.fillText('— Press any key to skip —', VIEW_W / 2, VIEW_H / 2 + 130);
+            // タイプ完了検知 → ボタン待機へ
+            const typingDone = tw.charIndex >= (tw.totalLen || 0);
+            if (typingDone && !narrativeWaiting && narrativeTimer > 30) {
+                narrativeWaiting = true;
+            }
+
+            // ボタン待機中: 続けるプロンプト (点滅)
+            if (narrativeWaiting) {
+                const blink = Math.floor(Date.now() / 500) % 2 === 0;
+                ctx.save();
+                ctx.globalAlpha = blink ? 1.0 : 0.4;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 16px monospace';
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#FFD700';
+                ctx.fillText('▶  Enter / A  で続ける  ◀', VIEW_W / 2, VIEW_H / 2 + 140);
+                ctx.restore();
+            } else if (!typingDone && narrativeTimer > 30) {
+                // タイプ中はスキップ案内
+                ctx.fillStyle = `rgba(130,130,130,${alpha * 0.6})`;
+                ctx.font = '12px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('何かキーを押してスキップ', VIEW_W / 2, VIEW_H / 2 + 140);
             }
             ctx.restore();
         }
@@ -6413,10 +6482,18 @@ const MEDITATION_DATA = [
                 VOL_PANEL.seY  = seBarY;
 
                 ctx.save();
-                ctx.fillStyle = '#445566';
-                ctx.font = 'bold 9px monospace';
+                // 音量セクション背景 (薄いボーダー)
+                ctx.strokeStyle = 'rgba(90,155,213,0.25)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(vbX - 2, 282, vbW + 4, 66, 4);
+                else ctx.rect(vbX - 2, 282, vbW + 4, 66);
+                ctx.stroke();
+                // ヘッダー
+                ctx.fillStyle = '#5B9BD5';
+                ctx.font = 'bold 10px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText('— 音量 (ドラッグで変更) —', px + STATS_W / 2, 291);
+                ctx.fillText('♪ 音量  (スライダーをドラッグ)', px + STATS_W / 2, 293);
 
                 const drawVolBar = (label, barY, vol, color) => {
                     ctx.font = '9px monospace'; ctx.textAlign = 'left';
@@ -7472,60 +7549,58 @@ const MEDITATION_DATA = [
             }
 
             if (isGameOver) {
-                const phase2Start = 220;
-                const phase3Start = 150;
-                // モノクロフィルター
+                // 暗転 + グレースケール
                 ctx.save();
-                const monoAlpha = Math.min(1, (deathSceneTimer - phase2Start) / 80);
-                if (deathSceneTimer < phase2Start) {
-                    ctx.fillStyle = `rgba(0,0,0,${Math.max(0, 0.7 - deathSceneTimer / 300 * 0.3)})`;
-                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-                    // グレースケールオーバーレイ
-                    ctx.fillStyle = `rgba(180,180,180,${Math.min(0.65, (phase2Start - deathSceneTimer) / 150)})`;
-                    ctx.globalCompositeOperation = 'color';
-                    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-                    ctx.globalCompositeOperation = 'source-over';
-                }
+                ctx.fillStyle = 'rgba(0,0,0,0.78)';
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.fillStyle = 'rgba(180,180,180,0.4)';
+                ctx.globalCompositeOperation = 'color';
+                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+                ctx.globalCompositeOperation = 'source-over';
                 ctx.restore();
 
-                ctx.fillStyle = 'rgba(0,0,0,0.72)';
-                ctx.fillRect(0, 0, VIEW_W, VIEW_H);
                 ctx.textAlign = 'center';
+                // タイマーに応じたフェードイン
+                const goFade = Math.min(1, (300 - gameOverTimer) / 40);
+                ctx.save();
+                ctx.globalAlpha = goFade;
 
-                // memento mori テキスト
-                if (deathSceneTimer < phase2Start) {
-                    const fadeIn = Math.min(1, (phase2Start - deathSceneTimer) / 60);
-                    ctx.globalAlpha = fadeIn;
-                    ctx.fillStyle = '#888888';
-                    ctx.font = 'italic 20px serif';
-                    ctx.fillText('memento mori', VIEW_W / 2, VIEW_H / 2 - 80);
-                    ctx.fillStyle = '#e02020';
-                    ctx.font = 'bold 52px monospace';
-                    ctx.fillText('GAME OVER', VIEW_W / 2, VIEW_H / 2 - 20);
-                    ctx.fillStyle = '#aaaaaa';
-                    ctx.font = '18px monospace';
-                    ctx.fillText(`— Stage ${currentStageIndex + 1}  Score: ${pScore} —`, VIEW_W / 2, VIEW_H / 2 + 30);
+                ctx.fillStyle = '#888888';
+                ctx.font = 'italic 20px serif';
+                ctx.fillText('memento mori', VIEW_W / 2, VIEW_H / 2 - 80);
 
-                    if (deathSceneTimer < 80) {
-                        ctx.fillStyle = '#888888';
-                        ctx.font = 'italic 16px serif';
-                        ctx.globalAlpha = (80 - deathSceneTimer) / 80;
-                        const lastWords = [
-                            'Cogito ergo sum...',
-                            '我思う、ゆえに我あり...',
-                            '存在は消えても、問いは残る...',
-                            'The unexamined life is not worth living...',
-                        ];
-                        ctx.fillText(lastWords[currentStageIndex % lastWords.length], VIEW_W / 2, VIEW_H / 2 + 75);
-                    }
-                    ctx.globalAlpha = 1;
-                }
+                ctx.fillStyle = '#e02020';
+                ctx.font = 'bold 52px monospace';
+                ctx.shadowBlur = 24;
+                ctx.shadowColor = '#880000';
+                ctx.fillText('GAME OVER', VIEW_W / 2, VIEW_H / 2 - 20);
+                ctx.shadowBlur = 0;
 
-                if (Math.floor(Date.now() / 500) % 2 === 0 && deathSceneTimer < 60) {
-                    ctx.fillStyle = '#555555';
-                    ctx.font = '14px monospace';
-                    ctx.fillText('Returning to title...', VIEW_W / 2, VIEW_H / 2 + 120);
-                }
+                ctx.fillStyle = '#aaaaaa';
+                ctx.font = '18px monospace';
+                ctx.fillText(`— Stage ${currentStageIndex + 1}  Score: ${pScore} —`, VIEW_W / 2, VIEW_H / 2 + 30);
+
+                ctx.fillStyle = '#888888';
+                ctx.font = 'italic 15px serif';
+                const lastWords = [
+                    '我思う、ゆえに我あり...',
+                    '存在は消えても、問いは残る...',
+                    '問いを持ち続ける者は死なない...',
+                    '試練は、生きた証だ...',
+                ];
+                ctx.fillText(lastWords[currentStageIndex % lastWords.length], VIEW_W / 2, VIEW_H / 2 + 70);
+
+                // ボタンで続ける (点滅)
+                const goBlink = Math.floor(Date.now() / 600) % 2 === 0;
+                ctx.globalAlpha = goFade * (goBlink ? 1.0 : 0.3);
+                ctx.fillStyle = '#EFD02E';
+                ctx.font = 'bold 16px monospace';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#EFD02E';
+                ctx.fillText('▶  Enter / A  でタイトルへ  ◀', VIEW_W / 2, VIEW_H / 2 + 120);
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+                ctx.restore();
                 ctx.textAlign = 'left';
             } else if (msgTimer > 0 && currentStageIndex !== 7) {
                 const cmLines = centerMessage.split('\n');
