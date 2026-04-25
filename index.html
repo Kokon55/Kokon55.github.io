@@ -974,6 +974,7 @@ const MEDITATION_DATA = [
             startNarrative(currentStageIndex);
             if (currentStageIndex === 0) tutorialStep = 1;
             playSoundEffect('stageclear');
+            restartBGMForStage();
         }
 
 
@@ -1201,28 +1202,50 @@ const MEDITATION_DATA = [
             if (!audioStarted || !audioCtx) return;
             const bgmAudio = document.getElementById('bgm');
             if (bgmAudio && bgmAudio.src && !bgmAudio.paused) return;
-            const cfg = bgmStages[currentStageIndex % bgmStages.length];
+
+            // ステージ変化検出: bgmIndex と nextNoteTime をリセット
             if (bgmCurrentStage !== currentStageIndex) {
                 bgmCurrentStage = currentStageIndex;
                 bgmIndex = 0;
                 nextNoteTime = audioCtx.currentTime + 0.05;
             }
-            // 動的テンポ: bgmDynamicSpeedMult が大きいほど早い (stepを短縮)
-            const dynStep = cfg.speed / bgmDynamicSpeedMult;
-            const noteLen = dynStep * 0.9;
-            // 動的音量: bgmDynamicVolMult を個々のゲインに適用
-            const dynGain = cfg.gain * bgmDynamicVolMult;
+
+            const profile = STAGE_BGM_PROFILES[Math.min(currentStageIndex, STAGE_BGM_PROFILES.length - 1)];
+            const melody  = BGM_MELODIES[profile.intensity];
+            const rootHz  = STAGE_ROOT_FREQS[Math.min(currentStageIndex, STAGE_ROOT_FREQS.length - 1)];
+
+            // semitone offset → frequency multiplier
+            function semitoneToFreq(root, semitones) {
+                return root * Math.pow(2, semitones / 12);
+            }
+
+            // 動的テンポ: bgmDynamicSpeedMult が大きいほど早い
+            const dynStep = (profile.tempo / 1000) / bgmDynamicSpeedMult;
+            const noteLen = dynStep * 0.88;
+
+            // 動的音量: profile.vol * bgmVolume * bgmDynamicVolMult
+            const dynGain = profile.vol * bgmVolume * bgmDynamicVolMult * 0.12;
+
             // BGMルーティング先: bgmFilter が存在すればそこへ、なければ直接 destination
             const bgmDest = bgmFilter || audioCtx.destination;
 
-            while (nextNoteTime < audioCtx.currentTime + 0.25) {
-                const freq = cfg.notes[bgmIndex % cfg.notes.length];
+            // oscillator type by intensity
+            const oscTypes = ['sine', 'triangle', 'square', 'sawtooth'];
+            const melOscType = oscTypes[profile.intensity];
 
-                if (freq > 0) {
+            while (nextNoteTime < audioCtx.currentTime + 0.25) {
+                const melStep = bgmIndex % melody.length;
+                const noteIdx = melody[melStep]; // could be -1 (rest)
+
+                if (noteIdx >= 0) {
+                    // スケールからセミトーンを取得してメロディ周波数を計算
+                    const semitone = profile.scale[noteIdx % profile.scale.length];
+                    const freq = semitoneToFreq(rootHz, semitone);
+
                     // --- メロディ ---
                     const osc = audioCtx.createOscillator();
                     const gn = audioCtx.createGain();
-                    osc.type = cfg.type;
+                    osc.type = melOscType;
                     osc.frequency.setValueAtTime(freq, nextNoteTime);
                     osc.connect(gn);
                     gn.connect(bgmDest);
@@ -1245,11 +1268,31 @@ const MEDITATION_DATA = [
                     gn2.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + noteLen);
                     osc2.start(nextNoteTime);
                     osc2.stop(nextNoteTime + noteLen);
+
+                    // --- コードパッド (8拍ごと) ---
+                    if (bgmIndex % 8 === 0) {
+                        [1.0, 1.26, 1.5].forEach(ratio => {
+                            const cOsc = audioCtx.createOscillator();
+                            const cGn = audioCtx.createGain();
+                            cOsc.type = 'sine';
+                            cOsc.frequency.setValueAtTime(freq * ratio * 0.5, nextNoteTime);
+                            cOsc.connect(cGn);
+                            cGn.connect(bgmDest);
+                            if (reverbDelay) cGn.connect(reverbDelay);
+                            cGn.gain.setValueAtTime(0.001, nextNoteTime);
+                            cGn.gain.linearRampToValueAtTime(dynGain * 0.22, nextNoteTime + dynStep * 0.5);
+                            cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 7.5);
+                            cOsc.start(nextNoteTime);
+                            cOsc.stop(nextNoteTime + dynStep * 8);
+                        });
+                    }
                 }
 
-                // --- ベースライン (4拍ごと) ---
+                // --- ベースライン (4拍ごと、profile.bass パターン使用) ---
                 if (bgmIndex % 4 === 0) {
-                    const bassFreq = cfg.notes.find(n => n > 0) * 0.25;
+                    const bassStep = (bgmIndex / 4) % 4;
+                    const bassSemitone = profile.bass[bassStep];
+                    const bassFreq = semitoneToFreq(rootHz * 0.25, bassSemitone);
                     if (bassFreq > 0) {
                         const bOsc = audioCtx.createOscillator();
                         const bGn = audioCtx.createGain();
@@ -1264,27 +1307,33 @@ const MEDITATION_DATA = [
                     }
                 }
 
-                // --- コードパッド (8拍ごと、ゆったりした和音) ---
-                if (bgmIndex % 8 === 0 && freq > 0) {
-                    [1.0, 1.26, 1.5].forEach(ratio => {
-                        const cOsc = audioCtx.createOscillator();
-                        const cGn = audioCtx.createGain();
-                        cOsc.type = 'sine';
-                        cOsc.frequency.setValueAtTime(freq * ratio * 0.5, nextNoteTime);
-                        cOsc.connect(cGn);
-                        cGn.connect(bgmDest);
-                        if (reverbDelay) cGn.connect(reverbDelay);
-                        cGn.gain.setValueAtTime(0.001, nextNoteTime);
-                        cGn.gain.linearRampToValueAtTime(dynGain * 0.22, nextNoteTime + dynStep * 0.5);
-                        cGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + dynStep * 7.5);
-                        cOsc.start(nextNoteTime);
-                        cOsc.stop(nextNoteTime + dynStep * 8);
-                    });
+                // --- intensity 3: パーカッション (2拍ごとに低周波ドラムヒット) ---
+                if (profile.intensity === 3 && bgmIndex % 2 === 0) {
+                    const dOsc = audioCtx.createOscillator();
+                    const dGn = audioCtx.createGain();
+                    dOsc.type = 'sawtooth';
+                    dOsc.frequency.setValueAtTime(80, nextNoteTime);
+                    dOsc.frequency.exponentialRampToValueAtTime(30, nextNoteTime + 0.08);
+                    dOsc.connect(dGn);
+                    dGn.connect(bgmDest);
+                    dGn.gain.setValueAtTime(0.3 * bgmVolume, nextNoteTime);
+                    dGn.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.08);
+                    dOsc.start(nextNoteTime);
+                    dOsc.stop(nextNoteTime + 0.09);
                 }
 
                 nextNoteTime += dynStep;
-                bgmIndex = (bgmIndex + 1) % cfg.notes.length;
+                bgmIndex++;
             }
+        }
+
+        // BGMをステージ切り替え時に再スタートする
+        function restartBGMForStage() {
+            if (!audioStarted || !audioCtx) return;
+            // ステージ変化フラグをリセットして次の updateBgm() 呼び出しで再初期化させる
+            bgmCurrentStage = -1;
+            bgmIndex = 0;
+            nextNoteTime = audioCtx.currentTime + 0.05;
         }
 
         // ==== updateBGMDynamic: ゲーム状態に応じてBGMを動的に変化させる ====
@@ -4565,6 +4614,15 @@ const MEDITATION_DATA = [
                 ctx.fillStyle = '#FF4444';
                 ctx.font = 'bold 12px monospace';
                 ctx.fillText(ngPlusLevel === 1 ? 'NG+' : 'NG++', 10, 35);
+            }
+
+            // BGMラベル (現在ステージの音楽名)
+            {
+                const bgmProfile = STAGE_BGM_PROFILES[Math.min(currentStageIndex, 19)];
+                ctx.fillStyle = '#888888';
+                ctx.font = '9px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('♪ ' + bgmProfile.label, px + STATS_W / 2, VIEW_H - 18);
             }
 
             // 哲学の道インジケータ
