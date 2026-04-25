@@ -2035,7 +2035,7 @@ const MEDITATION_DATA = [
                         currentStageIndex = 0;
                         maxReachedStage = 0;
                         savedItemsForContinue = null;
-                        hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                        hasLongSword = false; hasBow = false; hasShield = true; hasBoots = false;
                         playerLevel = 1; playerXP = 0; playerATK = 1.0;
                         player.maxHp = 5; player.hp = 5;
                         dailyChallengeActive = false;
@@ -2085,7 +2085,7 @@ const MEDITATION_DATA = [
                         currentStageIndex = 0;
                         maxReachedStage = 0;
                         savedItemsForContinue = null;
-                        hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                        hasLongSword = false; hasBow = false; hasShield = true; hasBoots = false;
                         playerLevel = 1; playerXP = 0; playerATK = 1.0;
                         player.maxHp = 5; player.hp = 5;
                         karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
@@ -2364,19 +2364,20 @@ const MEDITATION_DATA = [
                         else if (pauseMenuCursor === 3) { isPaused = false; gameState = 'title'; }
                     }
                 } else if (pauseInSettings) {
-                    // 設定画面 — 音量調整 (0.05刻み、localStorage保存)
                     const step = e.shiftKey ? 0.01 : 0.05;
                     if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                        if (pauseMenuCursor === 0) { bgmVolume = Math.max(0, Math.round((bgmVolume - step) * 100) / 100); localStorage.setItem('bgmVolume', bgmVolume); }
-                        if (pauseMenuCursor === 1) { seVolume  = Math.max(0, Math.round((seVolume  - step) * 100) / 100); localStorage.setItem('seVolume',  seVolume); }
+                        if (pauseMenuCursor === 0) bgmVolume = Math.max(0, Math.round((bgmVolume - step) * 100) / 100);
+                        if (pauseMenuCursor === 1) seVolume  = Math.max(0, Math.round((seVolume  - step) * 100) / 100);
                     } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                        if (pauseMenuCursor === 0) { bgmVolume = Math.min(1, Math.round((bgmVolume + step) * 100) / 100); localStorage.setItem('bgmVolume', bgmVolume); }
-                        if (pauseMenuCursor === 1) { seVolume  = Math.min(1, Math.round((seVolume  + step) * 100) / 100); localStorage.setItem('seVolume',  seVolume); }
+                        if (pauseMenuCursor === 0) bgmVolume = Math.min(1, Math.round((bgmVolume + step) * 100) / 100);
+                        if (pauseMenuCursor === 1) seVolume  = Math.min(1, Math.round((seVolume  + step) * 100) / 100);
                     } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
                         pauseMenuCursor = Math.max(0, pauseMenuCursor - 1);
                     } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
                         pauseMenuCursor = Math.min(2, pauseMenuCursor + 1);
                     } else if (e.code === 'Escape' || (e.code === 'Enter' && pauseMenuCursor === 2)) {
+                        localStorage.setItem('bgmVolume', bgmVolume);
+                        localStorage.setItem('seVolume', seVolume);
                         pauseInSettings = false; pauseMenuCursor = 0;
                     }
                 }
@@ -2431,7 +2432,7 @@ const MEDITATION_DATA = [
                         else titleSelectedOption = 2;
                         if (titleSelectedOption === 0) {
                             currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
-                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            hasLongSword = false; hasBow = false; hasShield = true; hasBoots = false;
                             playerLevel = 1; playerXP = 0; playerATK = 1.0;
                             player.maxHp = 5; player.hp = 5;
                             dailyChallengeActive = false; currentDailyChallenge = null;
@@ -2452,7 +2453,7 @@ const MEDITATION_DATA = [
                         } else {
                             // 今日のチャレンジ
                             currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
-                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            hasLongSword = false; hasBow = false; hasShield = true; hasBoots = false;
                             playerLevel = 1; playerXP = 0; playerATK = 1.0;
                             player.maxHp = 5; player.hp = 5;
                             karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
@@ -2605,7 +2606,7 @@ const MEDITATION_DATA = [
         let savedItemsForContinue = null; // ゲームオーバー時のアイテム保存
         let hasLongSword = false;
         let hasBow = false;
-        let hasShield = false;
+        let hasShield = true; // 最初から装備
         let hasBoots = false;
         let pScore = 0;
         let playerLevel = 1, playerXP = 0, playerATK = 1.0;
@@ -4315,7 +4316,7 @@ const MEDITATION_DATA = [
                             currentStageIndex = 0;
                             maxReachedStage = 0;
                             savedItemsForContinue = null;
-                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            hasLongSword = false; hasBow = false; hasShield = true; hasBoots = false;
                             playerLevel = 1; playerXP = 0; playerATK = 1.0;
                             player.maxHp = 5; player.hp = 5;
                             dailyChallengeActive = false; currentDailyChallenge = null;
@@ -4349,7 +4350,7 @@ const MEDITATION_DATA = [
                         } else {
                             // 今日のチャレンジ
                             currentStageIndex = 0; maxReachedStage = 0; savedItemsForContinue = null;
-                            hasLongSword = false; hasBow = false; hasShield = false; hasBoots = false;
+                            hasLongSword = false; hasBow = false; hasShield = true; hasBoots = false;
                             playerLevel = 1; playerXP = 0; playerATK = 1.0;
                             player.maxHp = 5; player.hp = 5;
                             karma = { bu: 0, chi: 0, mamori: 0, tetsu: 0 };
@@ -4470,14 +4471,18 @@ const MEDITATION_DATA = [
                         if (padUp) { pauseMenuCursor = Math.max(0, pauseMenuCursor - 1); jpTimer = 15; }
                         else if (padDown) { pauseMenuCursor = Math.min(2, pauseMenuCursor + 1); jpTimer = 15; }
                         else if (padLeft) {
-                            if (pauseMenuCursor === 0) { bgmVolume = Math.max(0, Math.round((bgmVolume - step) * 100) / 100); localStorage.setItem('bgmVolume', bgmVolume); }
-                            else if (pauseMenuCursor === 1) { seVolume = Math.max(0, Math.round((seVolume - step) * 100) / 100); localStorage.setItem('seVolume', seVolume); }
+                            if (pauseMenuCursor === 0) bgmVolume = Math.max(0, Math.round((bgmVolume - step) * 100) / 100);
+                            else if (pauseMenuCursor === 1) seVolume = Math.max(0, Math.round((seVolume - step) * 100) / 100);
                             jpTimer = 8;
                         } else if (padRight) {
-                            if (pauseMenuCursor === 0) { bgmVolume = Math.min(1, Math.round((bgmVolume + step) * 100) / 100); localStorage.setItem('bgmVolume', bgmVolume); }
-                            else if (pauseMenuCursor === 1) { seVolume = Math.min(1, Math.round((seVolume + step) * 100) / 100); localStorage.setItem('seVolume', seVolume); }
+                            if (pauseMenuCursor === 0) bgmVolume = Math.min(1, Math.round((bgmVolume + step) * 100) / 100);
+                            else if (pauseMenuCursor === 1) seVolume = Math.min(1, Math.round((seVolume + step) * 100) / 100);
                             jpTimer = 8;
-                        } else if ((padA && pauseMenuCursor === 2) || padB || padStart) { pauseInSettings = false; pauseMenuCursor = 0; jpTimer = 20; }
+                        } else if ((padA && pauseMenuCursor === 2) || padB || padStart) {
+                            localStorage.setItem('bgmVolume', bgmVolume);
+                            localStorage.setItem('seVolume', seVolume);
+                            pauseInSettings = false; pauseMenuCursor = 0; jpTimer = 20;
+                        }
                     } else if (pauseInAchievements) {
                         if (padB || padA || padStart) { pauseInAchievements = false; pauseMenuCursor = 0; jpTimer = 20; }
                     }
@@ -4490,7 +4495,7 @@ const MEDITATION_DATA = [
                 initAudio();
             }
 
-            if (padStart && jpTimer === 0) { // Start button: ポーズを開く
+            if (padStart && jpTimer === 0 && popupMessage === '') {
                 isPaused = true;
                 pauseMenuCursor = 0;
                 pauseInSettings = false;
