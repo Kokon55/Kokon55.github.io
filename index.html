@@ -3270,9 +3270,17 @@ const MEDITATION_DATA = [
                     speed: typeDef.speed,
                     sprite: typeDef.sprite,
                     type: typeDef.type,
+                    name: typeDef.name,
                     fireInterval: typeDef.fireInterval || 0,
                     fireTimer: 0,
-                    hitTimer: 0
+                    hitTimer: 0,
+                    // ==== AIステート ====
+                    flankAngle: (Math.random() - 0.5) * 1.4, // フランキング角度オフセット
+                    chargeTimer: 80 + Math.floor(Math.random() * 100), // チャージクールダウン
+                    strafeDir: Math.random() < 0.5 ? 1 : -1,  // ストレーフ方向
+                    strafeTimer: 60 + Math.floor(Math.random() * 60),   // ストレーフ切替
+                    retreatTimer: 0,  // 撤退継続フレーム
+                    aiFrame: Math.floor(Math.random() * 60),  // AIフレームオフセット(非同期化)
                 });
             }
         }
@@ -3971,20 +3979,48 @@ const MEDITATION_DATA = [
                             }
                         }
                     } else if (enemy.type === 'mage' || enemy.type === 'archer' || enemy.type === 'boss') {
-                        // 遠距離タイプは一定距離を保つ、または火を噴く
+                        // ==== 遠距離タイプ: ストレーフ + 距離維持 + 射撃 ====
+                        enemy.aiFrame++;
                         enemy.fireTimer++;
-                        if (dist > 250) {
-                            if (dist > 0) { edx /= dist; edy /= dist; }
-                            const nextEx = enemy.x + edx * enemy.speed * tsMult;
-                            const nextEy = enemy.y + edy * enemy.speed * tsMult;
+
+                        // ストレーフ方向の切替
+                        enemy.strafeTimer--;
+                        if (enemy.strafeTimer <= 0) {
+                            enemy.strafeDir *= -1;
+                            enemy.strafeTimer = 50 + Math.floor(Math.random() * 70);
+                        }
+
+                        if (dist > 0) {
+                            const normDx = edx / dist;
+                            const normDy = edy / dist;
+                            // 垂直ベクトル(ストレーフ用)
+                            const perpX = -normDy * enemy.strafeDir;
+                            const perpY =  normDx * enemy.strafeDir;
+
+                            let moveX = 0, moveY = 0;
+                            if (dist > 280) {
+                                // 遠すぎる: まず接近
+                                moveX = normDx * enemy.speed * tsMult;
+                                moveY = normDy * enemy.speed * tsMult;
+                            } else if (dist < 160) {
+                                // 近すぎる: 後退 + ストレーフ
+                                moveX = (-normDx * 0.6 + perpX * 0.8) * enemy.speed * tsMult;
+                                moveY = (-normDy * 0.6 + perpY * 0.8) * enemy.speed * tsMult;
+                            } else {
+                                // 適正距離: ストレーフのみ
+                                moveX = perpX * enemy.speed * tsMult * 0.85;
+                                moveY = perpY * enemy.speed * tsMult * 0.85;
+                            }
+                            const nextEx = enemy.x + moveX;
+                            const nextEy = enemy.y + moveY;
                             if (isWalkable(nextEx, enemy.y)) enemy.x = nextEx;
                             if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
                         }
+
                         if (enemy.fireTimer > enemy.fireInterval) {
                             enemy.fireTimer = 0;
-                            // 弾を発射
-                            let pdirX = edx / dist;
-                            let pdirY = edy / dist;
+                            let pdirX = edx / (dist || 1);
+                            let pdirY = edy / (dist || 1);
                             if (enemy.type === 'boss') {
                                 // 扇状に3発撃つ
                                 for (let a = -1; a <= 1; a++) {
@@ -4006,14 +4042,64 @@ const MEDITATION_DATA = [
                             }
                         }
                     } else {
-                        // 近接タイプ
+                        // ==== 近接タイプ: フランキング + チャージ + 撤退 + 分離 ====
+                        enemy.aiFrame++;
                         if (dist > 0) {
-                            edx /= dist;
-                            edy /= dist;
-                            const nextEx = enemy.x + edx * enemy.speed * tsMult;
-                            const nextEy = enemy.y + edy * enemy.speed * tsMult;
-                            if (isWalkable(nextEx, enemy.y)) enemy.x = nextEx;
-                            if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
+                            // HP25%未満で撤退行動
+                            const lowHp = enemy.hp < enemy.maxHp * 0.25;
+                            if (lowHp && dist < 140) {
+                                if (enemy.retreatTimer <= 0) enemy.retreatTimer = 50;
+                            }
+                            if (enemy.retreatTimer > 0) {
+                                enemy.retreatTimer--;
+                                // 後退: プレイヤーから離れる
+                                const rx = enemy.x - player.x; const ry = enemy.y - player.y;
+                                const rd = Math.sqrt(rx*rx+ry*ry)||1;
+                                const nextEx = enemy.x + (rx/rd) * enemy.speed * 0.8 * tsMult;
+                                const nextEy = enemy.y + (ry/rd) * enemy.speed * 0.8 * tsMult;
+                                if (isWalkable(nextEx, enemy.y)) enemy.x = nextEx;
+                                if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
+                            } else {
+                                // フランキング: 角度オフセットで側面から接近
+                                const baseAngle = Math.atan2(edy, edx);
+                                // 距離が遠いほどフランク角を強くかける(近づくと直線化)
+                                const flankStrength = Math.min(1, (dist - 60) / 200);
+                                const targetAngle = baseAngle + enemy.flankAngle * flankStrength;
+                                const fdx = Math.cos(targetAngle);
+                                const fdy = Math.sin(targetAngle);
+
+                                // チャージダッシュ (重量型: Orc=1, Troll=12, DarkKnight=9)
+                                const isHeavy = (enemy.name === 'Orc' || enemy.name === 'Troll' || enemy.name === 'DarkKnight');
+                                enemy.chargeTimer--;
+                                if (isHeavy && enemy.chargeTimer <= 0 && dist < 320 && dist > 70) {
+                                    enemy.chargeTimer = 160 + Math.floor(Math.random() * 80);
+                                    // 突進: 高速で3フレーム分移動
+                                    const chargePow = 9;
+                                    const cx = enemy.x + fdx * enemy.speed * chargePow;
+                                    const cy = enemy.y + fdy * enemy.speed * chargePow;
+                                    if (isWalkable(cx, enemy.y)) enemy.x = cx;
+                                    if (isWalkable(enemy.x, cy)) enemy.y = cy;
+                                    screenShake = Math.max(screenShake, 3);
+                                } else {
+                                    const nextEx = enemy.x + fdx * enemy.speed * tsMult;
+                                    const nextEy = enemy.y + fdy * enemy.speed * tsMult;
+                                    if (isWalkable(nextEx, enemy.y)) enemy.x = nextEx;
+                                    if (isWalkable(enemy.x, nextEy)) enemy.y = nextEy;
+                                }
+                            }
+                        }
+
+                        // 分離力: 他の敵と重なりすぎないよう押し合う
+                        for (let j2 = 0; j2 < enemies.length; j2++) {
+                            const other = enemies[j2];
+                            if (other === enemy || other.isBoss) continue;
+                            const sx = enemy.x - other.x, sy = enemy.y - other.y;
+                            const sd = Math.sqrt(sx*sx+sy*sy);
+                            if (sd < 40 && sd > 0) {
+                                const push = (40 - sd) / 40 * 1.2;
+                                enemy.x += (sx/sd) * push;
+                                enemy.y += (sy/sd) * push;
+                            }
                         }
                     }
                 }
@@ -5587,13 +5673,30 @@ const MEDITATION_DATA = [
                 if (enemy.type === 'boss') {
                     drawGlow(ctx, esx + SPRITE_SIZE * 0.75, esy + SPRITE_SIZE * 0.75, 28, '#FF4400', 12);
                 }
-                drawShape(enemy.sprite, esx, esy, wobble, scale, enemy.hitTimer % 4 > 1, eFlipX);
-                // HPバー
-                ctx.fillStyle = '#f00';
-                const hpRatio = enemy.hp / enemy.maxHp;
-                ctx.fillRect(esx, esy - 10, (16 * scale) * hpRatio, 4);
+                // チャージ予備動作: 重量型がチャージ直前に赤く点滅
+                const isHeavyEnemy = (enemy.name === 'Orc' || enemy.name === 'Troll' || enemy.name === 'DarkKnight');
+                const chargeFlash = isHeavyEnemy && enemy.chargeTimer > 0 && enemy.chargeTimer < 20 && Math.floor(Date.now()/80) % 2 === 0;
+                drawShape(enemy.sprite, esx, esy, wobble, scale, enemy.hitTimer % 4 > 1 || chargeFlash, eFlipX);
+                // HPバー (グラジエント: 緑→黄→赤)
+                const hpRatio = Math.max(0, enemy.hp / enemy.maxHp);
+                const barW = 16 * scale;
+                ctx.fillStyle = '#111';
+                ctx.fillRect(esx, esy - 10, barW, 5);
+                const hpGrad = ctx.createLinearGradient(esx, 0, esx + barW * hpRatio, 0);
+                if (hpRatio > 0.6) { hpGrad.addColorStop(0,'#2ECC71'); hpGrad.addColorStop(1,'#27AE60'); }
+                else if (hpRatio > 0.3) { hpGrad.addColorStop(0,'#FFD700'); hpGrad.addColorStop(1,'#FF6B35'); }
+                else { hpGrad.addColorStop(0,'#E84855'); hpGrad.addColorStop(1,'#AA1122'); }
+                ctx.fillStyle = hpGrad;
+                ctx.fillRect(esx, esy - 10, barW * hpRatio, 5);
                 ctx.strokeStyle = '#000';
-                ctx.strokeRect(esx, esy - 10, 16 * scale, 4);
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(esx, esy - 10, barW, 5);
+                // 撤退中インジケーター（ダメージ低HP時）
+                if (enemy.retreatTimer > 0) {
+                    ctx.save(); ctx.globalAlpha = 0.7; ctx.font = '10px monospace'; ctx.textAlign = 'center';
+                    ctx.fillStyle = '#FF4444'; ctx.fillText('!', esx + barW/2, esy - 14);
+                    ctx.restore();
+                }
             }
 
             // 主人公
